@@ -28,6 +28,19 @@ texture = ExtResource("1_q83aw")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00882569, 1.3408645, 0)
 shape = SubResource("BoxShape3D_fo0cc")
 
+[node name="CharacterBody3D2" type="CharacterBody3D" parent="." unique_id=211358299]
+script = ExtResource("1_fo0cc")
+device_id = 1
+
+[node name="Sprite3D" type="Sprite3D" parent="CharacterBody3D2" unique_id=76721855]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.3714242, 1.1423203, 0)
+modulate = Color(1, 1, 0.06666667, 1)
+texture = ExtResource("1_q83aw")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D2" unique_id=34308627]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2743802, 1.3408645, 0)
+shape = SubResource("BoxShape3D_fo0cc")
+
 [node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=1541391173]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1473611757]
