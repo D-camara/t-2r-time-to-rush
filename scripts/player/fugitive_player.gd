@@ -4,6 +4,8 @@ extends CharacterBody3D
 const DEFAULT_STUN: float = 2.0
 
 @export var move_speed: float = 10.0
+@export var acceleration: float = 14.0
+@export var rotation_lerp_speed: float = 12.0
 @export var camera_path: NodePath = ^"../CAMERA"
 
 @onready var animator: AnimationPlayer = get_node_or_null("boneco/AnimationPlayer")
@@ -34,7 +36,7 @@ func _physics_process(delta: float) -> void:
 	handle_input()
 	apply_gravity(delta)
 
-	var applied_velocity: Vector3 = velocity.lerp(movement_velocity, delta * 10.0)
+	var applied_velocity: Vector3 = velocity.lerp(movement_velocity, delta * acceleration)
 	applied_velocity.y = -gravity
 	velocity = applied_velocity
 
@@ -42,7 +44,7 @@ func _physics_process(delta: float) -> void:
 
 	if Vector2(velocity.z, velocity.x).length() > 0.0:
 		rotation_direction = Vector2(velocity.z, velocity.x).angle()
-	rotation.y = lerp_angle(rotation.y, rotation_direction, delta * 10.0)
+	rotation.y = lerp_angle(rotation.y, rotation_direction, delta * rotation_lerp_speed)
 	handle_animation()
 
 func apply_trap_stun(duration: float = DEFAULT_STUN) -> void:
@@ -94,6 +96,10 @@ func set_input_enabled(enabled: bool) -> void:
 	if not enabled:
 		velocity = Vector3.ZERO
 		movement_velocity = Vector3.ZERO
+
+func configure_movement(speed: float, new_acceleration: float) -> void:
+	move_speed = speed
+	acceleration = new_acceleration
 
 func capture() -> void:
 	is_captured = true

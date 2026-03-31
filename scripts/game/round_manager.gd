@@ -9,9 +9,13 @@ enum RoundState {
 
 @export var round_duration: float = 45.0
 @export var pre_round_countdown: float = 3.0
-@export var capture_distance: float = 2.2
+@export var capture_distance: float = 1.9
 @export var danger_distance: float = 4.5
 @export var low_time_threshold: float = 10.0
+@export var fugitive_speed: float = 11.2
+@export var fugitive_acceleration: float = 14.0
+@export var police_speed: float = 11.8
+@export var police_acceleration: float = 9.5
 @export var fugitive_spawn: Vector3 = Vector3.ZERO
 @export var police_spawn: Vector3 = Vector3(7.0, 0.0, 0.0)
 
@@ -63,6 +67,8 @@ func start_round() -> void:
 	countdown_remaining = pre_round_countdown
 	fugitive.reset_state(fugitive_spawn)
 	police.reset_state(police_spawn)
+	fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
+	police.configure_movement(police_speed, police_acceleration)
 	fugitive.set_input_enabled(false)
 	police.set_input_enabled(false)
 	_update_hud(_get_countdown_message())
@@ -91,6 +97,7 @@ func _update_hud(status_message: String) -> void:
 	hud.update_timer(remaining_time, timer_warning)
 	hud.update_active_fugitives(active_fugitives, 1)
 	hud.set_status(status_message, _get_status_color())
+	hud.set_controls_hint(_get_controls_hint())
 
 func _process_countdown(delta: float) -> void:
 	countdown_remaining = max(countdown_remaining - delta, 0.0)
@@ -143,3 +150,9 @@ func _get_status_color() -> Color:
 		return RoundHud.COLOR_WARNING
 
 	return RoundHud.COLOR_DEFAULT
+
+func _get_controls_hint() -> String:
+	if police.is_controller_connected():
+		return "WASD: Fugitivo | DualSense: Policia | R: Reiniciar"
+
+	return "WASD: Fugitivo | Setas: Policia | R: Reiniciar"

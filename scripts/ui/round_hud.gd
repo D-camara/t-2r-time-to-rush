@@ -27,3 +27,6 @@ func update_active_fugitives(active_count: int, total_count: int) -> void:
 func set_status(message: String, color: Color = COLOR_DEFAULT) -> void:
 	status_label.text = message
 	status_label.modulate = color
+
+func set_controls_hint(message: String) -> void:
+	controls_label.text = message
