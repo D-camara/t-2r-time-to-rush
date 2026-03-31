@@ -44,7 +44,6 @@ func _physics_process(delta: float) -> void:
 	rotation.y = lerp_angle(rotation.y, rotation_direction, delta * 10.0)
 	handle_animation()
 
-# chamado pela armadilha (Area3D) ao colidir com o player
 func apply_trap_stun(duration := DEFAULT_STUN) -> void:
 	if is_captured:
 		return
@@ -62,8 +61,10 @@ func handle_input() -> void:
 	var input := Vector3.ZERO
 	input.x = Input.get_axis("move_left", "move_right")
 	input.z = Input.get_axis("move_foward", "move_backwards")
+
 	if view:
 		input = input.rotated(Vector3.UP, view.rotation.y)
+
 	movement_velocity = input.normalized() * move_speed if input.length() > 0.0 else Vector3.ZERO
 
 func apply_gravity(delta: float) -> void:
@@ -77,9 +78,15 @@ func handle_animation() -> void:
 		return
 
 	if is_captured or is_stunned or (abs(velocity.x) <= 1.0 and abs(velocity.z) <= 1.0):
-		animator.play("animaÃ§oesfim/Idle", 0.3)
+		_play_animation_by_suffix("Idle")
 	else:
-		animator.play("animaÃ§oesfim/FastRun", 0.3)
+		_play_animation_by_suffix("FastRun")
+
+func _play_animation_by_suffix(suffix: String) -> void:
+	for animation_name in animator.get_animation_list():
+		if animation_name.ends_with("/" + suffix) or animation_name == suffix:
+			animator.play(animation_name, 0.3)
+			return
 
 func set_input_enabled(enabled: bool) -> void:
 	input_enabled = enabled
@@ -104,10 +111,3 @@ func reset_state(spawn_position: Vector3) -> void:
 	stun_timer = 0.0
 	input_enabled = true
 	is_captured = false
-
-func old_handle_animation():
-	if is_on_floor():
-		if abs(velocity.x) > 1 or abs(velocity.z) > 1:
-			animator.play("animaçoesfim/FastRun", 0.3)
-		else:
-			animator.play("animaçoesfim/Idle", 0.3)

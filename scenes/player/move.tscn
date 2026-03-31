@@ -1,7 +1,11 @@
 [gd_scene format=3 uid="uid://1rmlwk2viatv"]
 
-[ext_resource type="Script" uid="uid://bq8m4gjqujd0r" path="res://scripts/player/personagem.gd" id="1_86tx1"]
+[ext_resource type="Script" path="res://scripts/player/fugitive_player.gd" id="1_86tx1"]
 [ext_resource type="PackedScene" uid="uid://cd85q8s8wppv6" path="res://scenes/player/boneco.glb" id="2_2syaa"]
+[ext_resource type="Script" path="res://scripts/game/round_manager.gd" id="3_round"]
+[ext_resource type="Script" path="res://scripts/camera/shared_camera.gd" id="4_camera"]
+[ext_resource type="PackedScene" path="res://scenes/player/police_player.tscn" id="5_police"]
+[ext_resource type="PackedScene" path="res://scenes/ui/round_hud.tscn" id="6_hud"]
 
 [sub_resource type="Animation" id="Animation_tohxk"]
 resource_name = "FastRun"
@@ -463,6 +467,7 @@ size = Vector2(23, 15)
 data = PackedVector3Array(11.5, 0, 5, -11.5, 0, 5, 11.5, 0, -5, -11.5, 0, 5, -11.5, 0, -5, 11.5, 0, -5)
 
 [node name="JOGO" type="Node3D" unique_id=446853248]
+script = ExtResource("3_round")
 
 [node name="PERSONAGEM" type="CharacterBody3D" parent="." unique_id=353522985]
 script = ExtResource("1_86tx1")
@@ -479,9 +484,15 @@ shape = SubResource("CylinderShape3D_spp8y")
 
 [node name="CAMERA" type="Camera3D" parent="." unique_id=143584397]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 37.512016, -3.0241508)
+script = ExtResource("4_camera")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="CAMERA" unique_id=1808334499]
 environment = SubResource("Environment_c43ro")
+
+[node name="POLICIAL" parent="." instance=ExtResource("5_police")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0, 0)
+
+[node name="HUD" parent="." instance=ExtResource("6_hud")]
 
 [node name="CHAO" type="MeshInstance3D" parent="." unique_id=1772769341]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5.9977493)
