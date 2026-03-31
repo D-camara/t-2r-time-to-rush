@@ -2,10 +2,10 @@ extends CharacterBody3D
 
 @export var device_id: int = 0
 
-var speed := 5.0
+var speed: float = 5.0
 
-func _physics_process(delta):
-	var direction = InputManager.get_movement(device_id)
+func _physics_process(_delta: float) -> void:
+	var direction: Vector3 = InputManager.get_movement(device_id)
 
 	print(direction) # teste
 

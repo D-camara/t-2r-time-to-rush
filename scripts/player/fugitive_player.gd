@@ -1,20 +1,21 @@
+class_name FugitivePlayer
 extends CharacterBody3D
 
-const DEFAULT_STUN := 2.0
+const DEFAULT_STUN: float = 2.0
 
-@export var move_speed := 10.0
+@export var move_speed: float = 10.0
 @export var camera_path: NodePath = ^"../CAMERA"
 
 @onready var animator: AnimationPlayer = get_node_or_null("boneco/AnimationPlayer")
 @onready var view: Node3D = get_node_or_null(camera_path)
 
-var movement_velocity := Vector3.ZERO
-var gravity := 0.0
-var rotation_direction := 0.0
-var is_stunned := false
-var stun_timer := 0.0
-var input_enabled := true
-var is_captured := false
+var movement_velocity: Vector3 = Vector3.ZERO
+var gravity: float = 0.0
+var rotation_direction: float = 0.0
+var is_stunned: bool = false
+var stun_timer: float = 0.0
+var input_enabled: bool = true
+var is_captured: bool = false
 
 func _physics_process(delta: float) -> void:
 	if is_captured:
@@ -33,7 +34,7 @@ func _physics_process(delta: float) -> void:
 	handle_input()
 	apply_gravity(delta)
 
-	var applied_velocity := velocity.lerp(movement_velocity, delta * 10.0)
+	var applied_velocity: Vector3 = velocity.lerp(movement_velocity, delta * 10.0)
 	applied_velocity.y = -gravity
 	velocity = applied_velocity
 
@@ -44,7 +45,7 @@ func _physics_process(delta: float) -> void:
 	rotation.y = lerp_angle(rotation.y, rotation_direction, delta * 10.0)
 	handle_animation()
 
-func apply_trap_stun(duration := DEFAULT_STUN) -> void:
+func apply_trap_stun(duration: float = DEFAULT_STUN) -> void:
 	if is_captured:
 		return
 
@@ -58,7 +59,7 @@ func handle_input() -> void:
 		movement_velocity = Vector3.ZERO
 		return
 
-	var input := Vector3.ZERO
+	var input: Vector3 = Vector3.ZERO
 	input.x = Input.get_axis("move_left", "move_right")
 	input.z = Input.get_axis("move_foward", "move_backwards")
 
@@ -83,7 +84,7 @@ func handle_animation() -> void:
 		_play_animation_by_suffix("FastRun")
 
 func _play_animation_by_suffix(suffix: String) -> void:
-	for animation_name in animator.get_animation_list():
+	for animation_name: String in animator.get_animation_list():
 		if animation_name.ends_with("/" + suffix) or animation_name == suffix:
 			animator.play(animation_name, 0.3)
 			return

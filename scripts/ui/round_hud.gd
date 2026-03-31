@@ -1,3 +1,4 @@
+class_name RoundHud
 extends CanvasLayer
 
 @onready var time_label: Label = $Control/TopLeft/InfoColumn/TimeLabel

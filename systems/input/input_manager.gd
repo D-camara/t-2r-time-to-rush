@@ -1,6 +1,6 @@
 extends Node
 
-const DEADZONE := 0.2
+const DEADZONE: float = 0.2
 
 func get_movement(device_id: int) -> Vector3:
 	var x = Input.get_joy_axis(device_id, JOY_AXIS_LEFT_X)

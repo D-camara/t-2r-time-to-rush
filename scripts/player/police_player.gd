@@ -1,17 +1,18 @@
+class_name PolicePlayer
 extends CharacterBody3D
 
-@export var device_id := 0
-@export var move_speed := 11.0
+@export var device_id: int = 0
+@export var move_speed: float = 11.0
 
-var gravity := 0.0
-var input_enabled := true
-var rotation_direction := 0.0
+var gravity: float = 0.0
+var input_enabled: bool = true
+var rotation_direction: float = 0.0
 
 func _physics_process(delta: float) -> void:
 	if input_enabled:
-		var direction := InputManager.get_movement(device_id)
-		var target_velocity := Vector3(direction.x, 0.0, direction.z) * move_speed
-		var applied_velocity := velocity.lerp(target_velocity, delta * 12.0)
+		var direction: Vector3 = InputManager.get_movement(device_id)
+		var target_velocity: Vector3 = Vector3(direction.x, 0.0, direction.z) * move_speed
+		var applied_velocity: Vector3 = velocity.lerp(target_velocity, delta * 12.0)
 		applied_velocity.y = _get_vertical_velocity(delta)
 		velocity = applied_velocity
 	else:
