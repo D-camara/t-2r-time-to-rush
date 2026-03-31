@@ -1,0 +1,55 @@
+[gd_scene format=3 uid="uid://c1iw7s6evtnli"]
+
+[ext_resource type="Script" uid="uid://civuw2vysi6rx" path="res://scripts/player/player.gd" id="1_fo0cc"]
+[ext_resource type="Texture2D" uid="uid://bjrc66w6nqbmy" path="res://icon.svg" id="1_q83aw"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fo0cc"]
+size = Vector3(1.2329102, 1, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_kkcyg"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k5kau"]
+albedo_color = Color(0, 0.26737827, 0.009224909, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5fbk5"]
+material = SubResource("StandardMaterial3D_k5kau")
+size = Vector3(10, 0.5, 10)
+
+[node name="Node3D" type="Node3D" unique_id=115173754]
+
+[node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=2125979296]
+script = ExtResource("1_fo0cc")
+
+[node name="Sprite3D" type="Sprite3D" parent="CharacterBody3D" unique_id=642819950]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1423203, 0)
+texture = ExtResource("1_q83aw")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D" unique_id=73323085]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00882569, 1.3408645, 0)
+shape = SubResource("BoxShape3D_fo0cc")
+
+[node name="CharacterBody3D2" type="CharacterBody3D" parent="." unique_id=211358299]
+script = ExtResource("1_fo0cc")
+device_id = 1
+
+[node name="Sprite3D" type="Sprite3D" parent="CharacterBody3D2" unique_id=76721855]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.3714242, 1.1423203, 0)
+modulate = Color(1, 1, 0.06666667, 1)
+texture = ExtResource("1_q83aw")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D2" unique_id=34308627]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2743802, 1.3408645, 0)
+shape = SubResource("BoxShape3D_fo0cc")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=1541391173]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1473611757]
+transform = Transform3D(10, 0, 0, 0, 0.5, 0, 0, 0, 10, 0, 0, 0)
+shape = SubResource("BoxShape3D_kkcyg")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D" unique_id=1337563141]
+mesh = SubResource("BoxMesh_5fbk5")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1323665510]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2311362, 1.382394, 6.363341)
+fov = 82.95718
