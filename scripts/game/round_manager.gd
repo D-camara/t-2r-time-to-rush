@@ -7,21 +7,23 @@ enum RoundState {
 	POLICE_WIN,
 }
 
-@export var round_duration: float = 45.0
+@export var round_duration: float = 60.0
 @export var pre_round_countdown: float = 3.0
-@export var capture_distance: float = 1.9
-@export var danger_distance: float = 4.5
-@export var low_time_threshold: float = 10.0
-@export var fugitive_speed: float = 11.2
-@export var fugitive_acceleration: float = 14.0
-@export var police_speed: float = 11.8
-@export var police_acceleration: float = 9.5
-@export var fugitive_spawn: Vector3 = Vector3.ZERO
-@export var police_spawn: Vector3 = Vector3(7.0, 0.0, 0.0)
+@export var capture_distance: float = 1.75
+@export var danger_distance: float = 6.0
+@export var low_time_threshold: float = 12.0
+@export var fugitive_speed: float = 11.0
+@export var fugitive_acceleration: float = 13.5
+@export var police_speed: float = 11.6
+@export var police_acceleration: float = 9.2
+@export var fugitive_spawn: Vector3 = Vector3(0.0, 2.0, 0.0)
+@export var police_spawn: Vector3 = Vector3(7.0, 2.0, 0.0)
 
 @onready var fugitive: FugitivePlayer = $PERSONAGEM
 @onready var police: PolicePlayer = $POLICIAL
 @onready var hud: RoundHud = $HUD
+@onready var fugitive_spawn_marker: Node3D = get_node_or_null("FUGITIVE_SPAWN")
+@onready var police_spawn_marker: Node3D = get_node_or_null("POLICE_SPAWN")
 
 var current_state: int = RoundState.COUNTDOWN
 var remaining_time: float = 0.0
@@ -65,8 +67,8 @@ func start_round() -> void:
 	current_state = RoundState.COUNTDOWN
 	remaining_time = round_duration
 	countdown_remaining = pre_round_countdown
-	fugitive.reset_state(fugitive_spawn)
-	police.reset_state(police_spawn)
+	fugitive.reset_state(_get_fugitive_spawn_position())
+	police.reset_state(_get_police_spawn_position())
 	fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
 	police.configure_movement(police_speed, police_acceleration)
 	fugitive.set_input_enabled(false)
@@ -156,3 +158,13 @@ func _get_controls_hint() -> String:
 		return "WASD: Fugitivo | DualSense: Policia | R: Reiniciar"
 
 	return "WASD: Fugitivo | Setas: Policia | R: Reiniciar"
+
+func _get_fugitive_spawn_position() -> Vector3:
+	if fugitive_spawn_marker:
+		return fugitive_spawn_marker.global_position
+	return fugitive_spawn
+
+func _get_police_spawn_position() -> Vector3:
+	if police_spawn_marker:
+		return police_spawn_marker.global_position
+	return police_spawn

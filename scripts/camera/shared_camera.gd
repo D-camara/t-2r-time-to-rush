@@ -1,14 +1,14 @@
 extends Camera3D
 
-@export var base_height: float = 20.0
-@export var base_distance: float = 12.0
-@export var position_smoothing: float = 7.0
-@export var focus_smoothing: float = 8.5
-@export var distance_influence: float = 0.5
-@export var max_bonus_height: float = 10.0
+@export var base_height: float = 24.0
+@export var base_distance: float = 14.0
+@export var position_smoothing: float = 6.2
+@export var focus_smoothing: float = 7.5
+@export var distance_influence: float = 0.58
+@export var max_bonus_height: float = 14.0
 @export var focus_height: float = 1.5
-@export var movement_look_ahead: float = 0.35
-@export var max_look_ahead_distance: float = 3.5
+@export var movement_look_ahead: float = 0.4
+@export var max_look_ahead_distance: float = 4.5
 
 @onready var fugitive: FugitivePlayer = get_parent().get_node_or_null("PERSONAGEM")
 @onready var police: PolicePlayer = get_parent().get_node_or_null("POLICIAL")
