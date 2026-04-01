@@ -1,0 +1,4 @@
+interface:
+  display_name: "T2R: Time to Rush"
+  short_description: "Skill do prototipo T2R"
+  default_prompt: "Use $t2r-time-to-rush para implementar ou refinar um sistema do T2R neste projeto Godot."
