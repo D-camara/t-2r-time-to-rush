@@ -7,6 +7,9 @@ const DEFAULT_STUN: float = 2.0
 @export var acceleration: float = 14.0
 @export var rotation_lerp_speed: float = 12.0
 @export var camera_path: NodePath = ^"../CAMERA"
+@export var body_color: Color = Color(0.92, 0.18, 0.15, 1.0)
+@export var emission_color: Color = Color(0.42, 0.06, 0.05, 1.0)
+@export var emission_energy: float = 0.65
 
 @onready var animator: AnimationPlayer = get_node_or_null("boneco/AnimationPlayer")
 @onready var view: Node3D = get_node_or_null(camera_path)
@@ -18,6 +21,9 @@ var is_stunned: bool = false
 var stun_timer: float = 0.0
 var input_enabled: bool = true
 var is_captured: bool = false
+
+func _ready() -> void:
+	_apply_visual_palette()
 
 func _physics_process(delta: float) -> void:
 	if is_captured:
@@ -118,3 +124,20 @@ func reset_state(spawn_position: Vector3) -> void:
 	stun_timer = 0.0
 	input_enabled = true
 	is_captured = false
+
+func _apply_visual_palette() -> void:
+	var palette_material := StandardMaterial3D.new()
+	palette_material.albedo_color = body_color
+	palette_material.roughness = 0.28
+	palette_material.metallic = 0.05
+	palette_material.emission_enabled = emission_energy > 0.0
+	palette_material.emission = emission_color
+	palette_material.emission_energy_multiplier = emission_energy
+	_apply_palette_to_meshes(self, palette_material)
+
+func _apply_palette_to_meshes(node: Node, palette_material: Material) -> void:
+	for child: Node in node.get_children():
+		if child is MeshInstance3D:
+			var mesh_instance: MeshInstance3D = child
+			mesh_instance.material_override = palette_material
+		_apply_palette_to_meshes(child, palette_material)
