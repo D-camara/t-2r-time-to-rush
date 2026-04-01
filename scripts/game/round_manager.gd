@@ -7,22 +7,27 @@ enum RoundState {
 	POLICE_WIN,
 }
 
-@export var round_duration: float = 30.0
+@export var round_duration: float = 45.0
 @export var pre_round_countdown: float = 3.0
 @export var capture_distance: float = 1.75
 @export var danger_distance: float = 6.0
 @export var low_time_threshold: float = 12.0
 @export var fugitive_speed: float = 11.0
 @export var fugitive_acceleration: float = 13.5
-@export var police_speed: float = 11.6
+@export var police_speed: float = 11.9
 @export var police_acceleration: float = 9.2
+@export var infected_hunter_speed: float = 10.4
+@export var infected_hunter_acceleration: float = 8.6
 @export var fugitive_spawn: Vector3 = Vector3(0.0, 2.0, 0.0)
+@export var second_fugitive_spawn: Vector3 = Vector3(-12.0, 2.0, -4.0)
 @export var police_spawn: Vector3 = Vector3(7.0, 2.0, 0.0)
 
 @onready var fugitive: FugitivePlayer = $PERSONAGEM
+@onready var second_fugitive: FugitivePlayer = $FUGITIVO_2
 @onready var police: PolicePlayer = $POLICIAL
 @onready var hud: RoundHud = $HUD
 @onready var fugitive_spawn_marker: Node3D = get_node_or_null("FUGITIVE_SPAWN")
+@onready var second_fugitive_spawn_marker: Node3D = get_node_or_null("FUGITIVE_2_SPAWN")
 @onready var police_spawn_marker: Node3D = get_node_or_null("POLICE_SPAWN")
 
 var current_state: int = RoundState.COUNTDOWN
@@ -50,11 +55,11 @@ func _physics_process(_delta: float) -> void:
 	if current_state != RoundState.PLAYING:
 		return
 
-	var distance_between_players: float = _get_players_distance()
-
-	if distance_between_players <= capture_distance:
-		fugitive.capture()
-		_finish_round(RoundState.POLICE_WIN)
+	for active_fugitive: FugitivePlayer in _get_active_fugitives():
+		for hunter: CharacterBody3D in _get_hunters():
+			if _get_distance_between(active_fugitive.global_position, hunter.global_position) <= capture_distance:
+				_infect_fugitive(active_fugitive)
+				return
 
 func _unhandled_input(_event: InputEvent) -> void:
 	if current_state == RoundState.PLAYING or current_state == RoundState.COUNTDOWN:
@@ -68,10 +73,13 @@ func start_round() -> void:
 	remaining_time = round_duration
 	countdown_remaining = pre_round_countdown
 	fugitive.reset_state(_get_fugitive_spawn_position())
+	second_fugitive.reset_state(_get_second_fugitive_spawn_position())
 	police.reset_state(_get_police_spawn_position())
 	fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
+	second_fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
 	police.configure_movement(police_speed, police_acceleration)
 	fugitive.set_input_enabled(false)
+	second_fugitive.set_input_enabled(false)
 	police.set_input_enabled(false)
 	_update_hud(_get_countdown_message())
 
@@ -81,23 +89,24 @@ func _finish_round(result: int) -> void:
 
 	current_state = result
 	fugitive.set_input_enabled(false)
+	second_fugitive.set_input_enabled(false)
 	police.set_input_enabled(false)
 
 	if result == RoundState.POLICE_WIN:
-		_update_hud("Policia venceu! Aperte R para reiniciar")
+		_update_hud("Pegadores venceram! Aperte R para reiniciar")
 		return
 
 	remaining_time = 0.0
-	_update_hud("Fugitivo venceu! Aperte R para reiniciar")
+	_update_hud("Fugitivos venceram! Aperte R para reiniciar")
 
 func _update_hud(status_message: String) -> void:
 	if not hud:
 		return
 
-	var active_fugitives: int = 0 if fugitive.is_captured else 1
+	var active_fugitives: int = _get_active_fugitives().size()
 	var timer_warning: bool = current_state == RoundState.PLAYING and remaining_time <= low_time_threshold
 	hud.update_timer(remaining_time, timer_warning)
-	hud.update_active_fugitives(active_fugitives, 1)
+	hud.update_active_fugitives(active_fugitives, 2)
 	hud.set_status(status_message, _get_status_color())
 	hud.set_controls_hint(_get_controls_hint())
 
@@ -110,30 +119,26 @@ func _process_countdown(delta: float) -> void:
 
 	current_state = RoundState.PLAYING
 	fugitive.set_input_enabled(true)
+	second_fugitive.set_input_enabled(true)
 	police.set_input_enabled(true)
-	_update_hud("Valendo! Fuja ate o tempo acabar")
+	_update_hud("Valendo! Sobrevivam ate o tempo acabar")
 
 func _get_countdown_message() -> String:
 	if countdown_remaining > 0.0:
 		return "A rodada comeca em %d" % int(ceil(countdown_remaining))
 	return "Valendo!"
 
-func _get_players_distance() -> float:
-	return Vector2(
-		fugitive.global_position.x - police.global_position.x,
-		fugitive.global_position.z - police.global_position.z
-	).length()
-
 func _get_playing_status_message() -> String:
-	var distance_between_players: float = _get_players_distance()
+	if _get_active_fugitives().size() == 1:
+		return "So restou um fugitivo livre"
 
-	if distance_between_players <= danger_distance:
-		return "Perigo! A policia esta perto"
+	if _is_any_fugitive_in_danger():
+		return "Perigo! Os pegadores estao perto"
 
 	if remaining_time <= low_time_threshold:
-		return "Ultimos segundos! Continue fugindo"
+		return "Ultimos segundos! Continuem fugindo"
 
-	return "Fuja ate o tempo acabar"
+	return "Fujam ate o tempo acabar"
 
 func _get_status_color() -> Color:
 	if current_state == RoundState.COUNTDOWN:
@@ -145,7 +150,7 @@ func _get_status_color() -> Color:
 	if current_state == RoundState.FUGITIVE_WIN:
 		return RoundHud.COLOR_SUCCESS
 
-	if _get_players_distance() <= danger_distance:
+	if _is_any_fugitive_in_danger():
 		return RoundHud.COLOR_DANGER
 
 	if remaining_time <= low_time_threshold:
@@ -154,17 +159,67 @@ func _get_status_color() -> Color:
 	return RoundHud.COLOR_DEFAULT
 
 func _get_controls_hint() -> String:
-	if police.is_controller_connected():
-		return "WASD: Fugitivo | DualSense: Policia | R: Reiniciar"
-
-	return "WASD: Fugitivo | Setas: Policia | R: Reiniciar"
+	return "WASD: Fugitivo 1 | Controle 1: Policia | Controle 2: Fugitivo 2 | R: Reiniciar"
 
 func _get_fugitive_spawn_position() -> Vector3:
 	if fugitive_spawn_marker:
 		return fugitive_spawn_marker.global_position
 	return fugitive_spawn
 
+func _get_second_fugitive_spawn_position() -> Vector3:
+	if second_fugitive_spawn_marker:
+		return second_fugitive_spawn_marker.global_position
+	return second_fugitive_spawn
+
 func _get_police_spawn_position() -> Vector3:
 	if police_spawn_marker:
 		return police_spawn_marker.global_position
 	return police_spawn
+
+func _get_active_fugitives() -> Array[FugitivePlayer]:
+	var active_fugitives: Array[FugitivePlayer] = []
+	if fugitive and not fugitive.is_captured:
+		active_fugitives.append(fugitive)
+	if second_fugitive and not second_fugitive.is_captured:
+		active_fugitives.append(second_fugitive)
+	return active_fugitives
+
+func _get_hunters() -> Array[CharacterBody3D]:
+	var hunters: Array[CharacterBody3D] = [police]
+	if fugitive and fugitive.is_infected:
+		hunters.append(fugitive)
+	if second_fugitive and second_fugitive.is_infected:
+		hunters.append(second_fugitive)
+	return hunters
+
+func _infect_fugitive(target: FugitivePlayer) -> void:
+	if target == null or target.is_infected:
+		return
+
+	target.infect()
+	_apply_infected_hunter_balance()
+
+	if _get_active_fugitives().is_empty():
+		_finish_round(RoundState.POLICE_WIN)
+		return
+
+	_update_hud("Contagio! Mais um pegador entrou na perseguicao")
+
+func _is_any_fugitive_in_danger() -> bool:
+	for active_fugitive: FugitivePlayer in _get_active_fugitives():
+		for hunter: CharacterBody3D in _get_hunters():
+			if _get_distance_between(active_fugitive.global_position, hunter.global_position) <= danger_distance:
+				return true
+	return false
+
+func _get_distance_between(point_a: Vector3, point_b: Vector3) -> float:
+	return Vector2(point_a.x - point_b.x, point_a.z - point_b.z).length()
+
+func _apply_infected_hunter_balance() -> void:
+	police.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
+
+	if fugitive and fugitive.is_infected:
+		fugitive.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
+
+	if second_fugitive and second_fugitive.is_infected:
+		second_fugitive.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
