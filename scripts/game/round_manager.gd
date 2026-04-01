@@ -16,6 +16,8 @@ enum RoundState {
 @export var fugitive_acceleration: float = 13.5
 @export var police_speed: float = 11.9
 @export var police_acceleration: float = 9.2
+@export var infected_hunter_speed: float = 10.4
+@export var infected_hunter_acceleration: float = 8.6
 @export var fugitive_spawn: Vector3 = Vector3(0.0, 2.0, 0.0)
 @export var second_fugitive_spawn: Vector3 = Vector3(-12.0, 2.0, -4.0)
 @export var police_spawn: Vector3 = Vector3(7.0, 2.0, 0.0)
@@ -195,7 +197,7 @@ func _infect_fugitive(target: FugitivePlayer) -> void:
 		return
 
 	target.infect()
-	target.configure_movement(police_speed, police_acceleration)
+	_apply_infected_hunter_balance()
 
 	if _get_active_fugitives().is_empty():
 		_finish_round(RoundState.POLICE_WIN)
@@ -212,3 +214,12 @@ func _is_any_fugitive_in_danger() -> bool:
 
 func _get_distance_between(point_a: Vector3, point_b: Vector3) -> float:
 	return Vector2(point_a.x - point_b.x, point_a.z - point_b.z).length()
+
+func _apply_infected_hunter_balance() -> void:
+	police.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
+
+	if fugitive and fugitive.is_infected:
+		fugitive.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
+
+	if second_fugitive and second_fugitive.is_infected:
+		second_fugitive.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
