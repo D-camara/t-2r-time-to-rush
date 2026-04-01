@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/player/police_player.gd" id="1_police"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_police"]
+albedo_color = Color(0.96, 0.2, 0.12, 1)
+emission_enabled = true
+emission = Color(0.7, 0.08, 0.03, 1)
+emission_energy_multiplier = 1.4
+metallic = 0.08
+roughness = 0.2
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_police"]
+material = SubResource("StandardMaterial3D_police")
+radius = 0.55
+mid_height = 1.0
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_police"]
+radius = 0.55
+height = 2.1
+
+[node name="PolicePlayer" type="CharacterBody3D"]
+script = ExtResource("1_police")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
+mesh = SubResource("CapsuleMesh_police")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
+shape = SubResource("CapsuleShape3D_police")

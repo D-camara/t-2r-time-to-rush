@@ -1,0 +1,58 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/round_hud.gd" id="1_hud"]
+
+[node name="RoundHUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TopLeft" type="MarginContainer" parent="Control"]
+layout_mode = 1
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 360.0
+offset_bottom = 140.0
+
+[node name="InfoColumn" type="VBoxContainer" parent="Control/TopLeft"]
+layout_mode = 2
+
+[node name="TimeLabel" type="Label" parent="Control/TopLeft/InfoColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Tempo: 45"
+
+[node name="FugitivesLabel" type="Label" parent="Control/TopLeft/InfoColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Fugitivo ativo: 1/1"
+
+[node name="TopCenter" type="CenterContainer" parent="Control"]
+layout_mode = 1
+offset_left = 220.0
+offset_top = 16.0
+offset_right = 1060.0
+offset_bottom = 100.0
+
+[node name="StatusLabel" type="Label" parent="Control/TopCenter"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Fuja ate o tempo acabar"
+
+[node name="BottomLeft" type="MarginContainer" parent="Control"]
+layout_mode = 1
+offset_left = 24.0
+offset_top = 636.0
+offset_right = 620.0
+offset_bottom = 700.0
+
+[node name="ControlsLabel" type="Label" parent="Control/BottomLeft"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = ""

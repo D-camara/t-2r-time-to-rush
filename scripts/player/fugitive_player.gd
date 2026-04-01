@@ -1,8 +1,11 @@
+class_name FugitivePlayer
 extends CharacterBody3D
 
 const DEFAULT_STUN: float = 2.0
 
 @export var move_speed: float = 10.0
+@export var acceleration: float = 14.0
+@export var rotation_lerp_speed: float = 12.0
 @export var camera_path: NodePath = ^"../CAMERA"
 
 @onready var animator: AnimationPlayer = get_node_or_null("boneco/AnimationPlayer")
@@ -33,7 +36,7 @@ func _physics_process(delta: float) -> void:
 	handle_input()
 	apply_gravity(delta)
 
-	var applied_velocity: Vector3 = velocity.lerp(movement_velocity, delta * 10.0)
+	var applied_velocity: Vector3 = velocity.lerp(movement_velocity, delta * acceleration)
 	applied_velocity.y = -gravity
 	velocity = applied_velocity
 
@@ -41,10 +44,9 @@ func _physics_process(delta: float) -> void:
 
 	if Vector2(velocity.z, velocity.x).length() > 0.0:
 		rotation_direction = Vector2(velocity.z, velocity.x).angle()
-	rotation.y = lerp_angle(rotation.y, rotation_direction, delta * 10.0)
+	rotation.y = lerp_angle(rotation.y, rotation_direction, delta * rotation_lerp_speed)
 	handle_animation()
 
-# chamado pela armadilha (Area3D) ao colidir com o player
 func apply_trap_stun(duration: float = DEFAULT_STUN) -> void:
 	if is_captured:
 		return
@@ -62,8 +64,10 @@ func handle_input() -> void:
 	var input: Vector3 = Vector3.ZERO
 	input.x = Input.get_axis("move_left", "move_right")
 	input.z = Input.get_axis("move_foward", "move_backwards")
+
 	if view:
 		input = input.rotated(Vector3.UP, view.rotation.y)
+
 	movement_velocity = input.normalized() * move_speed if input.length() > 0.0 else Vector3.ZERO
 
 func apply_gravity(delta: float) -> void:
@@ -77,15 +81,25 @@ func handle_animation() -> void:
 		return
 
 	if is_captured or is_stunned or (abs(velocity.x) <= 1.0 and abs(velocity.z) <= 1.0):
-		animator.play("animaÃ§oesfim/Idle", 0.3)
+		_play_animation_by_suffix("Idle")
 	else:
-		animator.play("animaÃ§oesfim/FastRun", 0.3)
+		_play_animation_by_suffix("FastRun")
+
+func _play_animation_by_suffix(suffix: String) -> void:
+	for animation_name: String in animator.get_animation_list():
+		if animation_name.ends_with("/" + suffix) or animation_name == suffix:
+			animator.play(animation_name, 0.3)
+			return
 
 func set_input_enabled(enabled: bool) -> void:
 	input_enabled = enabled
 	if not enabled:
 		velocity = Vector3.ZERO
 		movement_velocity = Vector3.ZERO
+
+func configure_movement(speed: float, new_acceleration: float) -> void:
+	move_speed = speed
+	acceleration = new_acceleration
 
 func capture() -> void:
 	is_captured = true
@@ -104,10 +118,3 @@ func reset_state(spawn_position: Vector3) -> void:
 	stun_timer = 0.0
 	input_enabled = true
 	is_captured = false
-
-func old_handle_animation():
-	if is_on_floor():
-		if abs(velocity.x) > 1 or abs(velocity.z) > 1:
-			animator.play("animaçoesfim/FastRun", 0.3)
-		else:
-			animator.play("animaçoesfim/Idle", 0.3)

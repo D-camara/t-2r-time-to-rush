@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://coa71ibdm4cqa"]
+
+[ext_resource type="PackedScene" uid="uid://ceysgxcavst68" path="res://assets/models/paredebege.glb" id="1_k8hef"]
+
+[node name="paredebege" unique_id=1758896537 instance=ExtResource("1_k8hef")]

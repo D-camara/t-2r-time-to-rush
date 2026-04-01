@@ -24,15 +24,14 @@ func rebuild_collisions() -> void:
 		var box := BoxShape3D.new()
 
 		if item == 0:
-			box.size = Vector3(1, wall_height, 0.2)
-			body.position = map_to_local(cell)
-			body.position.y += wall_height * 0.5
-
-		elif item == 1:
 			box.size = Vector3(1, floor_height, 1)
 			body.position = map_to_local(cell)
 			body.position.y += floor_height * 0.5
 
+		elif item == 1:
+			box.size = Vector3(1, wall_height, 0.2)
+			body.position = map_to_local(cell)
+			body.position.y += wall_height * 0.5
 		else:
 			continue
 
