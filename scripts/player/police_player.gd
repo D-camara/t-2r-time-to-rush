@@ -5,12 +5,26 @@ extends CharacterBody3D
 @export var move_speed: float = 11.0
 @export var acceleration: float = 9.5
 @export var rotation_lerp_speed: float = 9.0
+@export var body_color: Color = Color(0.15, 0.78, 0.32, 1.0)
+@export var emission_color: Color = Color(0.04, 0.32, 0.09, 1.0)
+@export var emission_energy: float = 1.1
+@export var fall_limit_y: float = -5.0
+
+@onready var animator: AnimationPlayer = find_child("AnimationPlayer", true, false) as AnimationPlayer
 
 var gravity: float = 0.0
 var input_enabled: bool = true
 var rotation_direction: float = 0.0
+var respawn_position: Vector3 = Vector3.ZERO
+
+func _ready() -> void:
+	_apply_visual_palette()
 
 func _physics_process(delta: float) -> void:
+	if global_position.y < fall_limit_y:
+		_restore_to_spawn()
+		return
+
 	if input_enabled:
 		var direction: Vector3 = _get_move_direction()
 		var target_velocity: Vector3 = Vector3(direction.x, 0.0, direction.z) * move_speed
@@ -25,6 +39,7 @@ func _physics_process(delta: float) -> void:
 	if Vector2(velocity.z, velocity.x).length() > 0.1:
 		rotation_direction = Vector2(velocity.z, velocity.x).angle()
 	rotation.y = lerp_angle(rotation.y, rotation_direction, delta * rotation_lerp_speed)
+	_handle_animation()
 
 func _get_vertical_velocity(delta: float) -> float:
 	if not is_on_floor():
@@ -39,9 +54,8 @@ func set_input_enabled(enabled: bool) -> void:
 		velocity = Vector3.ZERO
 
 func reset_state(spawn_position: Vector3) -> void:
-	global_position = spawn_position
-	velocity = Vector3.ZERO
-	gravity = 0.0
+	respawn_position = spawn_position
+	_restore_to_spawn()
 	input_enabled = true
 
 func configure_movement(speed: float, new_acceleration: float) -> void:
@@ -60,3 +74,40 @@ func _get_move_direction() -> Vector3:
 	keyboard_direction.x = Input.get_axis("police_left", "police_right")
 	keyboard_direction.z = Input.get_axis("police_foward", "police_backwards")
 	return keyboard_direction.normalized() if keyboard_direction.length() > 0.0 else Vector3.ZERO
+
+func _handle_animation() -> void:
+	if not animator or not is_on_floor():
+		return
+
+	if not input_enabled or (abs(velocity.x) <= 1.0 and abs(velocity.z) <= 1.0):
+		_play_animation_by_suffix("Idle")
+	else:
+		_play_animation_by_suffix("FastRun")
+
+func _play_animation_by_suffix(suffix: String) -> void:
+	for animation_name: String in animator.get_animation_list():
+		if animation_name.ends_with("/" + suffix) or animation_name == suffix:
+			animator.play(animation_name, 0.3)
+			return
+
+func _apply_visual_palette() -> void:
+	var palette_material := StandardMaterial3D.new()
+	palette_material.albedo_color = body_color
+	palette_material.roughness = 0.22
+	palette_material.metallic = 0.08
+	palette_material.emission_enabled = emission_energy > 0.0
+	palette_material.emission = emission_color
+	palette_material.emission_energy_multiplier = emission_energy
+	_apply_palette_to_meshes(self, palette_material)
+
+func _apply_palette_to_meshes(node: Node, palette_material: Material) -> void:
+	for child: Node in node.get_children():
+		if child is MeshInstance3D:
+			var mesh_instance: MeshInstance3D = child
+			mesh_instance.material_override = palette_material
+		_apply_palette_to_meshes(child, palette_material)
+
+func _restore_to_spawn() -> void:
+	global_position = respawn_position
+	velocity = Vector3.ZERO
+	gravity = 0.0

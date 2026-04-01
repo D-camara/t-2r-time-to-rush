@@ -7,7 +7,7 @@ enum RoundState {
 	POLICE_WIN,
 }
 
-@export var round_duration: float = 60.0
+@export var round_duration: float = 30.0
 @export var pre_round_countdown: float = 3.0
 @export var capture_distance: float = 1.75
 @export var danger_distance: float = 6.0
