@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://b6cm462xjml4r" path="res://scripts/camera/shared_camera.gd" id="4_camera"]
 [ext_resource type="PackedScene" path="res://scenes/player/police_player.tscn" id="5_police"]
 [ext_resource type="PackedScene" path="res://scenes/ui/round_hud.tscn" id="6_hud"]
+[ext_resource type="PackedScene" path="res://scenes/player/fugitive_player.tscn" id="7_fugitive"]
 [ext_resource type="PackedScene" uid="uid://db28mqlv3ngww" path="res://scenes/maps/mesacanto.tscn" id="8_krkws"]
 [ext_resource type="PackedScene" uid="uid://b48lx6u48ejkx" path="res://scenes/maps/mesalonga.tscn" id="9_rayke"]
 [ext_resource type="PackedScene" uid="uid://c6ua0xhkwsxlw" path="res://scenes/maps/sofa.tscn" id="10_uv01s"]
@@ -486,10 +487,18 @@ environment = SubResource("Environment_c43ro")
 [node name="POLICIAL" parent="." unique_id=1667643868 instance=ExtResource("5_police")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 3.451757, 0.5527773)
 
+[node name="FUGITIVO_2" parent="." instance=ExtResource("7_fugitive")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.998428, 3.451757, -4.418783)
+use_keyboard_input = false
+device_id = 1
+
 [node name="HUD" parent="." unique_id=1214818089 instance=ExtResource("6_hud")]
 
 [node name="FUGITIVE_SPAWN" type="Node3D" parent="." unique_id=391150257]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 2, 6)
+
+[node name="FUGITIVE_2_SPAWN" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2, -4)
 
 [node name="POLICE_SPAWN" type="Node3D" parent="." unique_id=1241531624]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 2, -6)

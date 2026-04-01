@@ -11,6 +11,7 @@ extends Camera3D
 @export var max_look_ahead_distance: float = 4.5
 
 @onready var fugitive: FugitivePlayer = get_parent().get_node_or_null("PERSONAGEM")
+@onready var second_fugitive: FugitivePlayer = get_parent().get_node_or_null("FUGITIVO_2")
 @onready var police: PolicePlayer = get_parent().get_node_or_null("POLICIAL")
 
 var smoothed_focus_point: Vector3 = Vector3.ZERO
@@ -45,16 +46,16 @@ func _process(delta: float) -> void:
 	look_at(smoothed_focus_point + Vector3.UP * focus_height, Vector3.UP)
 
 func _get_target_focus_point() -> Vector3:
-	var midpoint: Vector3 = fugitive.global_position
-	var average_velocity: Vector3 = Vector3(fugitive.velocity.x, 0.0, fugitive.velocity.z)
+	var tracked_players: Array[CharacterBody3D] = _get_tracked_players()
+	var midpoint: Vector3 = Vector3.ZERO
+	var average_velocity: Vector3 = Vector3.ZERO
 
-	if police:
-		midpoint = (fugitive.global_position + police.global_position) * 0.5
-		average_velocity = Vector3(
-			(fugitive.velocity.x + police.velocity.x) * 0.5,
-			0.0,
-			(fugitive.velocity.z + police.velocity.z) * 0.5
-		)
+	for tracked_player: CharacterBody3D in tracked_players:
+		midpoint += tracked_player.global_position
+		average_velocity += Vector3(tracked_player.velocity.x, 0.0, tracked_player.velocity.z)
+
+	midpoint /= float(tracked_players.size())
+	average_velocity /= float(tracked_players.size())
 
 	var look_ahead_offset: Vector3 = average_velocity * movement_look_ahead
 	if look_ahead_offset.length() > max_look_ahead_distance:
@@ -63,10 +64,25 @@ func _get_target_focus_point() -> Vector3:
 	return midpoint + look_ahead_offset
 
 func _get_player_separation() -> float:
-	if not police:
-		return 0.0
+	var tracked_players: Array[CharacterBody3D] = _get_tracked_players()
+	var largest_distance: float = 0.0
 
-	return Vector2(
-		fugitive.global_position.x - police.global_position.x,
-		fugitive.global_position.z - police.global_position.z
-	).length()
+	for first_index: int in range(tracked_players.size()):
+		for second_index: int in range(first_index + 1, tracked_players.size()):
+			var distance_between_players: float = Vector2(
+				tracked_players[first_index].global_position.x - tracked_players[second_index].global_position.x,
+				tracked_players[first_index].global_position.z - tracked_players[second_index].global_position.z
+			).length()
+			largest_distance = max(largest_distance, distance_between_players)
+
+	return largest_distance
+
+func _get_tracked_players() -> Array[CharacterBody3D]:
+	var tracked_players: Array[CharacterBody3D] = []
+	if fugitive:
+		tracked_players.append(fugitive)
+	if second_fugitive:
+		tracked_players.append(second_fugitive)
+	if police:
+		tracked_players.append(police)
+	return tracked_players
