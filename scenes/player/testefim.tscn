@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://by0k7as5qajr0"]
+
+[ext_resource type="PackedScene" uid="uid://covd8ydafv5jq" path="res://assets/models/SAOCHAOEPAREDE.glb" id="1_12208"]
+
+[node name="SAOCHAOEPAREDE" unique_id=1510431159 instance=ExtResource("1_12208")]
