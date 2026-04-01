@@ -63,10 +63,18 @@ func configure_movement(speed: float, new_acceleration: float) -> void:
 	acceleration = new_acceleration
 
 func is_controller_connected() -> bool:
-	return InputManager.has_device(device_id)
+	var input_manager: Node = _get_input_manager()
+	if input_manager == null or not input_manager.has_method("has_device"):
+		return false
+	return bool(input_manager.call("has_device", device_id))
 
 func _get_move_direction() -> Vector3:
-	var controller_direction: Vector3 = InputManager.get_movement(device_id)
+	var controller_direction: Vector3 = Vector3.ZERO
+	var input_manager: Node = _get_input_manager()
+	if input_manager != null and input_manager.has_method("get_movement"):
+		var movement_result: Variant = input_manager.call("get_movement", device_id)
+		if movement_result is Vector3:
+			controller_direction = movement_result
 	if controller_direction.length() > 0.0:
 		return controller_direction
 
@@ -74,6 +82,9 @@ func _get_move_direction() -> Vector3:
 	keyboard_direction.x = Input.get_axis("police_left", "police_right")
 	keyboard_direction.z = Input.get_axis("police_foward", "police_backwards")
 	return keyboard_direction.normalized() if keyboard_direction.length() > 0.0 else Vector3.ZERO
+
+func _get_input_manager() -> Node:
+	return get_node_or_null("/root/InputManager")
 
 func _handle_animation() -> void:
 	if not animator or not is_on_floor():

@@ -16,7 +16,7 @@ config/features=PackedStringArray("4.6", "Forward Plus")
 
 [autoload]
 
-InputManager="*uid://305lm47ptge"
+InputManager="*res://systems/input/input_manager.gd"
 
 [input]
 

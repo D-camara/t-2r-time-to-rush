@@ -14,7 +14,7 @@ enum RoundState {
 @export var low_time_threshold: float = 12.0
 @export var fugitive_speed: float = 11.0
 @export var fugitive_acceleration: float = 13.5
-@export var police_speed: float = 11.6
+@export var police_speed: float = 11.9
 @export var police_acceleration: float = 9.2
 @export var fugitive_spawn: Vector3 = Vector3(0.0, 2.0, 0.0)
 @export var police_spawn: Vector3 = Vector3(7.0, 2.0, 0.0)
