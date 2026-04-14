@@ -20,14 +20,17 @@ enum RoundState {
 @export var infected_hunter_acceleration: float = 8.6
 @export var fugitive_spawn: Vector3 = Vector3(0.0, 2.0, 0.0)
 @export var second_fugitive_spawn: Vector3 = Vector3(-12.0, 2.0, -4.0)
+@export var third_fugitive_spawn: Vector3 = Vector3(-2.0, 2.0, -12.0)
 @export var police_spawn: Vector3 = Vector3(7.0, 2.0, 0.0)
 
 @onready var fugitive: FugitivePlayer = $PERSONAGEM
 @onready var second_fugitive: FugitivePlayer = $FUGITIVO_2
+@onready var third_fugitive: FugitivePlayer = $FUGITIVO_3
 @onready var police: PolicePlayer = $POLICIAL
 @onready var hud: RoundHud = $HUD
 @onready var fugitive_spawn_marker: Node3D = get_node_or_null("FUGITIVE_SPAWN")
 @onready var second_fugitive_spawn_marker: Node3D = get_node_or_null("FUGITIVE_2_SPAWN")
+@onready var third_fugitive_spawn_marker: Node3D = get_node_or_null("FUGITIVE_3_SPAWN")
 @onready var police_spawn_marker: Node3D = get_node_or_null("POLICE_SPAWN")
 
 var current_state: int = RoundState.COUNTDOWN
@@ -69,17 +72,30 @@ func _unhandled_input(_event: InputEvent) -> void:
 		get_tree().reload_current_scene()
 
 func start_round() -> void:
+	_configure_players_from_lobby()
 	current_state = RoundState.COUNTDOWN
 	remaining_time = round_duration
 	countdown_remaining = pre_round_countdown
-	fugitive.reset_state(_get_fugitive_spawn_position())
-	second_fugitive.reset_state(_get_second_fugitive_spawn_position())
+	if fugitive.is_participating:
+		fugitive.reset_state(_get_fugitive_spawn_position())
+	if second_fugitive.is_participating:
+		second_fugitive.reset_state(_get_second_fugitive_spawn_position())
+	if third_fugitive.is_participating:
+		third_fugitive.reset_state(_get_third_fugitive_spawn_position())
 	police.reset_state(_get_police_spawn_position())
-	fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
-	second_fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
+	if fugitive.is_participating:
+		fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
+	if second_fugitive.is_participating:
+		second_fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
+	if third_fugitive.is_participating:
+		third_fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
 	police.configure_movement(police_speed, police_acceleration)
-	fugitive.set_input_enabled(false)
-	second_fugitive.set_input_enabled(false)
+	if fugitive.is_participating:
+		fugitive.set_input_enabled(false)
+	if second_fugitive.is_participating:
+		second_fugitive.set_input_enabled(false)
+	if third_fugitive.is_participating:
+		third_fugitive.set_input_enabled(false)
 	police.set_input_enabled(false)
 	_update_hud(_get_countdown_message())
 
@@ -88,8 +104,12 @@ func _finish_round(result: int) -> void:
 		return
 
 	current_state = result
-	fugitive.set_input_enabled(false)
-	second_fugitive.set_input_enabled(false)
+	if fugitive.is_participating:
+		fugitive.set_input_enabled(false)
+	if second_fugitive.is_participating:
+		second_fugitive.set_input_enabled(false)
+	if third_fugitive.is_participating:
+		third_fugitive.set_input_enabled(false)
 	police.set_input_enabled(false)
 
 	if result == RoundState.POLICE_WIN:
@@ -104,9 +124,10 @@ func _update_hud(status_message: String) -> void:
 		return
 
 	var active_fugitives: int = _get_active_fugitives().size()
+	var participating_fugitives: int = _get_participating_fugitive_count()
 	var timer_warning: bool = current_state == RoundState.PLAYING and remaining_time <= low_time_threshold
 	hud.update_timer(remaining_time, timer_warning)
-	hud.update_active_fugitives(active_fugitives, 2)
+	hud.update_active_fugitives(active_fugitives, participating_fugitives)
 	hud.set_status(status_message, _get_status_color())
 	hud.set_controls_hint(_get_controls_hint())
 
@@ -118,8 +139,12 @@ func _process_countdown(delta: float) -> void:
 		return
 
 	current_state = RoundState.PLAYING
-	fugitive.set_input_enabled(true)
-	second_fugitive.set_input_enabled(true)
+	if fugitive.is_participating:
+		fugitive.set_input_enabled(true)
+	if second_fugitive.is_participating:
+		second_fugitive.set_input_enabled(true)
+	if third_fugitive.is_participating:
+		third_fugitive.set_input_enabled(true)
 	police.set_input_enabled(true)
 	_update_hud("Valendo! Sobrevivam ate o tempo acabar")
 
@@ -159,7 +184,7 @@ func _get_status_color() -> Color:
 	return RoundHud.COLOR_DEFAULT
 
 func _get_controls_hint() -> String:
-	return "WASD: Fugitivo 1 | Controle 1: Policia | Controle 2: Fugitivo 2 | R: Reiniciar"
+	return "Controle 1 vira Policia | Capturados viram pegadores | R: Reiniciar"
 
 func _get_fugitive_spawn_position() -> Vector3:
 	if fugitive_spawn_marker:
@@ -171,6 +196,11 @@ func _get_second_fugitive_spawn_position() -> Vector3:
 		return second_fugitive_spawn_marker.global_position
 	return second_fugitive_spawn
 
+func _get_third_fugitive_spawn_position() -> Vector3:
+	if third_fugitive_spawn_marker:
+		return third_fugitive_spawn_marker.global_position
+	return third_fugitive_spawn
+
 func _get_police_spawn_position() -> Vector3:
 	if police_spawn_marker:
 		return police_spawn_marker.global_position
@@ -178,11 +208,23 @@ func _get_police_spawn_position() -> Vector3:
 
 func _get_active_fugitives() -> Array[FugitivePlayer]:
 	var active_fugitives: Array[FugitivePlayer] = []
-	if fugitive and not fugitive.is_captured:
+	if fugitive and fugitive.is_participating and not fugitive.is_captured:
 		active_fugitives.append(fugitive)
-	if second_fugitive and not second_fugitive.is_captured:
+	if second_fugitive and second_fugitive.is_participating and not second_fugitive.is_captured:
 		active_fugitives.append(second_fugitive)
+	if third_fugitive and third_fugitive.is_participating and not third_fugitive.is_captured:
+		active_fugitives.append(third_fugitive)
 	return active_fugitives
+
+func _get_participating_fugitive_count() -> int:
+	var total: int = 0
+	if fugitive and fugitive.is_participating:
+		total += 1
+	if second_fugitive and second_fugitive.is_participating:
+		total += 1
+	if third_fugitive and third_fugitive.is_participating:
+		total += 1
+	return total
 
 func _get_hunters() -> Array[CharacterBody3D]:
 	var hunters: Array[CharacterBody3D] = [police]
@@ -190,6 +232,8 @@ func _get_hunters() -> Array[CharacterBody3D]:
 		hunters.append(fugitive)
 	if second_fugitive and second_fugitive.is_infected:
 		hunters.append(second_fugitive)
+	if third_fugitive and third_fugitive.is_infected:
+		hunters.append(third_fugitive)
 	return hunters
 
 func _infect_fugitive(target: FugitivePlayer) -> void:
@@ -223,3 +267,35 @@ func _apply_infected_hunter_balance() -> void:
 
 	if second_fugitive and second_fugitive.is_infected:
 		second_fugitive.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
+
+	if third_fugitive and third_fugitive.is_infected:
+		third_fugitive.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
+
+func _configure_players_from_lobby() -> void:
+	var input_manager: Node = get_node_or_null("/root/InputManager")
+	if input_manager == null or not input_manager.has_method("get_joined_devices"):
+		return
+
+	var joined_result: Variant = input_manager.call("get_joined_devices")
+	if not (joined_result is Array):
+		return
+
+	var joined_devices: Array = joined_result
+	if joined_devices.is_empty():
+		return
+
+	police.device_id = int(joined_devices[0])
+
+	_assign_fugitive_slot(fugitive, joined_devices, 1)
+	_assign_fugitive_slot(second_fugitive, joined_devices, 2)
+	_assign_fugitive_slot(third_fugitive, joined_devices, 3)
+
+func _assign_fugitive_slot(player: FugitivePlayer, joined_devices: Array, joined_index: int) -> void:
+	player.use_keyboard_input = false
+	if joined_devices.size() > joined_index:
+		player.device_id = int(joined_devices[joined_index])
+		player.is_participating = true
+		player.visible = true
+		return
+
+	player.deactivate_slot()

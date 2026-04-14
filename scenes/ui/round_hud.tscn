@@ -31,7 +31,7 @@ text = "Tempo: 45"
 [node name="FugitivesLabel" type="Label" parent="Control/TopLeft/InfoColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "Fugitivos livres: 2/2"
+text = "Fugitivos livres: 3/3"
 
 [node name="TopCenter" type="CenterContainer" parent="Control"]
 layout_mode = 1

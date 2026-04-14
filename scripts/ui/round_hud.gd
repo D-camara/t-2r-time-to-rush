@@ -13,7 +13,7 @@ const COLOR_SUCCESS: Color = Color(0.48, 1.0, 0.56, 1.0)
 const COLOR_INFO: Color = Color(0.55, 0.82, 1.0, 1.0)
 
 func _ready() -> void:
-	controls_label.text = "WASD: Fugitivo 1 | Controle 1: Policia | Controle 2: Fugitivo 2 | R: Reiniciar"
+	controls_label.text = "Controle 1 vira Policia | Capturados viram pegadores | R: Reiniciar"
 	status_label.modulate = COLOR_DEFAULT
 	time_label.modulate = COLOR_DEFAULT
 
