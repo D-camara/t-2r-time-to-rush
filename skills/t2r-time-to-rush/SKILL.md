@@ -1,12 +1,14 @@
 ---
 name: t2r-time-to-rush
-description: "Construir, refatorar, depurar e expandir T2R: Time to Rush, um prototipo Godot 4 de perseguicao assimetrica local com policial, fugitivos, cronometro, contagio, camera compartilhada, HUD de rodada e identidade cyber-heist. Use ao trabalhar neste repositorio em loop de rodada, balanceamento, input local, camera, HUD, mapas, classes, habilidades, itens, pontuacao, integracao entre o design documentado e o estado real do codigo, ou documentacao e apresentacao do jogo. Nao use para projetos Godot genericos sem relacao com o T2R."
+description: "Skill de projeto para T2R: Time to Rush, um prototipo Godot 4 de perseguicao assimetrica local. Use ao trabalhar especificamente neste repositorio para decidir quais arquivos e cenas sao canonicos, preservar o game feel e a identidade do T2R, alinhar implementacao atual com design documentado, identificar divergencias entre prototipo, documento e pitch, e evitar adicionar features de roadmap sem pedido explicito. Nao use para projetos Godot genericos sem relacao com o T2R."
 ---
 
 # T2R: Time to Rush
 
-Atue como um senior gameplay programmer e technical designer focado neste repositorio.
-Otimize para partidas curtas e legiveis, multiplayer local assimetrico, boa sensacao de perseguicao, codigo facil de manter e coerencia entre o prototipo jogavel e a fantasia cyber-heist do projeto.
+Atue como especialista neste projeto.
+Use esta skill para entender o que e canonico no T2R, o que e visao futura, e quais limites de implementacao devem ser respeitados.
+
+Para detalhes tecnicos de implementacao Godot 4 neste repositorio, combine esta skill com `t2r-godot-3d-top-down` quando a tarefa envolver controller, camera, HUD, loop de rodada, refactor, debug, arquitetura de cena ou performance.
 
 ## Ordem de Verdade
 
@@ -17,8 +19,9 @@ Use esta ordem sempre que houver conflito entre fontes:
 3. slides e PDFs como pitch, tom, lore, atmosfera e material de apresentacao
 4. suposicoes novas apenas quando o usuario pedir ou quando forem claramente seguras
 
-Se slides e codigo divergirem, preserve o comportamento atual do jogo e chame a divergencia pelo nome em vez de misturar os dois silenciosamente.
-Se `Projeto.docx` e codigo divergirem, trate o documento como design alvo e o codigo como implementacao atual.
+Se slides e codigo divergirem, preserve o comportamento atual do jogo e explicite a divergencia.
+Se `Projeto.docx` e codigo divergirem, trate o documento como design alvo e o codigo como implementacao atual, sem alterar o comportamento atual silenciosamente.
+So alinhe o codigo ao documento quando o usuario pedir essa mudanca.
 
 ## Estado Atual do Jogo
 
@@ -53,11 +56,11 @@ Classifique a tarefa no menor dominio util:
 - roadmap e expansao
 - refactor, debug ou limpeza
 
-Resolva o problema com a menor arquitetura que ainda permita evolucao do T2R.
+Resolva o problema com a menor mudanca que ainda preserve clareza, tuning e evolucao do T2R.
 
 ## Regras de Implementacao
 
-Prefira preservar a separacao de responsabilidades que o prototipo ja sugere:
+Preserve a separacao de responsabilidades que o prototipo ja sugere:
 
 - `scripts/game/round_manager.gd` controla fluxo da rodada, estados, vitoria e derrota
 - `scripts/player/fugitive_player.gd` controla fugitivos e sua conversao em pegadores infectados
@@ -69,6 +72,7 @@ Prefira preservar a separacao de responsabilidades que o prototipo ja sugere:
 Mantenha tuning em propriedades exportadas sempre que isso ajudar o balanceamento.
 Evite espalhar regra de rodada dentro dos scripts de player, camera ou HUD.
 Evite criar sistemas globais novos se o problema ainda cabe bem na cena principal e nos scripts existentes.
+Evite refactors amplos sem necessidade direta da tarefa.
 
 ## Regras Especificas do T2R
 
@@ -92,7 +96,7 @@ Nao implemente silenciosamente recursos que aparecem nos slides mas ainda nao ex
 
 Esses elementos podem ser usados como direcao conceitual, mas so devem entrar no jogo quando o usuario pedir explicitamente.
 
-Quando o pedido mencionar o documento de projeto, trate estes elementos como especificacao de design planejada:
+Quando o pedido mencionar o documento de projeto, trate estes elementos como especificacao planejada, nao como estado atual do prototipo:
 
 - partida em formato party game
 - estrutura padrao de 5 rodadas customizaveis
@@ -135,32 +139,17 @@ Se o usuario nao apontar outra fonte, trate estes como canonicos primeiro:
 Arquivos como `teste.gd`, `personagem.gd`, `player.gd` e rascunhos antigos podem servir como historico ou experimento, mas nao devem virar fonte principal sem motivo.
 Para um mapa rapido do repositorio, leia [references/repo-map.md](references/repo-map.md).
 
-## Formato de Resposta
+## Comportamento Esperado
 
-Para implementacoes, responda nesta ordem:
+Ao responder ou implementar:
 
-1. objetivo no contexto do T2R
-2. estado atual relevante
-3. decisao de arquitetura
-4. arquivos ou cenas a editar
-5. codigo ou patch
-6. impacto em game feel e balanceamento
-7. verificacao rapida
+- deixe claro o que ja existe no prototipo e o que ainda e design ou roadmap
+- priorize a experiencia jogavel atual antes de expandir escopo
+- proponha mudancas pequenas, legiveis e testaveis
+- explique divergencias importantes entre codigo, documento e pitch quando elas afetarem a tarefa
+- preserve a leitura rapida de papeis e o ritmo curto da partida
 
-Para depuracao, responda nesta ordem:
-
-1. sintoma
-2. fonte atual da regra
-3. causa raiz
-4. correcao exata
-5. verificacao rapida
-
-Para pitch ou documentacao, responda nesta ordem:
-
-1. mensagem central
-2. o que ja existe no prototipo
-3. o que ainda e visao ou roadmap
-4. texto final
+Quando a tarefa for puramente tecnica em Godot, use esta skill para contexto do projeto e `t2r-godot-3d-top-down` para a decisao de implementacao.
 
 ## Referencias
 

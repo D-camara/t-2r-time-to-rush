@@ -2,6 +2,13 @@
 
 Leia este arquivo quando a tarefa for de pitch, direcao criativa, UI copy, narrativa, apresentacao ou identidade do jogo.
 
+## Use Este Arquivo Para
+
+- manter o tom do T2R consistente
+- escrever pitch, copy, descricoes e apresentacao
+- sustentar atmosfera, fantasy e identidade visual
+- separar direcao criativa de mecanica implementada
+
 ## Fantasia Central
 
 T2R: Time to Rush e apresentado como um multiplayer assimetrico de perseguicao e fuga.
@@ -70,3 +77,12 @@ Aparecem referencias como:
 
 Trate isso como material de art direction e pitch deck, nao como elenco tecnico travado no codigo.
 O `Projeto.docx` expande esse elenco com Rinoceronte, Dragao de Komodo, Sagui, Camaleao e Pica-Pau.
+
+## Nao Use Este Arquivo Para
+
+- decidir o que ja esta implementado
+- inferir regras tecnicas ou balanceamento atual
+- concluir que uma feature de pitch ja deve existir no jogo
+
+Para estado atual, leia `current-prototype.md`.
+Para gaps entre visao e codigo, leia `roadmap-and-gaps.md`.

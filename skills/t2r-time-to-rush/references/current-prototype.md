@@ -2,6 +2,13 @@
 
 Leia este arquivo quando a tarefa depender do estado real e implementado do jogo.
 
+## Use Este Arquivo Para
+
+- confirmar comportamento jogavel atual
+- checar valores de tuning relevantes
+- validar regras ativas da rodada
+- evitar confundir design planejado com estado implementado
+
 ## Base Tecnica
 
 - Engine: Godot 4.6
@@ -42,6 +49,12 @@ Valores atuais exportados:
 - Captura hoje nao remove o fugitivo da partida: ele vira um pegador infectado.
 - Fugitivos infectados continuam jogaveis e passam a cacar o ultimo fugitivo livre.
 - Ao final da rodada, o jogo espera `R` para recarregar a cena atual.
+
+## O Que Nao Assumir a Partir Deste Arquivo
+
+Nao trate este snapshot como especificacao futura.
+Para regras planejadas de rodadas, pontuacao, classes, itens ou roster, leia `design-spec.md`.
+Para diferencas entre prototipo e pitch, leia `roadmap-and-gaps.md`.
 
 ## Input Atual
 

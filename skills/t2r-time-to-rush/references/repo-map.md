@@ -2,6 +2,12 @@
 
 Leia este arquivo quando a tarefa depender de localizar sistemas ou decidir quais arquivos sao canonicos.
 
+## Use Este Arquivo Para
+
+- encontrar rapidamente os arquivos principais do prototipo
+- localizar onde cada responsabilidade mora hoje
+- evitar abrir arquivos legados sem necessidade
+
 ## Arquivos Canonicos do Prototipo Atual
 
 - `project.godot`
@@ -50,7 +56,10 @@ Existem varios arquivos de teste e historico no repositorio, como:
 
 Eles podem ajudar a recuperar ideias antigas, mas nao devem virar referencia principal sem indicacao explicita do usuario.
 
-## Skills no Projeto
+## Nao Use Este Arquivo Para
 
-Ja existe uma skill generica em `skills/SKILL.md`.
-Use `skills/t2r-time-to-rush/` quando a tarefa for especificamente sobre este jogo e este repositorio.
+- decidir regras planejadas de design
+- inferir lore, pitch ou roadmap
+- substituir leitura do codigo quando o comportamento exato importar
+
+Para regras implementadas e valores atuais, leia `current-prototype.md`.

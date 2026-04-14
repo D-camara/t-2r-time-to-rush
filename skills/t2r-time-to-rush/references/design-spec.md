@@ -2,6 +2,13 @@
 
 Leia este arquivo quando a tarefa vier do `Projeto.docx` ou depender de regras planejadas do jogo, personagens nomeados, habilidades, itens, pontuacao ou estrutura ideal das rodadas.
 
+## Use Este Arquivo Para
+
+- entender o design alvo que ainda nao esta completo no codigo
+- consultar roster, habilidades e regras planejadas
+- separar fantasy pitch de regra documentada
+- propor expansoes futuras sem confundir com o prototipo atual
+
 ## Premissa
 
 Depois de um grande assalto a banco, os assaltantes precisam escapar antes de serem capturados.
@@ -11,6 +18,12 @@ Os policiais usam teletransporte tatico para chamar reforcos quando encostam em 
 
 Use essa base como fantasia de design e narrativa.
 Nao assuma que tudo isso ja existe como mecanica implementada no codigo.
+
+## O Que Nao Assumir a Partir Deste Arquivo
+
+Nao trate estes itens como comportamento atual do jogo.
+Se a tarefa for sobre o que ja funciona hoje, leia `current-prototype.md`.
+Se a tarefa for sobre o que os slides vendem como tom ou direcao, leia `vision-and-lore.md`.
 
 ## Estrutura Planejada da Rodada
 

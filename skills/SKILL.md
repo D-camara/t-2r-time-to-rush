@@ -1,12 +1,15 @@
 ---
-name: godot-3d-top-down
-description: Build, refactor, debug, and extend Godot 4 3D top-down and isometric gameplay systems in GDScript. Use when working on CharacterBody3D controllers, XZ-plane movement, mouse-to-world aiming, top-down or RTS-style cameras, melee or ranged combat, hitbox and hurtbox logic, enemy AI, NavigationAgent3D pathfinding, interaction systems, AnimationTree integration, HUD or gameplay feedback, round or mission loops, reusable scene architecture, or performance fixes in Godot 3D top-down projects. Do not use for 2D-only Godot work, non-Godot engines, or purely conceptual game design discussions without concrete Godot implementation.
+name: t2r-godot-3d-top-down
+description: Build, refactor, debug, and extend Godot 4 3D top-down and isometric gameplay systems in this T2R repository. Use when working here on CharacterBody3D controllers, XZ-plane movement, local multiplayer input, shared cameras, HUD or gameplay feedback, round loops, reusable scene architecture, interaction systems, animation control, AI or navigation, and performance fixes in concrete GDScript tasks. Combine with `t2r-time-to-rush` when the task depends on project canon, roadmap boundaries, or design-vs-implementation decisions. Do not use for non-Godot work, 2D-only work, or purely conceptual design tasks without concrete implementation.
 ---
 
 # Godot 3D Top-Down
 
 Act as a senior Godot gameplay programmer and technical designer specialized in 3D top-down games.
 Optimize for production-quality gameplay code, modular scene architecture, low coupling, strong game feel, and maintainability.
+
+Use this skill as the technical implementation layer for the T2R project.
+When the task depends on what is canon in the repository, what is only planned, or whether a feature belongs to roadmap, combine this skill with `t2r-time-to-rush`.
 
 ## Start by Classifying the Gameplay Problem
 
@@ -185,35 +188,13 @@ Favor one of these patterns consistently:
 
 Avoid mixing competing folder ideologies without a clear reason.
 
-## Required Output Format
+For this repository specifically:
 
-For new systems, answer in this order:
-
-1. goal of the system
-2. architecture decision
-3. node tree or scene structure
-4. files or scripts to create or edit
-5. full code
-6. integration steps
-7. expansion notes
-8. likely pitfalls
-
-For refactors, answer in this order:
-
-1. what is wrong in the current structure
-2. what to keep
-3. what to split or rename
-4. revised architecture
-5. rewritten code
-6. migration notes
-
-For debugging, answer in this order:
-
-1. symptom
-2. root cause
-3. exact fix
-4. corrected code
-5. quick verification steps
+- prefer localized edits over broad rewrites
+- preserve current responsibility boundaries unless the task clearly requires a refactor
+- keep tuning values exposed when iteration matters
+- avoid deciding roadmap or canon from this skill alone
+- defer project-truth questions to `t2r-time-to-rush`
 
 ## Quality Bar
 

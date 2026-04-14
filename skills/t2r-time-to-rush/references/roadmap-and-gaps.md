@@ -3,6 +3,12 @@
 Leia este arquivo quando a tarefa envolver alinhamento entre o prototipo jogavel e o que os slides prometem.
 Agora considere tambem o `Projeto.docx` como a especificacao mais detalhada do design alvo.
 
+## Use Este Arquivo Para
+
+- comparar estado atual contra design alvo
+- decidir se uma mudanca preserva, aproxima ou substitui o prototipo atual
+- detectar quando uma tarefa esta puxando roadmap sem pedido explicito
+
 ## Diferencas Mais Importantes
 
 ### Quantidade de jogadores
@@ -43,15 +49,6 @@ Slides e `Projeto.docx` citam como planejado, mas ainda nao implementado:
 - itens e restricoes por numero de pegadores
 - perks por rodada anterior
 
-## Regra de Interpretacao
-
-Quando houver conflito:
-
-1. trate o codigo como estado jogavel atual
-2. trate o `Projeto.docx` como especificacao de design mais detalhada
-3. trate os slides como visao, narrativa, direcao e backlog
-4. nao implemente o roadmap sem pedido explicito
-
 ## Como Falar Disso para o Usuario
 
 Ao propor mudancas, seja explicito:
@@ -69,3 +66,13 @@ Pare para alinhar antes de mudar:
 - remocao do sistema de contagio
 - adicao de pontuacao, vidas ou ranking
 - aumento drastico do tempo de rodada
+
+## Nao Use Este Arquivo Para
+
+- descobrir valores exatos do prototipo atual
+- localizar scripts ou cenas
+- detalhar roster, habilidades ou lore
+
+Para comportamento atual, leia `current-prototype.md`.
+Para localizar arquivos, leia `repo-map.md`.
+Para regras planejadas, leia `design-spec.md`.
