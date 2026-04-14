@@ -1,0 +1,4 @@
+interface:
+  display_name: "T2R Godot 3D Top-Down"
+  short_description: "Implementacao tecnica Godot 4 para o T2R"
+  default_prompt: "Use $t2r-godot-3d-top-down para implementar, depurar ou refatorar sistemas Godot 4 no T2R, e combine com t2r-time-to-rush quando a tarefa depender de canon do projeto ou limites de roadmap."

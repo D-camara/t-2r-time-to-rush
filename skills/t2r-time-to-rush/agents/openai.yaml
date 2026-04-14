@@ -1,0 +1,4 @@
+interface:
+  display_name: "T2R: Time to Rush"
+  short_description: "Contexto canonico e regras de projeto do T2R"
+  default_prompt: "Use $t2r-time-to-rush para trabalhar no T2R respeitando arquivos canonicos, estado atual do prototipo, limites entre implementacao e roadmap, e combine com t2r-godot-3d-top-down quando a tarefa exigir decisao tecnica de Godot 4."
