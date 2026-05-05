@@ -161,6 +161,9 @@ func _style_button(button: Button, accent: Color, hover: Color) -> void:
 	button.add_theme_color_override("font_color", Color(0.03, 0.05, 0.08, 1.0))
 	button.add_theme_color_override("font_hover_color", Color(0.03, 0.05, 0.08, 1.0))
 	button.add_theme_color_override("font_disabled_color", COLOR_MUTED)
+	button.add_theme_color_override("font_shadow_color", Color(1.0, 1.0, 1.0, 0.18))
+	button.add_theme_constant_override("shadow_offset_x", 0)
+	button.add_theme_constant_override("shadow_offset_y", 2)
 	button.add_theme_stylebox_override("normal", _make_button_style(accent))
 	button.add_theme_stylebox_override("hover", _make_button_style(hover))
 	button.add_theme_stylebox_override("pressed", _make_button_style(accent.darkened(0.15)))
@@ -169,16 +172,18 @@ func _style_button(button: Button, accent: Color, hover: Color) -> void:
 func _make_button_style(fill: Color) -> StyleBoxFlat:
 	var style_box: StyleBoxFlat = StyleBoxFlat.new()
 	style_box.bg_color = fill
-	style_box.border_color = Color(1.0, 1.0, 1.0, 0.24)
-	style_box.set_border_width_all(1)
-	style_box.corner_radius_top_left = 8
-	style_box.corner_radius_top_right = 8
-	style_box.corner_radius_bottom_right = 8
-	style_box.corner_radius_bottom_left = 8
-	style_box.content_margin_left = 18
-	style_box.content_margin_right = 18
-	style_box.content_margin_top = 10
-	style_box.content_margin_bottom = 10
+	style_box.border_color = Color(1.0, 1.0, 1.0, 0.34)
+	style_box.set_border_width_all(3)
+	style_box.corner_radius_top_left = 14
+	style_box.corner_radius_top_right = 14
+	style_box.corner_radius_bottom_right = 14
+	style_box.corner_radius_bottom_left = 14
+	style_box.shadow_color = Color(0.0, 0.0, 0.0, 0.48)
+	style_box.shadow_size = 10
+	style_box.content_margin_left = 22
+	style_box.content_margin_right = 22
+	style_box.content_margin_top = 13
+	style_box.content_margin_bottom = 13
 	return style_box
 
 func _style_slider(slider: HSlider) -> void:

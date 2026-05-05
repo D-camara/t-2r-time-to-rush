@@ -11,17 +11,31 @@ extends CharacterBody3D
 @export var fall_limit_y: float = -5.0
 
 @onready var animator: AnimationPlayer = find_child("AnimationPlayer", true, false) as AnimationPlayer
+@onready var character_visual: Node3D = find_child("boneco", true, false) as Node3D
 
 var gravity: float = 0.0
 var input_enabled: bool = true
 var rotation_direction: float = 0.0
 var respawn_position: Vector3 = Vector3.ZERO
+var visual_pulse_time: float = 0.0
+var player_ring: MeshInstance3D = null
+var player_shadow: MeshInstance3D = null
+var role_beacon: MeshInstance3D = null
+var visual_base_position: Vector3 = Vector3.ZERO
 
 func _ready() -> void:
+	if character_visual:
+		visual_base_position = character_visual.position
+	_ensure_player_shadow()
 	_ensure_player_ring()
+	_ensure_role_beacon()
 	_apply_visual_palette()
 
 func _physics_process(delta: float) -> void:
+	visual_pulse_time += delta
+	_update_player_ring()
+	_update_token_presence(delta)
+
 	if global_position.y < fall_limit_y:
 		_restore_to_spawn()
 		return
@@ -114,10 +128,15 @@ func _apply_visual_palette() -> void:
 
 func _apply_palette_to_meshes(node: Node, palette_material: Material) -> void:
 	for child: Node in node.get_children():
+		if _is_visual_helper(child):
+			continue
 		if child is MeshInstance3D:
 			var mesh_instance: MeshInstance3D = child
 			mesh_instance.material_override = palette_material
 		_apply_palette_to_meshes(child, palette_material)
+
+func _is_visual_helper(node: Node) -> bool:
+	return node == player_ring or node == player_shadow or node == role_beacon or node.name.begins_with("Token")
 
 func _restore_to_spawn() -> void:
 	global_position = respawn_position
@@ -125,7 +144,11 @@ func _restore_to_spawn() -> void:
 	gravity = 0.0
 
 func _ensure_player_ring() -> void:
-	if get_node_or_null("PlayerReadabilityRing"):
+	var existing_ring: MeshInstance3D = get_node_or_null("PlayerReadabilityRing") as MeshInstance3D
+	if existing_ring:
+		player_ring = existing_ring
+		if player_ring.material_override == null:
+			player_ring.material_override = _create_ring_material()
 		return
 
 	var ring: MeshInstance3D = MeshInstance3D.new()
@@ -137,12 +160,108 @@ func _ensure_player_ring() -> void:
 	mesh.radial_segments = 48
 	ring.mesh = mesh
 	ring.position = Vector3(0.0, 0.075, 0.0)
+	ring.material_override = _create_ring_material()
+	add_child(ring)
+	player_ring = ring
 
+func _ensure_player_shadow() -> void:
+	var existing_shadow: MeshInstance3D = get_node_or_null("TokenGroundShadow") as MeshInstance3D
+	if existing_shadow:
+		player_shadow = existing_shadow
+		return
+
+	var shadow: MeshInstance3D = MeshInstance3D.new()
+	shadow.name = "TokenGroundShadow"
+	var mesh: CylinderMesh = CylinderMesh.new()
+	mesh.top_radius = 0.98
+	mesh.bottom_radius = 0.98
+	mesh.height = 0.028
+	mesh.radial_segments = 48
+	shadow.mesh = mesh
+	shadow.scale = Vector3(1.34, 1.0, 0.78)
+	shadow.position = Vector3(0.18, 0.035, 0.24)
+	shadow.material_override = _create_shadow_material()
+	add_child(shadow)
+	player_shadow = shadow
+
+func _ensure_role_beacon() -> void:
+	var existing_beacon: MeshInstance3D = get_node_or_null("TokenRoleBeacon") as MeshInstance3D
+	if existing_beacon:
+		role_beacon = existing_beacon
+		return
+
+	var beacon: MeshInstance3D = MeshInstance3D.new()
+	beacon.name = "TokenRoleBeacon"
+	var mesh: CylinderMesh = CylinderMesh.new()
+	mesh.bottom_radius = 0.32
+	mesh.top_radius = 0.0
+	mesh.height = 0.72
+	mesh.radial_segments = 4
+	beacon.mesh = mesh
+	beacon.position = Vector3(0.0, 4.35, 0.0)
+	beacon.rotation_degrees.y = 45.0
+	beacon.material_override = _create_beacon_material(emission_color)
+	add_child(beacon)
+	role_beacon = beacon
+
+func _create_ring_material() -> StandardMaterial3D:
 	var material: StandardMaterial3D = StandardMaterial3D.new()
 	material.albedo_color = Color(0.898, 0.933, 0.973, 0.82)
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.emission_enabled = true
 	material.emission = Color(0.898, 0.933, 0.973, 1.0)
 	material.emission_energy_multiplier = 0.5
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	ring.material_override = material
-	add_child(ring)
+	return material
+
+func _create_shadow_material() -> StandardMaterial3D:
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.albedo_color = Color(0.0, 0.0, 0.0, 0.62)
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	return material
+
+func _create_beacon_material(color: Color) -> StandardMaterial3D:
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.albedo_color = color
+	material.emission_enabled = true
+	material.emission = color
+	material.emission_energy_multiplier = 1.65
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	return material
+
+func _update_player_ring() -> void:
+	if player_ring == null:
+		return
+
+	var material: StandardMaterial3D = player_ring.material_override as StandardMaterial3D
+	if material == null:
+		return
+
+	var pulse: float = (sin(visual_pulse_time * 7.5) + 1.0) * 0.5
+	player_ring.scale = Vector3.ONE * (1.0 + pulse * 0.12)
+	material.albedo_color = Color(0.976, 0.451, 0.086, 0.86)
+	material.emission = emission_color
+	material.emission_energy_multiplier = 0.82 + pulse * 0.56
+
+func _update_token_presence(delta: float) -> void:
+	var planar_speed: float = Vector2(velocity.x, velocity.z).length()
+	var move_pulse: float = clamp(planar_speed / max(move_speed, 0.001), 0.0, 1.0)
+	var danger_pulse: float = (sin(visual_pulse_time * 9.0) + 1.0) * 0.5
+
+	if player_shadow:
+		var shadow_scale: float = 1.0 + move_pulse * 0.22
+		player_shadow.scale = Vector3(1.34 * shadow_scale, 1.0, 0.78 * shadow_scale)
+
+	if role_beacon:
+		var beacon_material: StandardMaterial3D = role_beacon.material_override as StandardMaterial3D
+		if beacon_material:
+			beacon_material.emission_energy_multiplier = 1.35 + danger_pulse * 1.15
+		role_beacon.rotation_degrees.y += 150.0 * delta
+		role_beacon.scale = Vector3.ONE * (1.08 + danger_pulse * 0.16)
+
+	if character_visual:
+		var bob: float = sin(visual_pulse_time * 10.0) * 0.04 * move_pulse
+		var squash_xz: float = 1.0 + move_pulse * 0.045
+		character_visual.scale = Vector3(squash_xz, 1.0 - move_pulse * 0.025, squash_xz)
+		character_visual.position = visual_base_position + Vector3(0.0, bob, 0.0)

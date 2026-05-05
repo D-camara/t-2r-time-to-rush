@@ -49,6 +49,7 @@ func _process(delta: float) -> void:
 		return
 
 	remaining_time = max(remaining_time - delta, 0.0)
+	_update_fugitive_visual_alerts()
 	_update_hud(_get_playing_status_message())
 
 	if remaining_time <= 0.0:
@@ -90,6 +91,9 @@ func start_round() -> void:
 	if third_fugitive.is_participating:
 		third_fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
 	police.configure_movement(police_speed, police_acceleration)
+	if hud:
+		hud.hide_round_result()
+		hud.show_round_banner("Roubo em andamento")
 	if fugitive.is_participating:
 		fugitive.set_input_enabled(false)
 	if second_fugitive.is_participating:
@@ -111,12 +115,17 @@ func _finish_round(result: int) -> void:
 	if third_fugitive.is_participating:
 		third_fugitive.set_input_enabled(false)
 	police.set_input_enabled(false)
+	_clear_fugitive_visual_alerts()
 
 	if result == RoundState.POLICE_WIN:
+		if hud:
+			hud.show_round_result("Pegadores venceram", "Todos os fugitivos foram convertidos antes do cofre fechar.", false)
 		_update_hud("Pegadores venceram! Aperte R para reiniciar")
 		return
 
 	remaining_time = 0.0
+	if hud:
+		hud.show_round_result("Fugitivos venceram", "Pelo menos um jogador escapou ate o fim da operacao.", true)
 	_update_hud("Fugitivos venceram! Aperte R para reiniciar")
 
 func _update_hud(status_message: String) -> void:
@@ -125,9 +134,10 @@ func _update_hud(status_message: String) -> void:
 
 	var active_fugitives: int = _get_active_fugitives().size()
 	var participating_fugitives: int = _get_participating_fugitive_count()
+	var hunter_count: int = _get_hunters().size()
 	var timer_warning: bool = current_state == RoundState.PLAYING and remaining_time <= low_time_threshold
 	hud.update_timer(remaining_time, timer_warning)
-	hud.update_active_fugitives(active_fugitives, participating_fugitives)
+	hud.update_round_counts(active_fugitives, participating_fugitives, hunter_count)
 	hud.set_status(status_message, _get_status_color())
 	hud.set_controls_hint(_get_controls_hint())
 
@@ -242,6 +252,8 @@ func _infect_fugitive(target: FugitivePlayer) -> void:
 
 	target.infect()
 	_apply_infected_hunter_balance()
+	if hud:
+		hud.show_capture_flash("Contagio confirmado")
 
 	if _get_active_fugitives().is_empty():
 		_finish_round(RoundState.POLICE_WIN)
@@ -255,6 +267,19 @@ func _is_any_fugitive_in_danger() -> bool:
 			if _get_distance_between(active_fugitive.global_position, hunter.global_position) <= danger_distance:
 				return true
 	return false
+
+func _update_fugitive_visual_alerts() -> void:
+	for active_fugitive: FugitivePlayer in _get_active_fugitives():
+		var is_in_danger: bool = false
+		for hunter: CharacterBody3D in _get_hunters():
+			if _get_distance_between(active_fugitive.global_position, hunter.global_position) <= danger_distance:
+				is_in_danger = true
+				break
+		active_fugitive.set_danger_visual(is_in_danger)
+
+func _clear_fugitive_visual_alerts() -> void:
+	for active_fugitive: FugitivePlayer in _get_active_fugitives():
+		active_fugitive.set_danger_visual(false)
 
 func _get_distance_between(point_a: Vector3, point_b: Vector3) -> float:
 	return Vector2(point_a.x - point_b.x, point_a.z - point_b.z).length()
