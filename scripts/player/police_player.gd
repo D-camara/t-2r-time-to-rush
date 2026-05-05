@@ -5,9 +5,9 @@ extends CharacterBody3D
 @export var move_speed: float = 11.0
 @export var acceleration: float = 9.5
 @export var rotation_lerp_speed: float = 9.0
-@export var body_color: Color = Color(0.15, 0.78, 0.32, 1.0)
-@export var emission_color: Color = Color(0.04, 0.32, 0.09, 1.0)
-@export var emission_energy: float = 1.1
+@export var body_color: Color = Color(0.937, 0.267, 0.267, 1.0)
+@export var emission_color: Color = Color(0.976, 0.451, 0.086, 1.0)
+@export var emission_energy: float = 1.25
 @export var fall_limit_y: float = -5.0
 
 @onready var animator: AnimationPlayer = find_child("AnimationPlayer", true, false) as AnimationPlayer
@@ -18,6 +18,7 @@ var rotation_direction: float = 0.0
 var respawn_position: Vector3 = Vector3.ZERO
 
 func _ready() -> void:
+	_ensure_player_ring()
 	_apply_visual_palette()
 
 func _physics_process(delta: float) -> void:
@@ -102,7 +103,7 @@ func _play_animation_by_suffix(suffix: String) -> void:
 			return
 
 func _apply_visual_palette() -> void:
-	var palette_material := StandardMaterial3D.new()
+	var palette_material: StandardMaterial3D = StandardMaterial3D.new()
 	palette_material.albedo_color = body_color
 	palette_material.roughness = 0.22
 	palette_material.metallic = 0.08
@@ -122,3 +123,26 @@ func _restore_to_spawn() -> void:
 	global_position = respawn_position
 	velocity = Vector3.ZERO
 	gravity = 0.0
+
+func _ensure_player_ring() -> void:
+	if get_node_or_null("PlayerReadabilityRing"):
+		return
+
+	var ring: MeshInstance3D = MeshInstance3D.new()
+	ring.name = "PlayerReadabilityRing"
+	var mesh: CylinderMesh = CylinderMesh.new()
+	mesh.top_radius = 0.72
+	mesh.bottom_radius = 0.72
+	mesh.height = 0.045
+	mesh.radial_segments = 48
+	ring.mesh = mesh
+	ring.position = Vector3(0.0, 0.075, 0.0)
+
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.albedo_color = Color(0.898, 0.933, 0.973, 0.82)
+	material.emission_enabled = true
+	material.emission = Color(0.898, 0.933, 0.973, 1.0)
+	material.emission_energy_multiplier = 0.5
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ring.material_override = material
+	add_child(ring)

@@ -3,22 +3,37 @@ extends Control
 const GAME_SCENE_PATH: String = "res://scenes/player/move.tscn"
 const MAX_PLAYERS: int = 4
 const MIN_PLAYERS_TO_START: int = 2
+const COLOR_SURFACE: Color = Color(0.094, 0.133, 0.208, 0.94)
+const COLOR_SURFACE_HOVER: Color = Color(0.118, 0.169, 0.267, 1.0)
+const COLOR_BORDER: Color = Color(0.165, 0.224, 0.325, 1.0)
+const COLOR_GREEN: Color = Color(0.133, 0.773, 0.369, 1.0)
+const COLOR_GREEN_HIGHLIGHT: Color = Color(0.29, 0.871, 0.502, 1.0)
+const COLOR_GOLD: Color = Color(0.918, 0.702, 0.031, 1.0)
+const COLOR_RED: Color = Color(0.937, 0.267, 0.267, 1.0)
+const COLOR_TEXT: Color = Color(0.898, 0.933, 0.973, 1.0)
+const COLOR_MUTED: Color = Color(0.58, 0.639, 0.722, 1.0)
 
 @onready var play_button: Button = $Root/Columns/MenuPanel/MenuColumn/PlayButton
 @onready var settings_button: Button = $Root/Columns/MenuPanel/MenuColumn/SettingsButton
 @onready var quit_button: Button = $Root/Columns/MenuPanel/MenuColumn/QuitButton
 @onready var status_label: Label = $Root/Columns/MenuPanel/MenuColumn/StatusLabel
+@onready var title_label: Label = $Root/Columns/MenuPanel/MenuColumn/Title
+@onready var subtitle_label: Label = $Root/Columns/MenuPanel/MenuColumn/Subtitle
 @onready var connected_label: Label = $Root/Columns/LobbyPanel/LobbyColumn/ConnectedLabel
+@onready var join_hint_label: Label = $Root/Columns/LobbyPanel/LobbyColumn/JoinHint
 @onready var slot_labels: Array[Label] = [
 	$Root/Columns/LobbyPanel/LobbyColumn/Slot1,
 	$Root/Columns/LobbyPanel/LobbyColumn/Slot2,
 	$Root/Columns/LobbyPanel/LobbyColumn/Slot3,
 	$Root/Columns/LobbyPanel/LobbyColumn/Slot4,
 ]
+@onready var menu_panel: PanelContainer = $Root/Columns/MenuPanel
+@onready var lobby_panel: PanelContainer = $Root/Columns/LobbyPanel
 @onready var settings_panel: PanelContainer = $SettingsOverlay
 @onready var volume_slider: HSlider = $SettingsOverlay/SettingsColumn/VolumeSlider
 
 func _ready() -> void:
+	_apply_visual_style()
 	play_button.pressed.connect(_on_play_pressed)
 	settings_button.pressed.connect(_on_settings_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
@@ -90,3 +105,92 @@ func _sync_volume_slider() -> void:
 
 func _is_join_button(button_index: int) -> bool:
 	return button_index == JOY_BUTTON_A or button_index == JOY_BUTTON_X
+
+func _apply_visual_style() -> void:
+	_add_background()
+	_style_panel(menu_panel)
+	_style_panel(lobby_panel)
+	_style_panel(settings_panel)
+	_style_button(play_button, COLOR_GREEN, COLOR_GREEN_HIGHLIGHT)
+	_style_button(settings_button, COLOR_GOLD, Color(1.0, 0.82, 0.2, 1.0))
+	_style_button(quit_button, COLOR_RED, Color(0.973, 0.451, 0.267, 1.0))
+	_style_slider(volume_slider)
+
+	title_label.add_theme_color_override("font_color", COLOR_TEXT)
+	title_label.add_theme_color_override("font_shadow_color", Color(0.133, 0.773, 0.369, 0.45))
+	title_label.add_theme_constant_override("shadow_offset_x", 0)
+	title_label.add_theme_constant_override("shadow_offset_y", 3)
+	subtitle_label.add_theme_color_override("font_color", COLOR_GOLD)
+	status_label.add_theme_color_override("font_color", COLOR_MUTED)
+	connected_label.add_theme_color_override("font_color", COLOR_GREEN_HIGHLIGHT)
+	join_hint_label.add_theme_color_override("font_color", COLOR_GOLD)
+
+	for label: Label in slot_labels:
+		label.add_theme_color_override("font_color", COLOR_TEXT)
+		label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.7))
+		label.add_theme_constant_override("outline_size", 3)
+
+func _add_background() -> void:
+	var existing_background: Node = get_node_or_null("HeistBackground")
+	if existing_background:
+		return
+
+	var background: HeistBackground = HeistBackground.new()
+	background.name = "HeistBackground"
+	add_child(background)
+	move_child(background, 0)
+
+func _style_panel(panel: PanelContainer) -> void:
+	var style_box: StyleBoxFlat = StyleBoxFlat.new()
+	style_box.bg_color = COLOR_SURFACE
+	style_box.border_color = COLOR_BORDER
+	style_box.set_border_width_all(2)
+	style_box.corner_radius_top_left = 8
+	style_box.corner_radius_top_right = 8
+	style_box.corner_radius_bottom_right = 8
+	style_box.corner_radius_bottom_left = 8
+	style_box.shadow_color = Color(0.0, 0.0, 0.0, 0.38)
+	style_box.shadow_size = 12
+	style_box.content_margin_left = 24
+	style_box.content_margin_right = 24
+	style_box.content_margin_top = 22
+	style_box.content_margin_bottom = 22
+	panel.add_theme_stylebox_override("panel", style_box)
+
+func _style_button(button: Button, accent: Color, hover: Color) -> void:
+	button.add_theme_color_override("font_color", Color(0.03, 0.05, 0.08, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(0.03, 0.05, 0.08, 1.0))
+	button.add_theme_color_override("font_disabled_color", COLOR_MUTED)
+	button.add_theme_stylebox_override("normal", _make_button_style(accent))
+	button.add_theme_stylebox_override("hover", _make_button_style(hover))
+	button.add_theme_stylebox_override("pressed", _make_button_style(accent.darkened(0.15)))
+	button.add_theme_stylebox_override("disabled", _make_button_style(COLOR_SURFACE_HOVER))
+
+func _make_button_style(fill: Color) -> StyleBoxFlat:
+	var style_box: StyleBoxFlat = StyleBoxFlat.new()
+	style_box.bg_color = fill
+	style_box.border_color = Color(1.0, 1.0, 1.0, 0.24)
+	style_box.set_border_width_all(1)
+	style_box.corner_radius_top_left = 8
+	style_box.corner_radius_top_right = 8
+	style_box.corner_radius_bottom_right = 8
+	style_box.corner_radius_bottom_left = 8
+	style_box.content_margin_left = 18
+	style_box.content_margin_right = 18
+	style_box.content_margin_top = 10
+	style_box.content_margin_bottom = 10
+	return style_box
+
+func _style_slider(slider: HSlider) -> void:
+	slider.add_theme_stylebox_override("slider", _make_line_style(COLOR_BORDER, 4))
+	slider.add_theme_stylebox_override("grabber_area", _make_line_style(COLOR_GREEN, 4))
+	slider.add_theme_stylebox_override("grabber_area_highlight", _make_line_style(COLOR_GREEN_HIGHLIGHT, 5))
+
+func _make_line_style(color: Color, height: int) -> StyleBoxFlat:
+	var style_box: StyleBoxFlat = StyleBoxFlat.new()
+	style_box.bg_color = color
+	style_box.corner_radius_top_left = height
+	style_box.corner_radius_top_right = height
+	style_box.corner_radius_bottom_right = height
+	style_box.corner_radius_bottom_left = height
+	return style_box

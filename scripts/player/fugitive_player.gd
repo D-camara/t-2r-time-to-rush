@@ -9,12 +9,12 @@ const DEFAULT_STUN: float = 2.0
 @export var acceleration: float = 14.0
 @export var rotation_lerp_speed: float = 12.0
 @export var camera_path: NodePath = ^"../CAMERA"
-@export var fugitive_body_color: Color = Color(0.92, 0.18, 0.15, 1.0)
-@export var fugitive_emission_color: Color = Color(0.42, 0.06, 0.05, 1.0)
-@export var fugitive_emission_energy: float = 0.65
-@export var hunter_body_color: Color = Color(0.15, 0.78, 0.32, 1.0)
-@export var hunter_emission_color: Color = Color(0.04, 0.32, 0.09, 1.0)
-@export var hunter_emission_energy: float = 1.1
+@export var fugitive_body_color: Color = Color(0.133, 0.773, 0.369, 1.0)
+@export var fugitive_emission_color: Color = Color(0.29, 0.871, 0.502, 1.0)
+@export var fugitive_emission_energy: float = 0.85
+@export var hunter_body_color: Color = Color(0.937, 0.267, 0.267, 1.0)
+@export var hunter_emission_color: Color = Color(0.976, 0.451, 0.086, 1.0)
+@export var hunter_emission_energy: float = 1.25
 @export var fall_limit_y: float = -5.0
 
 @onready var animator: AnimationPlayer = find_child("AnimationPlayer", true, false) as AnimationPlayer
@@ -32,6 +32,7 @@ var respawn_position: Vector3 = Vector3.ZERO
 var is_participating: bool = true
 
 func _ready() -> void:
+	_ensure_player_ring()
 	_apply_current_palette()
 
 func _physics_process(delta: float) -> void:
@@ -211,3 +212,26 @@ func _restore_to_spawn() -> void:
 	velocity = Vector3.ZERO
 	movement_velocity = Vector3.ZERO
 	gravity = 0.0
+
+func _ensure_player_ring() -> void:
+	if get_node_or_null("PlayerReadabilityRing"):
+		return
+
+	var ring: MeshInstance3D = MeshInstance3D.new()
+	ring.name = "PlayerReadabilityRing"
+	var mesh: CylinderMesh = CylinderMesh.new()
+	mesh.top_radius = 0.72
+	mesh.bottom_radius = 0.72
+	mesh.height = 0.045
+	mesh.radial_segments = 48
+	ring.mesh = mesh
+	ring.position = Vector3(0.0, 0.075, 0.0)
+
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.albedo_color = Color(0.898, 0.933, 0.973, 0.78)
+	material.emission_enabled = true
+	material.emission = Color(0.898, 0.933, 0.973, 1.0)
+	material.emission_energy_multiplier = 0.45
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ring.material_override = material
+	add_child(ring)

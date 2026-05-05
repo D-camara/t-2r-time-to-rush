@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://bfya461w7ism2" path="res://scenes/maps/lamp_round_floor.tscn" id="12_uycwa"]
 [ext_resource type="PackedScene" uid="uid://bx5vc6bwe5ece" path="res://scenes/maps/caixas.tscn" id="13_68cte"]
 [ext_resource type="PackedScene" uid="uid://dbwl0fgwkc5no" path="res://scenes/maps/livro.tscn" id="14_uycwa"]
+[ext_resource type="Script" path="res://scripts/game/arena_style.gd" id="15_arena"]
 
 [sub_resource type="Animation" id="Animation_tohxk"]
 resource_name = "FastRun"
@@ -462,6 +463,9 @@ size = Vector3(120, 1, 120)
 
 [node name="JOGO" type="Node3D" unique_id=446853248]
 script = ExtResource("3_round")
+
+[node name="ARENA_STYLE" type="Node3D" parent="."]
+script = ExtResource("15_arena")
 
 [node name="PERSONAGEM" type="CharacterBody3D" parent="." unique_id=353522985]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.7593746, 3.6845512)
