@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://bn642t4q3pila"]
+
+[ext_resource type="PackedScene" uid="uid://e54ua7cqai7h" path="res://assets/models/PAREDECHAOEDGAR.glb" id="1_c72q8"]
+
+[node name="PAREDECHAOEDGAR" unique_id=426327155 instance=ExtResource("1_c72q8")]
