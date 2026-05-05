@@ -12,6 +12,7 @@ extends Camera3D
 
 @onready var fugitive: FugitivePlayer = get_parent().get_node_or_null("PERSONAGEM")
 @onready var second_fugitive: FugitivePlayer = get_parent().get_node_or_null("FUGITIVO_2")
+@onready var third_fugitive: FugitivePlayer = get_parent().get_node_or_null("FUGITIVO_3")
 @onready var police: PolicePlayer = get_parent().get_node_or_null("POLICIAL")
 
 var smoothed_focus_point: Vector3 = Vector3.ZERO
@@ -79,10 +80,12 @@ func _get_player_separation() -> float:
 
 func _get_tracked_players() -> Array[CharacterBody3D]:
 	var tracked_players: Array[CharacterBody3D] = []
-	if fugitive:
+	if fugitive and fugitive.is_participating:
 		tracked_players.append(fugitive)
-	if second_fugitive:
+	if second_fugitive and second_fugitive.is_participating:
 		tracked_players.append(second_fugitive)
+	if third_fugitive and third_fugitive.is_participating:
+		tracked_players.append(third_fugitive)
 	if police:
 		tracked_players.append(police)
 	return tracked_players

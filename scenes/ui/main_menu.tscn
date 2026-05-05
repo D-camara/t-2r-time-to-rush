@@ -1,0 +1,152 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Root" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 36.0
+offset_top = 28.0
+offset_right = -36.0
+offset_bottom = -28.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Columns" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+theme_override_constants/separation = 32
+
+[node name="MenuPanel" type="PanelContainer" parent="Root/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MenuColumn" type="VBoxContainer" parent="Root/Columns/MenuPanel"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="Root/Columns/MenuPanel/MenuColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 42
+text = "T2R: Time to Rush"
+
+[node name="Subtitle" type="Label" parent="Root/Columns/MenuPanel/MenuColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Perseguicao assimetrica em tempo real"
+
+[node name="PlayButton" type="Button" parent="Root/Columns/MenuPanel/MenuColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Jogar"
+
+[node name="SettingsButton" type="Button" parent="Root/Columns/MenuPanel/MenuColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Configuracoes"
+
+[node name="QuitButton" type="Button" parent="Root/Columns/MenuPanel/MenuColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Sair"
+
+[node name="StatusLabel" type="Label" parent="Root/Columns/MenuPanel/MenuColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = ""
+autowrap_mode = 3
+
+[node name="LobbyPanel" type="PanelContainer" parent="Root/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LobbyColumn" type="VBoxContainer" parent="Root/Columns/LobbyPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LobbyTitle" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Lobby"
+
+[node name="ConnectedLabel" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Controles conectados: 0"
+
+[node name="JoinHint" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Aperte X no controle para entrar"
+autowrap_mode = 3
+
+[node name="Slot1" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Jogador 1: Aperte X para entrar"
+
+[node name="Slot2" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Jogador 2: Aperte X para entrar"
+
+[node name="Slot3" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Jogador 3: Aperte X para entrar"
+
+[node name="Slot4" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Jogador 4: Aperte X para entrar"
+
+[node name="SettingsOverlay" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -110.0
+offset_right = 220.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SettingsColumn" type="VBoxContainer" parent="SettingsOverlay"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="SettingsTitle" type="Label" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Configuracoes"
+
+[node name="VolumeLabel" type="Label" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Volume geral"
+
+[node name="VolumeSlider" type="HSlider" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="CloseHint" type="Label" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Clique em Configuracoes novamente para fechar"

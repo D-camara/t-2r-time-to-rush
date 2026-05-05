@@ -29,11 +29,15 @@ var input_enabled: bool = true
 var is_captured: bool = false
 var is_infected: bool = false
 var respawn_position: Vector3 = Vector3.ZERO
+var is_participating: bool = true
 
 func _ready() -> void:
 	_apply_current_palette()
 
 func _physics_process(delta: float) -> void:
+	if not is_participating:
+		return
+
 	if global_position.y < fall_limit_y:
 		_restore_to_spawn()
 		return
@@ -120,6 +124,9 @@ func infect() -> void:
 	_apply_current_palette()
 
 func reset_state(spawn_position: Vector3) -> void:
+	is_participating = true
+	visible = true
+	process_mode = Node.PROCESS_MODE_INHERIT
 	respawn_position = spawn_position
 	global_position = spawn_position
 	velocity = Vector3.ZERO
@@ -131,6 +138,17 @@ func reset_state(spawn_position: Vector3) -> void:
 	is_captured = false
 	is_infected = false
 	_apply_current_palette()
+
+func deactivate_slot() -> void:
+	is_participating = false
+	visible = false
+	input_enabled = false
+	is_captured = true
+	is_infected = false
+	is_stunned = false
+	stun_timer = 0.0
+	velocity = Vector3.ZERO
+	movement_velocity = Vector3.ZERO
 
 func is_controller_connected() -> bool:
 	if device_id < 0:
