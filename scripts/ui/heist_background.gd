@@ -65,7 +65,7 @@ func _draw_security_lanes(rect_size: Vector2) -> void:
 
 func _draw_physical_table(center: Vector2, radius: float) -> void:
 	var shadow_rect: Rect2 = Rect2(center - Vector2(radius * 1.36, radius * 0.52), Vector2(radius * 2.72, radius * 1.04))
-	draw_rect(shadow_rect.position + Vector2(16.0, 18.0), shadow_rect.size, Color(0.0, 0.0, 0.0, 0.28))
+	draw_rect(Rect2(shadow_rect.position + Vector2(16.0, 18.0), shadow_rect.size), Color(0.0, 0.0, 0.0, 0.28))
 	draw_rect(shadow_rect, Color(0.094, 0.133, 0.208, 0.34))
 	draw_rect(Rect2(shadow_rect.position + Vector2(10.0, 10.0), shadow_rect.size - Vector2(20.0, 20.0)), Color(0.22, 0.741, 0.973, 0.08))
 	for index: int in range(5):
