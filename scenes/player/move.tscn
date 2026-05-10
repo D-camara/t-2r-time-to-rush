@@ -460,6 +460,9 @@ glow_enabled = true
 [sub_resource type="BoxShape3D" id="BoxShape3D_safety_floor"]
 size = Vector3(120, 1, 120)
 
+[sub_resource type="PlaneMesh" id="PlaneMesh_uycwa"]
+size = Vector2(300, 300)
+
 [node name="JOGO" type="Node3D" unique_id=446853248]
 script = ExtResource("3_round")
 
@@ -552,3 +555,9 @@ transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 8.927612, 2.5, -14.81252)
 
 [node name="cardboardBoxClosed2" parent="MOVEIS" unique_id=1894950708 instance=ExtResource("13_68cte")]
 transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 11.04879, 2.5, -20.771938)
+
+[node name="CHAOFLAT" type="MeshInstance3D" parent="." unique_id=1447819397]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5123787, 1.5114787, -2.1724768)
+visible = false
+mesh = SubResource("PlaneMesh_uycwa")
+metadata/_edit_lock_ = true
