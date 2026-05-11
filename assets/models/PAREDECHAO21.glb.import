@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://e54ua7cqai7h"
-path="res://.godot/imported/PAREDECHAOEDGAR.glb-730ce26f051b54360fb626e0c17445b0.scn"
+uid="uid://k78owvuubpvx"
+path="res://.godot/imported/PAREDECHAO21.glb-3aa2f7964ce22e0ac88905eeac27f51f.scn"
 
 [deps]
 
-source_file="res://assets/models/PAREDECHAOEDGAR.glb"
-dest_files=["res://.godot/imported/PAREDECHAOEDGAR.glb-730ce26f051b54360fb626e0c17445b0.scn"]
+source_file="res://assets/models/PAREDECHAO21.glb"
+dest_files=["res://.godot/imported/PAREDECHAO21.glb-3aa2f7964ce22e0ac88905eeac27f51f.scn"]
 
 [params]
 

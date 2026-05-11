@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dr0nbqnov77sa"
-path.s3tc="res://.godot/imported/PAREDECHAOEDGAR_pixel.png-717a004b4d160a53cfc583627340eaac.s3tc.ctex"
+uid="uid://8t4tiqkjivn5"
+path.s3tc="res://.godot/imported/PAREDECHAO21_pixel (2).png-ea1f2547d94e4d76fcd82e130430cec4.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "8c184c218a126f61bd1eab968db342c6"
+"md5": "a88a72fe42b77882b9420d47ae285434"
 }
 
 [deps]
 
-source_file="res://assets/models/PAREDECHAOEDGAR_pixel.png"
-dest_files=["res://.godot/imported/PAREDECHAOEDGAR_pixel.png-717a004b4d160a53cfc583627340eaac.s3tc.ctex"]
+source_file="res://assets/models/PAREDECHAO21_pixel (2).png"
+dest_files=["res://.godot/imported/PAREDECHAO21_pixel (2).png-ea1f2547d94e4d76fcd82e130430cec4.s3tc.ctex"]
 
 [params]
 
