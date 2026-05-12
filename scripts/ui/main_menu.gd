@@ -2,7 +2,7 @@ extends Control
 
 const GAME_SCENE_PATH: String = "res://scenes/player/move.tscn"
 const MAX_PLAYERS: int = 4
-const MIN_PLAYERS_TO_START: int = 2
+const MIN_PLAYERS_TO_START: int = 1
 const COLOR_SURFACE: Color = Color(0.094, 0.133, 0.208, 0.94)
 const COLOR_SURFACE_HOVER: Color = Color(0.118, 0.169, 0.267, 1.0)
 const COLOR_BORDER: Color = Color(0.165, 0.224, 0.325, 1.0)
@@ -70,7 +70,7 @@ func _input(event: InputEvent) -> void:
 func _on_play_pressed() -> void:
 	var joined_players: Array[int] = InputManager.get_joined_devices()
 	if joined_players.size() < MIN_PLAYERS_TO_START:
-		status_label.text = "Entre com pelo menos 2 controles para iniciar"
+		status_label.text = "Entre com pelo menos 1 controle para iniciar"
 		return
 
 	get_tree().change_scene_to_file(GAME_SCENE_PATH)
@@ -92,7 +92,7 @@ func _update_lobby_ui() -> void:
 
 	connected_label.text = "Controles conectados: %d | Prontos: %d/%d" % [connected_devices.size(), ready_players, MAX_PLAYERS]
 	play_button.disabled = ready_players < MIN_PLAYERS_TO_START
-	play_button.text = "Jogar" if ready_players >= MIN_PLAYERS_TO_START else "Jogar (min. 2)"
+	play_button.text = "Jogar" if ready_players >= MIN_PLAYERS_TO_START else "Jogar (min. 1)"
 
 	for slot_index: int in range(slot_labels.size()):
 		if slot_index < ready_players:

@@ -7,13 +7,8 @@
 [ext_resource type="PackedScene" path="res://scenes/player/police_player.tscn" id="5_police"]
 [ext_resource type="PackedScene" path="res://scenes/ui/round_hud.tscn" id="6_hud"]
 [ext_resource type="PackedScene" path="res://scenes/player/fugitive_player.tscn" id="7_fugitive"]
-[ext_resource type="PackedScene" uid="uid://db28mqlv3ngww" path="res://scenes/maps/mesacanto.tscn" id="8_krkws"]
-[ext_resource type="PackedScene" uid="uid://b48lx6u48ejkx" path="res://scenes/maps/mesalonga.tscn" id="9_rayke"]
-[ext_resource type="PackedScene" uid="uid://c6ua0xhkwsxlw" path="res://scenes/maps/sofa.tscn" id="10_uv01s"]
-[ext_resource type="PackedScene" uid="uid://cr6phxen6045p" path="res://scenes/maps/sofalongo.tscn" id="11_68cte"]
-[ext_resource type="PackedScene" uid="uid://bfya461w7ism2" path="res://scenes/maps/lamp_round_floor.tscn" id="12_uycwa"]
-[ext_resource type="PackedScene" uid="uid://bx5vc6bwe5ece" path="res://scenes/maps/caixas.tscn" id="13_68cte"]
-[ext_resource type="PackedScene" uid="uid://dbwl0fgwkc5no" path="res://scenes/maps/livro.tscn" id="14_uycwa"]
+[ext_resource type="PackedScene" path="res://assets/models/MAPANOVOCOLIS.tscn" id="8_krkws"]
+[ext_resource type="Script" path="res://scripts/game/arena_style.gd" id="15_arena"]
 
 [sub_resource type="Animation" id="Animation_tohxk"]
 resource_name = "FastRun"
@@ -463,6 +458,9 @@ albedo_color = Color(0, 0, 0, 1)
 material = SubResource("StandardMaterial3D_hqmky")
 size = Vector2(1000, 1000)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_gameplay_floor"]
+size = Vector3(520, 0.4, 540)
+
 [node name="JOGO" type="Node3D" unique_id=446853248]
 script = ExtResource("3_round")
 
@@ -505,20 +503,17 @@ device_id = 2
 
 [node name="HUD" parent="." unique_id=1214818089 instance=ExtResource("6_hud")]
 
-[node name="POLICE_SPAWN" type="Node3D" parent="." unique_id=1241531624]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.877434, 99.265274, 209.31905)
+[node name="FUGITIVE_SPAWN" type="Node3D" parent="." unique_id=391150257]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.5, 2, 105)
 
 [node name="FUGITIVE_2_SPAWN" type="Node3D" parent="." unique_id=344666412]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1907578, 107.52202, 206.09384)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -56, 2, 133)
 
-[node name="FUGITIVE_SPAWN" type="Node3D" parent="." unique_id=391150257]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 2, 6)
-
-[node name="FUGITIVE_2_SPAWN" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2, -4)
+[node name="FUGITIVE_3_SPAWN" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -108.5, 2, 105)
 
 [node name="POLICE_SPAWN" type="Node3D" parent="." unique_id=1241531624]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 2, -6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 2, 182)
 
 [node name="CHAOFLAT" type="MeshInstance3D" parent="." unique_id=1549766559]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.7869854, 0.08146286, -33.511566)
@@ -526,5 +521,11 @@ visible = false
 mesh = SubResource("PlaneMesh_b5ksb")
 metadata/_edit_lock_ = true
 
+[node name="GAMEPLAY_FLOOR" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, -0.2, 138)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GAMEPLAY_FLOOR"]
+shape = SubResource("BoxShape3D_gameplay_floor")
+
 [node name="MAPANOVIS" parent="." unique_id=1112820765 instance=ExtResource("8_krkws")]
-transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, 0, 0, 0)
+transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, 0, 23.7, 0)
