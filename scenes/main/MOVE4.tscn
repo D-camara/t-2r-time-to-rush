@@ -1,5 +1,5 @@
 [gd_scene format=3 uid="uid://chrmue3d71157"]
 
-[ext_resource type="PackedScene" uid="uid://k78owvuubpvx" path="res://assets/models/PAREDECHAO21.glb" id="1_xjpoq"]
+[ext_resource type="PackedScene" uid="uid://k78owvuubpvx" path="res://assets/PAREDECHAO21.glb" id="1_xjpoq"]
 
 [node name="PAREDECHAO21" unique_id=2144808129 instance=ExtResource("1_xjpoq")]

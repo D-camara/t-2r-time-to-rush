@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/player/police_player.tscn" id="5_police"]
 [ext_resource type="PackedScene" path="res://scenes/ui/round_hud.tscn" id="6_hud"]
 [ext_resource type="PackedScene" path="res://scenes/player/fugitive_player.tscn" id="7_fugitive"]
-[ext_resource type="MeshLibrary" uid="uid://crr8a2vi5u4ge" path="res://assets/models/NOVAMESH21.meshlib" id="8_krkws"]
+[ext_resource type="PackedScene" uid="uid://c40wr0lndts4x" path="res://assets/models/MAPANOVOCOLIS.tscn" id="8_krkws"]
 
 [sub_resource type="Animation" id="Animation_tohxk"]
 resource_name = "FastRun"
@@ -450,20 +450,17 @@ reflected_light_source = 2
 ssao_enabled = true
 glow_enabled = true
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_safety_floor"]
-size = Vector3(120, 1, 120)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hqmky"]
+albedo_color = Color(0, 0, 0, 1)
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_uycwa"]
-size = Vector2(300, 300)
-
-[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_krkws"]
-data = PackedVector3Array(150, 0, 150, -150, 0, 150, 150, 0, -150, -150, 0, 150, -150, 0, -150, 150, 0, -150)
+[sub_resource type="PlaneMesh" id="PlaneMesh_b5ksb"]
+material = SubResource("StandardMaterial3D_hqmky")
+size = Vector2(1000, 1000)
 
 [node name="JOGO" type="Node3D" unique_id=446853248]
 script = ExtResource("3_round")
 
 [node name="PERSONAGEM" type="CharacterBody3D" parent="." unique_id=353522985]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.322248, 8.906696, -36.759724)
 script = ExtResource("1_86tx1")
 metadata/_edit_group_ = true
 
@@ -484,44 +481,28 @@ script = ExtResource("4_camera")
 environment = SubResource("Environment_c43ro")
 
 [node name="POLICIAL" parent="." unique_id=1667643868 instance=ExtResource("5_police")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.054407, 8.6521845, -27.211338)
 
 [node name="FUGITIVO_2" parent="." unique_id=1693917688 instance=ExtResource("7_fugitive")]
-transform = Transform3D(0.99819815, -0.037127193, 0.047137514, 0.041036185, 0.995547, -0.084866226, -0.043776765, 0.08664766, 0.9952768, 33.08457, 10.093124, -32.034897)
+transform = Transform3D(0.97297275, -0.02049847, 0.23000789, 0.04103618, 0.99554694, -0.08486622, -0.22724402, 0.092011176, 0.96948135, 0, 0, 0)
 use_keyboard_input = false
 device_id = 1
 
 [node name="HUD" parent="." unique_id=1214818089 instance=ExtResource("6_hud")]
 
-[node name="FUGITIVE_SPAWN" type="Node3D" parent="." unique_id=391150257]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 10.08269, -16.930487)
+[node name="POLICE_SPAWN" type="Node3D" parent="." unique_id=1241531624]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.877434, 99.265274, 209.31905)
 
 [node name="FUGITIVE_2_SPAWN" type="Node3D" parent="." unique_id=344666412]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2, -19.163515)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1907578, 107.52202, 206.09384)
 
-[node name="POLICE_SPAWN" type="Node3D" parent="." unique_id=1241531624]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.242434, -0.17249489, -23.774706)
+[node name="FUGITIVE_SPAWN" type="Node3D" parent="." unique_id=391150257]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.49781, 94.664536, 194.93008)
 
-[node name="SAFETY_FLOOR" type="StaticBody3D" parent="." unique_id=1926727459]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+[node name="CHAOFLAT" type="MeshInstance3D" parent="." unique_id=1549766559]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.7869854, 0.08146286, -33.511566)
+visible = false
+mesh = SubResource("PlaneMesh_b5ksb")
+metadata/_edit_lock_ = true
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="SAFETY_FLOOR" unique_id=180594805]
-shape = SubResource("BoxShape3D_safety_floor")
-
-[node name="GridMap" type="GridMap" parent="." unique_id=12756003]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5123787, -0.16211295, -2.1724768)
-mesh_library = ExtResource("8_krkws")
-cell_size = Vector3(1, 1, 1)
-data = {
-"cells": PackedInt32Array(458705, 65487, 1179650, 458705, 65499, 1310720, 458705, 65509, 1310720, 458705, 65519, 1310720, 458705, 65529, 1310720, 458705, 65533, 1310723, 458705, 65535, 131074, 458707, 65534, 131075, 458710, 65526, 524291, 458711, 65534, 131075, 458715, 65534, 131075, 458717, 65488, 524288, 458718, 65488, 524288, 458719, 65488, 524288, 458720, 65488, 524288, 458720, 65526, 524291, 458720, 65534, 1310724, 458720, 4, 1310723, 458720, 6, 131074, 458721, 65488, 524288, 458721, 65525, 1179651, 458721, 65529, 1179651, 458721, 65533, 131075, 458721, 65534, 524290, 458722, 65488, 524288, 458722, 5, 131072, 458723, 65488, 524288, 458724, 65488, 524288, 458725, 65488, 524288, 458726, 65488, 524288, 458727, 65487, 131075, 458727, 65488, 524288, 458728, 1, 1310723, 458728, 4, 131076, 458729, 0, 131072, 458732, 65499, 1310720, 458732, 65503, 1310723, 458732, 65505, 131074, 458732, 5, 131072, 458733, 65487, 524290, 458734, 65504, 131072, 458742, 5, 131072, 458743, 65494, 1310723, 458743, 0, 1179652, 458743, 1, 1179651, 458744, 65494, 1179648, 458747, 65490, 524291, 458751, 65490, 524291, 393217, 65534, 1179650, 393217, 4, 1310723, 393218, 65494, 1310723, 393218, 6, 1310722, 393219, 65490, 524291, 393219, 65494, 1179648, 393223, 65534, 131075, 393223, 65535, 524291, 393226, 65515, 1310720, 393227, 65524, 1179648, 393228, 65505, 524288, 393237, 65515, 1310720, 393237, 65535, 524288, 393238, 65505, 524288, 393238, 65513, 131072, 393238, 65515, 1179651, 393238, 65525, 1179651, 393238, 65529, 1179651, 393238, 65535, 1310722, 393248, 65514, 1179652, 393248, 65515, 1179651, 393248, 65519, 1179651, 393248, 65523, 1179651, 393248, 65528, 524288)
-}
-metadata/_editor_floor_ = Vector3(0, 2, 0)
-
-[node name="CHAOFLAT" type="MeshInstance3D" parent="." unique_id=1447819397]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5036249, 1.2515335, -2.2451725)
-mesh = SubResource("PlaneMesh_uycwa")
-
-[node name="StaticBody3D" type="StaticBody3D" parent="CHAOFLAT" unique_id=1280626971]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="CHAOFLAT/StaticBody3D" unique_id=1054387765]
-shape = SubResource("ConcavePolygonShape3D_krkws")
+[node name="MAPANOVIS" parent="." unique_id=1112820765 instance=ExtResource("8_krkws")]
+transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, 0, 0, 0)
