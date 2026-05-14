@@ -7,7 +7,8 @@
 [ext_resource type="PackedScene" path="res://scenes/player/police_player.tscn" id="5_police"]
 [ext_resource type="PackedScene" path="res://scenes/ui/round_hud.tscn" id="6_hud"]
 [ext_resource type="PackedScene" path="res://scenes/player/fugitive_player.tscn" id="7_fugitive"]
-[ext_resource type="PackedScene" uid="uid://c40wr0lndts4x" path="res://assets/models/MAPANOVOCOLIS.tscn" id="8_krkws"]
+[ext_resource type="PackedScene" uid="uid://by5pu3yig6us7" path="res://scenes/mapacolis.tscn" id="8_krkws"]
+[ext_resource type="PackedScene" uid="uid://cs4o2etd4hxh2" path="res://scenes/pfvrpisca.tscn" id="9_hqmky"]
 
 [sub_resource type="Animation" id="Animation_tohxk"]
 resource_name = "FastRun"
@@ -451,11 +452,11 @@ ssao_enabled = true
 glow_enabled = true
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hqmky"]
-albedo_color = Color(0, 0, 0, 1)
+albedo_color = Color(0, 0.5930351, 0.18549362, 1)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_b5ksb"]
 material = SubResource("StandardMaterial3D_hqmky")
-size = Vector2(1000, 1000)
+size = Vector2(150, 400)
 
 [node name="JOGO" type="Node3D" unique_id=446853248]
 script = ExtResource("3_round")
@@ -483,26 +484,29 @@ environment = SubResource("Environment_c43ro")
 [node name="POLICIAL" parent="." unique_id=1667643868 instance=ExtResource("5_police")]
 
 [node name="FUGITIVO_2" parent="." unique_id=1693917688 instance=ExtResource("7_fugitive")]
-transform = Transform3D(0.97297275, -0.02049847, 0.23000789, 0.04103618, 0.99554694, -0.08486622, -0.22724402, 0.092011176, 0.96948135, 0, 0, 0)
+transform = Transform3D(0.9718229, -0.021768482, 0.2347045, 0.043267045, 0.995282, -0.086841635, -0.23170674, 0.09454967, 0.9681798, 0, 0, 0)
 use_keyboard_input = false
 device_id = 1
 
 [node name="HUD" parent="." unique_id=1214818089 instance=ExtResource("6_hud")]
 
-[node name="POLICE_SPAWN" type="Node3D" parent="." unique_id=1241531624]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.877434, 99.265274, 209.31905)
-
 [node name="FUGITIVE_2_SPAWN" type="Node3D" parent="." unique_id=344666412]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1907578, 107.52202, 206.09384)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1907578, 74.94262, 201.66258)
+
+[node name="POLICE_SPAWN" type="Node3D" parent="." unique_id=1241531624]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.877434, 66.685875, 204.88779)
+metadata/_edit_group_ = true
 
 [node name="FUGITIVE_SPAWN" type="Node3D" parent="." unique_id=391150257]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.49781, 94.664536, 194.93008)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.49781, 62.085136, 190.49883)
 
 [node name="CHAOFLAT" type="MeshInstance3D" parent="." unique_id=1549766559]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.7869854, 0.08146286, -33.511566)
-visible = false
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -356.28967, -1.4011841, 110.13052)
 mesh = SubResource("PlaneMesh_b5ksb")
+
+[node name="MAPA2" parent="." unique_id=716392980 instance=ExtResource("8_krkws")]
+transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, 0, 0, 0)
 metadata/_edit_lock_ = true
 
-[node name="MAPANOVIS" parent="." unique_id=1112820765 instance=ExtResource("8_krkws")]
-transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, 0, 0, 0)
+[node name="CARROPOL" parent="." unique_id=1378452665 instance=ExtResource("9_hqmky")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 0, 229)
