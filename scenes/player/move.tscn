@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/round_hud.tscn" id="6_hud"]
 [ext_resource type="PackedScene" path="res://scenes/player/fugitive_player.tscn" id="7_fugitive"]
 [ext_resource type="PackedScene" uid="uid://by5pu3yig6us7" path="res://scenes/mapacolis.tscn" id="8_krkws"]
-[ext_resource type="PackedScene" uid="uid://cs4o2etd4hxh2" path="res://scenes/pfvrpisca.tscn" id="9_hqmky"]
+[ext_resource type="PackedScene" uid="uid://dn6flkv4cbmpg" path="res://assets/models/CARROS/police.glb" id="9_hqmky"]
 
 [sub_resource type="Animation" id="Animation_tohxk"]
 resource_name = "FastRun"
@@ -508,5 +508,20 @@ mesh = SubResource("PlaneMesh_b5ksb")
 transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, 0, 0, 0)
 metadata/_edit_lock_ = true
 
-[node name="CARROPOL" parent="." unique_id=1378452665 instance=ExtResource("9_hqmky")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 0, 229)
+[node name="police" parent="." unique_id=70608505 instance=ExtResource("9_hqmky")]
+transform = Transform3D(-5.9337387, 0, 0.88923866, 0, 6, 0, -0.88923866, 0, -5.9337387, -19.737835, 0, 231.43614)
+
+[node name="police2" parent="." unique_id=1347629323 instance=ExtResource("9_hqmky")]
+transform = Transform3D(-4.9464164, 0, 3.3960187, 0, 5.999998, 0, -3.3960187, 0, -4.9464164, -47.52242, 0, 233.60895)
+
+[node name="police3" parent="." unique_id=1822350491 instance=ExtResource("9_hqmky")]
+transform = Transform3D(-4.170059, 0, 4.314001, 0, 6.000001, 0, -4.314001, 0, -4.170059, -67.95249, 0, 227.58571)
+
+[node name="police4" parent="." unique_id=1082606483 instance=ExtResource("9_hqmky")]
+transform = Transform3D(-5.534016, 0, -2.3183346, 0, 6.000001, 0, 2.3183346, 0, -5.534016, 7.072, 0, 232.8894)
+
+[node name="police5" parent="." unique_id=551177899 instance=ExtResource("9_hqmky")]
+transform = Transform3D(-1.635696, 0, -5.772737, 0, 6, 0, 5.772737, 0, -1.635696, 35.117714, 0, 208.8588)
+
+[node name="police6" parent="." unique_id=1161925963 instance=ExtResource("9_hqmky")]
+transform = Transform3D(-5.6067, 0.048251066, -2.1360257, 0.060541112, 5.99965, -0.023382407, 2.135713, -0.04340271, -5.6068587, 27.225252, 0, 226.22565)

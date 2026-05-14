@@ -1,7 +1,6 @@
-[gd_scene format=3 uid="uid://dg5wqnfn5pd55"]
+[gd_scene format=3 uid="uid://c5o64eihewchj"]
 
-[ext_resource type="Script" uid="uid://dt3gj2042vnew" path="res://scripts/carropisca.gd" id="1_05ea0"]
-[ext_resource type="PackedScene" uid="uid://dn6flkv4cbmpg" path="res://assets/models/CARROS/police.glb" id="1_x6k1j"]
+[ext_resource type="PackedScene" uid="uid://dn6flkv4cbmpg" path="res://assets/models/CARROS/police.glb" id="1_q8uhm"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_4paln"]
 
@@ -19,6 +18,7 @@ emission_energy_multiplier = 16.0
 
 [sub_resource type="Animation" id="Animation_05ea0"]
 resource_name = "PISCANDO"
+loop_mode = 1
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
@@ -78,22 +78,19 @@ _data = {
 }
 
 [node name="CARROPOL" type="Node3D" unique_id=1378452665]
-script = ExtResource("1_05ea0")
-
-[node name="police" parent="." unique_id=70608505 instance=ExtResource("1_x6k1j")]
-transform = Transform3D(6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0)
 
 [node name="LUZAZUL" type="MeshInstance3D" parent="." unique_id=20447828]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3047881, 7.410264, 0.6164565)
-visible = false
 mesh = SubResource("BoxMesh_4paln")
 surface_material_override/0 = SubResource("StandardMaterial3D_pnqdm")
 
 [node name="LUZVERMELHA" type="MeshInstance3D" parent="." unique_id=12844783]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.3949155, 7.402173, 0.5799641)
-visible = false
 mesh = SubResource("BoxMesh_pnqdm")
 surface_material_override/0 = SubResource("StandardMaterial3D_pi7f1")
 
 [node name="PISCAR" type="AnimationPlayer" parent="." unique_id=676206394]
+reset_on_save = false
 libraries/ = SubResource("AnimationLibrary_s1lgn")
+
+[node name="police" parent="." unique_id=70608505 instance=ExtResource("1_q8uhm")]
