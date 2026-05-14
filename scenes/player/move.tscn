@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/round_hud.tscn" id="6_hud"]
 [ext_resource type="PackedScene" path="res://scenes/player/fugitive_player.tscn" id="7_fugitive"]
 [ext_resource type="PackedScene" uid="uid://by5pu3yig6us7" path="res://scenes/mapacolis.tscn" id="8_krkws"]
-[ext_resource type="PackedScene" uid="uid://dn6flkv4cbmpg" path="res://assets/models/CARROS/police.glb" id="9_hqmky"]
+[ext_resource type="PackedScene" uid="uid://cua7818nxcsdt" path="res://scenes/POLICIAVERMELH.tscn" id="10_b5ksb"]
 
 [sub_resource type="Animation" id="Animation_tohxk"]
 resource_name = "FastRun"
@@ -456,7 +456,7 @@ albedo_color = Color(0, 0.5930351, 0.18549362, 1)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_b5ksb"]
 material = SubResource("StandardMaterial3D_hqmky")
-size = Vector2(150, 400)
+size = Vector2(150, 455)
 
 [node name="JOGO" type="Node3D" unique_id=446853248]
 script = ExtResource("3_round")
@@ -501,27 +501,27 @@ metadata/_edit_group_ = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.49781, 62.085136, 190.49883)
 
 [node name="CHAOFLAT" type="MeshInstance3D" parent="." unique_id=1549766559]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -356.28967, -1.4011841, 110.13052)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -356.28967, -1.4011841, 137.05214)
 mesh = SubResource("PlaneMesh_b5ksb")
 
 [node name="MAPA2" parent="." unique_id=716392980 instance=ExtResource("8_krkws")]
 transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, 0, 0, 0)
 metadata/_edit_lock_ = true
 
-[node name="police" parent="." unique_id=70608505 instance=ExtResource("9_hqmky")]
-transform = Transform3D(-5.9337387, 0, 0.88923866, 0, 6, 0, -0.88923866, 0, -5.9337387, -19.737835, 0, 231.43614)
+[node name="police" parent="." unique_id=70608505 instance=ExtResource("10_b5ksb")]
+transform = Transform3D(-4.96833, -0.09410382, 3.3625655, -0.029815657, 5.998649, 0.12382283, -3.3637505, 0.08582256, -4.9676785, -33.998917, 0, 241.9494)
 
-[node name="police2" parent="." unique_id=1347629323 instance=ExtResource("9_hqmky")]
-transform = Transform3D(-4.9464164, 0, 3.3960187, 0, 5.999998, 0, -3.3960187, 0, -4.9464164, -47.52242, 0, 233.60895)
+[node name="police7" parent="police" unique_id=2097401597 instance=ExtResource("10_b5ksb")]
+transform = Transform3D(0.18076581, -0.004969263, 0.9835135, 0.021195497, 0.9997746, 0.0011557899, -0.9832976, 0.02063712, 0.18083033, -1.9298382, -0.09034097, 3.9119148)
 
-[node name="police3" parent="." unique_id=1822350491 instance=ExtResource("9_hqmky")]
-transform = Transform3D(-4.170059, 0, 4.314001, 0, 6.000001, 0, -4.314001, 0, -4.170059, -67.95249, 0, 227.58571)
+[node name="police2" parent="police" unique_id=1485156738 instance=ExtResource("10_b5ksb")]
+transform = Transform3D(0.5345595, -0.0049692644, 0.8451161, 0.020097047, 0.9997749, -0.0068332744, -0.8448918, 0.020637125, 0.5345388, -6.012768, -0.14889735, 5.765564)
 
-[node name="police4" parent="." unique_id=1082606483 instance=ExtResource("9_hqmky")]
-transform = Transform3D(-5.534016, 0, -2.3183346, 0, 6.000001, 0, 2.3183346, 0, -5.534016, 7.072, 0, 232.8894)
+[node name="police3" parent="police" unique_id=793585675 instance=ExtResource("10_b5ksb")]
+transform = Transform3D(0.8336588, -0.004969263, -0.5522574, -0.0072554406, 0.9997746, -0.019948523, 0.552232, 0.02063712, 0.83343494, 4.6218147, 0.03354633, -0.51226425)
 
-[node name="police5" parent="." unique_id=551177899 instance=ExtResource("9_hqmky")]
-transform = Transform3D(-1.635696, 0, -5.772737, 0, 6, 0, 5.772737, 0, -1.635696, 35.117714, 0, 208.8588)
+[node name="police4" parent="police" unique_id=558597190 instance=ExtResource("10_b5ksb")]
+transform = Transform3D(-0.19525063, -0.004969263, 0.98074067, 0.019270116, 0.9997746, 0.008902108, -0.9805639, 0.02063712, -0.19511098, -7.228464, -0.24388683, 10.074636)
 
-[node name="police6" parent="." unique_id=1161925963 instance=ExtResource("9_hqmky")]
-transform = Transform3D(-5.6067, 0.048251066, -2.1360257, 0.060541112, 5.99965, -0.023382407, 2.135713, -0.04340271, -5.6068587, 27.225252, 0, 226.22565)
+[node name="police5" parent="police" unique_id=442689984 instance=ExtResource("10_b5ksb")]
+transform = Transform3D(0.99964786, -0.0049692625, -0.026063114, 0.0044286493, 0.99977446, -0.020759866, 0.0261603, 0.020637117, 0.9994446, 7.895319, 0.071989596, -1.5864296)
