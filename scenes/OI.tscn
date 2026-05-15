@@ -1,0 +1,96 @@
+[gd_scene format=3 uid="uid://c5o64eihewchj"]
+
+[ext_resource type="PackedScene" uid="uid://dn6flkv4cbmpg" path="res://assets/models/CARROS/police.glb" id="1_q8uhm"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_4paln"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pnqdm"]
+emission_enabled = true
+emission = Color(0, 0.1562872, 0.9006566, 1)
+emission_energy_multiplier = 16.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_pnqdm"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pi7f1"]
+emission_enabled = true
+emission = Color(0.90526885, 3.3450872e-06, 1.1551381e-06, 1)
+emission_energy_multiplier = 16.0
+
+[sub_resource type="Animation" id="Animation_05ea0"]
+resource_name = "PISCANDO"
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("LUZVERMELHA:visible")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [true, false]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("LUZAZUL:visible")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [false, true]
+}
+
+[sub_resource type="Animation" id="Animation_2jilp"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("LUZVERMELHA:visible")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("LUZAZUL:visible")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_s1lgn"]
+_data = {
+&"PISCANDO": SubResource("Animation_05ea0"),
+&"RESET": SubResource("Animation_2jilp")
+}
+
+[node name="CARROPOL" type="Node3D" unique_id=1378452665]
+
+[node name="LUZAZUL" type="MeshInstance3D" parent="." unique_id=20447828]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3047881, 7.410264, 0.6164565)
+mesh = SubResource("BoxMesh_4paln")
+surface_material_override/0 = SubResource("StandardMaterial3D_pnqdm")
+
+[node name="LUZVERMELHA" type="MeshInstance3D" parent="." unique_id=12844783]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.3949155, 7.402173, 0.5799641)
+mesh = SubResource("BoxMesh_pnqdm")
+surface_material_override/0 = SubResource("StandardMaterial3D_pi7f1")
+
+[node name="PISCAR" type="AnimationPlayer" parent="." unique_id=676206394]
+reset_on_save = false
+libraries/ = SubResource("AnimationLibrary_s1lgn")
+
+[node name="police" parent="." unique_id=70608505 instance=ExtResource("1_q8uhm")]

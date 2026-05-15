@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://cua7818nxcsdt"]
+
+[ext_resource type="PackedScene" uid="uid://dn6flkv4cbmpg" path="res://assets/models/CARROS/police.glb" id="1_xxw6n"]
+[ext_resource type="Script" uid="uid://br5e4bbon30dy" path="res://scripts/police.gd" id="2_nx6gg"]
+
+[node name="police" unique_id=70608505 instance=ExtResource("1_xxw6n")]
+transform = Transform3D(6, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0)
+script = ExtResource("2_nx6gg")
+
+[node name="BlueLight" type="OmniLight3D" parent="." index="5" unique_id=448539706]
+transform = Transform3D(0.16666667, 0, 0, 0, 0.16666667, 0, 0, 0, 0.16666667, -0.22700135, 1.2785143, 0.067433044)
+light_color = Color(0.22817954, 0.21268725, 0.9496142, 1)
+light_energy = 8.129
+omni_range = 28.895
+
+[node name="RedLight" type="OmniLight3D" parent="." index="6" unique_id=150791971]
+transform = Transform3D(0.16666667, 0, 0, 0, 0.16666667, 0, 0, 0, 0.16666667, 0.24623577, 1.2911195, 0.0822034)
+light_color = Color(0.8184097, 0, 0.13384235, 1)
+light_energy = 8.402
+omni_range = 28.959
