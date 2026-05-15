@@ -9,12 +9,13 @@ const DEFAULT_STUN: float = 2.0
 @export var acceleration: float = 14.0
 @export var rotation_lerp_speed: float = 12.0
 @export var camera_path: NodePath = ^"../CAMERA"
-@export var fugitive_body_color: Color = Color(0.133, 0.773, 0.369, 1.0)
-@export var fugitive_emission_color: Color = Color(0.29, 0.871, 0.502, 1.0)
-@export var fugitive_emission_energy: float = 0.85
-@export var hunter_body_color: Color = Color(0.937, 0.267, 0.267, 1.0)
-@export var hunter_emission_color: Color = Color(0.976, 0.451, 0.086, 1.0)
-@export var hunter_emission_energy: float = 1.25
+@export var fugitive_body_color: Color = Color(0.015, 0.105, 0.32, 1.0)
+@export var fugitive_emission_color: Color = Color(0.12, 0.58, 1.0, 1.0)
+@export var fugitive_emission_energy: float = 2.15
+@export var hunter_body_color: Color = Color(0.03, 0.14, 0.42, 1.0)
+@export var hunter_emission_color: Color = Color(0.22, 0.74, 0.97, 1.0)
+@export var hunter_emission_energy: float = 2.65
+@export var visual_scale: float = 2.15
 @export var fall_limit_y: float = -5.0
 
 @onready var animator: AnimationPlayer = find_child("AnimationPlayer", true, false) as AnimationPlayer
@@ -36,6 +37,9 @@ var visual_pulse_time: float = 0.0
 var player_ring: MeshInstance3D = null
 var player_shadow: MeshInstance3D = null
 var role_beacon: MeshInstance3D = null
+var avatar_body: MeshInstance3D = null
+var avatar_head: MeshInstance3D = null
+var avatar_visor: MeshInstance3D = null
 var pop_timer: float = 0.0
 var visual_base_position: Vector3 = Vector3.ZERO
 
@@ -45,6 +49,7 @@ func _ready() -> void:
 	_ensure_player_shadow()
 	_ensure_player_ring()
 	_ensure_role_beacon()
+	_ensure_presentation_avatar()
 	_apply_current_palette()
 
 func _physics_process(delta: float) -> void:
@@ -220,6 +225,7 @@ func _apply_current_palette() -> void:
 	palette_material.metallic = 0.05
 	palette_material.emission_enabled = palette_material.emission_energy_multiplier > 0.0
 	_apply_palette_to_meshes(self, palette_material)
+	_update_presentation_avatar_palette()
 
 func _apply_palette_to_meshes(node: Node, palette_material: Material) -> void:
 	for child: Node in node.get_children():
@@ -231,7 +237,7 @@ func _apply_palette_to_meshes(node: Node, palette_material: Material) -> void:
 		_apply_palette_to_meshes(child, palette_material)
 
 func _is_visual_helper(node: Node) -> bool:
-	return node == player_ring or node == player_shadow or node == role_beacon or node.name.begins_with("Token")
+	return node == player_ring or node == player_shadow or node == role_beacon or node.name.begins_with("Token") or node.name.begins_with("HeistAvatar")
 
 func _restore_to_spawn() -> void:
 	global_position = respawn_position
@@ -303,6 +309,68 @@ func _ensure_role_beacon() -> void:
 	add_child(beacon)
 	role_beacon = beacon
 
+func _ensure_presentation_avatar() -> void:
+	avatar_body = get_node_or_null("HeistAvatarBody") as MeshInstance3D
+	avatar_head = get_node_or_null("HeistAvatarHead") as MeshInstance3D
+	avatar_visor = get_node_or_null("HeistAvatarVisor") as MeshInstance3D
+
+	if avatar_body == null:
+		avatar_body = MeshInstance3D.new()
+		avatar_body.name = "HeistAvatarBody"
+		var body_mesh: CapsuleMesh = CapsuleMesh.new()
+		body_mesh.radius = 0.58
+		body_mesh.height = 2.35
+		body_mesh.radial_segments = 24
+		body_mesh.rings = 8
+		avatar_body.mesh = body_mesh
+		avatar_body.position = Vector3(0.0, 2.02, 0.0)
+		add_child(avatar_body)
+
+	if avatar_head == null:
+		avatar_head = MeshInstance3D.new()
+		avatar_head.name = "HeistAvatarHead"
+		var head_mesh: SphereMesh = SphereMesh.new()
+		head_mesh.radius = 0.55
+		head_mesh.height = 0.8
+		head_mesh.radial_segments = 24
+		head_mesh.rings = 12
+		avatar_head.mesh = head_mesh
+		avatar_head.position = Vector3(0.0, 3.35, -0.03)
+		add_child(avatar_head)
+
+	if avatar_visor == null:
+		avatar_visor = MeshInstance3D.new()
+		avatar_visor.name = "HeistAvatarVisor"
+		var visor_mesh: BoxMesh = BoxMesh.new()
+		visor_mesh.size = Vector3(0.86, 0.16, 0.12)
+		avatar_visor.mesh = visor_mesh
+		avatar_visor.position = Vector3(0.0, 3.43, -0.47)
+		add_child(avatar_visor)
+
+	_update_presentation_avatar_palette()
+
+func _update_presentation_avatar_palette() -> void:
+	var role_body_color: Color = hunter_body_color if is_infected else fugitive_body_color
+	var role_glow_color: Color = hunter_emission_color if is_infected else fugitive_emission_color
+	var role_glow_energy: float = hunter_emission_energy if is_infected else fugitive_emission_energy
+
+	if avatar_body:
+		avatar_body.material_override = _create_avatar_material(role_body_color, role_glow_color, role_glow_energy)
+	if avatar_head:
+		avatar_head.material_override = _create_avatar_material(role_body_color.lightened(0.14), role_glow_color, role_glow_energy * 0.85)
+	if avatar_visor:
+		avatar_visor.material_override = _create_avatar_material(Color(0.88, 0.96, 1.0, 1.0), role_glow_color, role_glow_energy * 1.2)
+
+func _create_avatar_material(albedo: Color, emission_color: Color, emission_energy: float) -> StandardMaterial3D:
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.albedo_color = albedo
+	material.roughness = 0.2
+	material.metallic = 0.16
+	material.emission_enabled = true
+	material.emission = emission_color
+	material.emission_energy_multiplier = emission_energy
+	return material
+
 func _create_ring_material() -> StandardMaterial3D:
 	var material: StandardMaterial3D = StandardMaterial3D.new()
 	material.albedo_color = Color(0.898, 0.933, 0.973, 0.78)
@@ -311,6 +379,7 @@ func _create_ring_material() -> StandardMaterial3D:
 	material.emission = Color(0.898, 0.933, 0.973, 1.0)
 	material.emission_energy_multiplier = 0.45
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.no_depth_test = true
 	return material
 
 func _create_shadow_material() -> StandardMaterial3D:
@@ -327,6 +396,7 @@ func _create_beacon_material(color: Color) -> StandardMaterial3D:
 	material.emission = color
 	material.emission_energy_multiplier = 1.4
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.no_depth_test = true
 	return material
 
 func _update_player_ring() -> void:
@@ -374,13 +444,24 @@ func _update_token_presence(delta: float) -> void:
 			beacon_material.emission = role_color
 			beacon_material.emission_energy_multiplier = 1.1 + danger_pulse * (0.9 if is_infected or is_in_danger_visual else 0.25)
 		role_beacon.rotation_degrees.y += delta * (120.0 if is_infected else 70.0)
-		role_beacon.scale = Vector3.ONE * (1.0 + danger_pulse * (0.14 if is_infected or is_in_danger_visual else 0.05))
+		role_beacon.scale = Vector3.ONE * (0.58 + danger_pulse * (0.08 if is_infected or is_in_danger_visual else 0.03))
+
+	if avatar_body:
+		avatar_body.rotation_degrees.z = sin(visual_pulse_time * 8.0) * 2.5 * move_pulse
+	if avatar_head:
+		avatar_head.position = Vector3(0.0, 3.35 + sin(visual_pulse_time * 7.0) * 0.025 * move_pulse, -0.03)
+	if avatar_visor:
+		avatar_visor.position = Vector3(0.0, 3.43 + sin(visual_pulse_time * 7.0) * 0.025 * move_pulse, -0.47)
 
 	if character_visual:
 		var pop_scale: float = 1.0 + (pop_timer / 0.32) * 0.3
 		var bob: float = sin(visual_pulse_time * 9.0) * 0.035 * move_pulse
 		var squash_xz: float = 1.0 + move_pulse * 0.035
-		character_visual.scale = Vector3(squash_xz * pop_scale, (1.0 - move_pulse * 0.02) * pop_scale, squash_xz * pop_scale)
+		character_visual.scale = Vector3(
+			squash_xz * pop_scale * visual_scale,
+			(1.0 - move_pulse * 0.02) * pop_scale * visual_scale,
+			squash_xz * pop_scale * visual_scale
+		)
 		character_visual.position = visual_base_position + Vector3(0.0, bob, 0.0)
 
 func _flash_role_change() -> void:

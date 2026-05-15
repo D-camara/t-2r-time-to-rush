@@ -323,4 +323,6 @@ func _assign_fugitive_slot(player: FugitivePlayer, joined_devices: Array, joined
 		player.visible = true
 		return
 
-	player.deactivate_slot()
+	player.device_id = -1
+	player.is_participating = true
+	player.visible = true

@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://scenes/player/fugitive_player.tscn" id="7_fugitive"]
 [ext_resource type="PackedScene" path="res://assets/models/MAPANOVOCOLIS.tscn" id="8_krkws"]
 [ext_resource type="Script" path="res://scripts/game/arena_style.gd" id="15_arena"]
+[ext_resource type="Script" path="res://scripts/game/map_visibility_helper.gd" id="16_map_visibility"]
 
 [sub_resource type="Animation" id="Animation_tohxk"]
 resource_name = "FastRun"
@@ -459,7 +460,7 @@ material = SubResource("StandardMaterial3D_hqmky")
 size = Vector2(1000, 1000)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_gameplay_floor"]
-size = Vector3(520, 0.4, 540)
+size = Vector3(150, 0.4, 160)
 
 [node name="JOGO" type="Node3D" unique_id=446853248]
 script = ExtResource("3_round")
@@ -504,16 +505,16 @@ device_id = 2
 [node name="HUD" parent="." unique_id=1214818089 instance=ExtResource("6_hud")]
 
 [node name="FUGITIVE_SPAWN" type="Node3D" parent="." unique_id=391150257]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.5, 2, 105)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2, 18)
 
 [node name="FUGITIVE_2_SPAWN" type="Node3D" parent="." unique_id=344666412]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -56, 2, 133)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 2, 22)
 
 [node name="FUGITIVE_3_SPAWN" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -108.5, 2, 105)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 2, 22)
 
 [node name="POLICE_SPAWN" type="Node3D" parent="." unique_id=1241531624]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 2, 182)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2, 38)
 
 [node name="CHAOFLAT" type="MeshInstance3D" parent="." unique_id=1549766559]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.7869854, 0.08146286, -33.511566)
@@ -522,10 +523,11 @@ mesh = SubResource("PlaneMesh_b5ksb")
 metadata/_edit_lock_ = true
 
 [node name="GAMEPLAY_FLOOR" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, -0.2, 138)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, -0.2, 28)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GAMEPLAY_FLOOR"]
 shape = SubResource("BoxShape3D_gameplay_floor")
 
 [node name="MAPANOVIS" parent="." unique_id=1112820765 instance=ExtResource("8_krkws")]
-transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, 0, 23.7, 0)
+transform = Transform3D(-1.6, 0, -1.3987643e-07, 0, 1.6, 0, 1.3987643e-07, 0, -1.6, 0, 10.9, 0)
+script = ExtResource("16_map_visibility")
