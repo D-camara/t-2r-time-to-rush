@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://by5pu3yig6us7" path="res://scenes/mapacolis.tscn" id="8_krkws"]
 [ext_resource type="PackedScene" uid="uid://cua7818nxcsdt" path="res://scenes/POLICIAVERMELH.tscn" id="10_b5ksb"]
 [ext_resource type="Script" path="res://scripts/game/arena_style.gd" id="15_arena"]
+[ext_resource type="Script" path="res://scripts/game/imported_city_collision_builder.gd" id="16_city_collision"]
 
 [sub_resource type="Animation" id="Animation_tohxk"]
 resource_name = "FastRun"
@@ -437,8 +438,8 @@ height = 3.8203125
 radius = 0.3930664
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_86tx1"]
-sky_top_color = Color(0.8219605, 0.9431423, 0.9282102, 1)
-sky_horizon_color = Color(0.058343045, 0.3046049, 0.24021697, 1)
+sky_top_color = Color(0.010, 0.018, 0.040, 1)
+sky_horizon_color = Color(0.028, 0.045, 0.078, 1)
 
 [sub_resource type="Sky" id="Sky_2syaa"]
 sky_material = SubResource("ProceduralSkyMaterial_86tx1")
@@ -446,11 +447,11 @@ sky_material = SubResource("ProceduralSkyMaterial_86tx1")
 [sub_resource type="Environment" id="Environment_c43ro"]
 sky = SubResource("Sky_2syaa")
 ambient_light_source = 3
-ambient_light_color = Color(0.6923086, 0.00042326184, 0.7062721, 1)
-ambient_light_energy = 2.15
+ambient_light_color = Color(0.36, 0.43, 0.56, 1)
+ambient_light_energy = 0.62
 reflected_light_source = 2
-ssao_enabled = true
-glow_enabled = true
+ssao_enabled = false
+glow_enabled = false
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hqmky"]
 albedo_color = Color(0, 0.5930351, 0.18549362, 1)
@@ -460,7 +461,7 @@ material = SubResource("StandardMaterial3D_hqmky")
 size = Vector2(150, 455)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_gameplay_floor"]
-size = Vector3(150, 0.4, 160)
+size = Vector3(260, 0.4, 260)
 
 [node name="JOGO" type="Node3D" unique_id=446853248]
 script = ExtResource("3_round")
@@ -490,6 +491,18 @@ script = ExtResource("4_camera")
 [node name="WorldEnvironment" type="WorldEnvironment" parent="CAMERA" unique_id=1808334499]
 environment = SubResource("Environment_c43ro")
 
+[node name="KEY_LIGHT" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.8660254, -0.35355338, 0.35355338, 0, 0.70710677, 0.70710677, -0.5, -0.61237246, 0.61237246, 0, 80, 0)
+light_color = Color(0.48, 0.58, 0.78, 1)
+light_energy = 0.58
+shadow_enabled = false
+
+[node name="FILL_LIGHT" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 28, 85)
+light_color = Color(0.12, 0.26, 0.48, 1)
+light_energy = 0.14
+omni_range = 95.0
+
 [node name="POLICIAL" parent="." unique_id=1667643868 instance=ExtResource("5_police")]
 
 [node name="FUGITIVO_2" parent="." unique_id=1693917688 instance=ExtResource("7_fugitive")]
@@ -505,16 +518,16 @@ device_id = 2
 [node name="HUD" parent="." unique_id=1214818089 instance=ExtResource("6_hud")]
 
 [node name="FUGITIVE_SPAWN" type="Node3D" parent="." unique_id=391150257]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.49781, 62.085136, 190.49883)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -57.7, 2, 102.3)
 
 [node name="FUGITIVE_2_SPAWN" type="Node3D" parent="." unique_id=344666412]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1907578, 74.94262, 201.66258)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 2, 102.3)
 
 [node name="FUGITIVE_3_SPAWN" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.8, 68.8, 187.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 2, 101.1)
 
 [node name="POLICE_SPAWN" type="Node3D" parent="." unique_id=1241531624]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.877434, 66.685875, 204.88779)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 2, 67.3)
 metadata/_edit_group_ = true
 
 [node name="CHAOFLAT" type="MeshInstance3D" parent="." unique_id=1549766559]
@@ -523,10 +536,11 @@ mesh = SubResource("PlaneMesh_b5ksb")
 
 [node name="MAPA2" parent="." unique_id=716392980 instance=ExtResource("8_krkws")]
 transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, 0, 0, 0)
+script = ExtResource("16_city_collision")
 metadata/_edit_lock_ = true
 
 [node name="GAMEPLAY_FLOOR" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 60.5, 200)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.2, 25)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GAMEPLAY_FLOOR"]
 shape = SubResource("BoxShape3D_gameplay_floor")

@@ -24,12 +24,20 @@ var pulsing_nodes: Array[Node3D] = []
 var floating_nodes: Array[Node3D] = []
 
 func _ready() -> void:
+	if _uses_imported_city_map():
+		set_process(false)
+		return
+
 	_style_environment()
 	_add_heist_lighting()
 	_add_premium_board()
 	_add_heist_zones()
 	_add_vault_markings()
 	_style_props()
+
+func _uses_imported_city_map() -> bool:
+	var scene_root: Node = get_parent()
+	return scene_root != null and scene_root.get_node_or_null("MAPA2") != null
 
 func _process(delta: float) -> void:
 	pulse_time += delta

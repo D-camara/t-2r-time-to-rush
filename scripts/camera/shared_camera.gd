@@ -1,17 +1,17 @@
 extends Camera3D
 
-@export var base_height: float = 34.0
-@export var base_distance: float = 30.0
-@export var position_smoothing: float = 7.2
+@export var base_height: float = 112.0
+@export var base_distance: float = 10.0
+@export var position_smoothing: float = 6.8
 @export var focus_smoothing: float = 7.5
 @export var distance_influence: float = 0.22
-@export var max_bonus_height: float = 12.0
-@export var focus_height: float = 1.4
-@export var movement_look_ahead: float = 0.32
-@export var max_look_ahead_distance: float = 3.5
-@export var orthographic_base_size: float = 22.0
-@export var orthographic_distance_influence: float = 0.16
-@export var orthographic_max_size: float = 42.0
+@export var max_bonus_height: float = 18.0
+@export var focus_height: float = 1.2
+@export var movement_look_ahead: float = 0.18
+@export var max_look_ahead_distance: float = 2.5
+@export var orthographic_base_size: float = 78.0
+@export var orthographic_distance_influence: float = 0.14
+@export var orthographic_max_size: float = 128.0
 @export var orthographic_smoothing: float = 5.5
 @export var snap_distance: float = 80.0
 
