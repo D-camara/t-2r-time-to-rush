@@ -15,8 +15,9 @@ const DEFAULT_STUN: float = 2.0
 @export var hunter_body_color: Color = Color(0.03, 0.14, 0.42, 1.0)
 @export var hunter_emission_color: Color = Color(0.22, 0.74, 0.97, 1.0)
 @export var hunter_emission_energy: float = 2.65
-@export var visual_scale: float = 2.15
+@export var visual_scale: float = 1.2
 @export var fall_limit_y: float = -5.0
+@export var fall_reset_margin: float = 18.0
 
 @onready var animator: AnimationPlayer = find_child("AnimationPlayer", true, false) as AnimationPlayer
 @onready var character_visual: Node3D = find_child("boneco", true, false) as Node3D
@@ -46,6 +47,7 @@ var visual_base_position: Vector3 = Vector3.ZERO
 func _ready() -> void:
 	if character_visual:
 		visual_base_position = character_visual.position
+		character_visual.scale = Vector3.ONE * visual_scale
 	_ensure_player_shadow()
 	_ensure_player_ring()
 	_ensure_role_beacon()
@@ -60,7 +62,7 @@ func _physics_process(delta: float) -> void:
 	_update_player_ring()
 	_update_token_presence(delta)
 
-	if global_position.y < fall_limit_y:
+	if global_position.y < _get_current_fall_limit():
 		_restore_to_spawn()
 		return
 
@@ -162,6 +164,8 @@ func reset_state(spawn_position: Vector3) -> void:
 	is_captured = false
 	is_infected = false
 	is_in_danger_visual = false
+	if character_visual:
+		character_visual.scale = Vector3.ONE * visual_scale
 	_apply_current_palette()
 	_update_player_ring()
 
@@ -245,6 +249,9 @@ func _restore_to_spawn() -> void:
 	movement_velocity = Vector3.ZERO
 	gravity = 0.0
 
+func _get_current_fall_limit() -> float:
+	return maxf(fall_limit_y, respawn_position.y - fall_reset_margin)
+
 func set_danger_visual(enabled: bool) -> void:
 	is_in_danger_visual = enabled
 
@@ -259,8 +266,8 @@ func _ensure_player_ring() -> void:
 	var ring: MeshInstance3D = MeshInstance3D.new()
 	ring.name = "PlayerReadabilityRing"
 	var mesh: CylinderMesh = CylinderMesh.new()
-	mesh.top_radius = 0.72
-	mesh.bottom_radius = 0.72
+	mesh.top_radius = 0.48
+	mesh.bottom_radius = 0.48
 	mesh.height = 0.045
 	mesh.radial_segments = 48
 	ring.mesh = mesh
@@ -278,13 +285,13 @@ func _ensure_player_shadow() -> void:
 	var shadow: MeshInstance3D = MeshInstance3D.new()
 	shadow.name = "TokenGroundShadow"
 	var mesh: CylinderMesh = CylinderMesh.new()
-	mesh.top_radius = 0.92
-	mesh.bottom_radius = 0.92
+	mesh.top_radius = 0.58
+	mesh.bottom_radius = 0.58
 	mesh.height = 0.028
 	mesh.radial_segments = 48
 	shadow.mesh = mesh
-	shadow.scale = Vector3(1.28, 1.0, 0.72)
-	shadow.position = Vector3(0.16, 0.035, 0.22)
+	shadow.scale = Vector3(1.18, 1.0, 0.68)
+	shadow.position = Vector3(0.1, 0.035, 0.14)
 	shadow.material_override = _create_shadow_material()
 	add_child(shadow)
 	player_shadow = shadow
@@ -298,12 +305,12 @@ func _ensure_role_beacon() -> void:
 	var beacon: MeshInstance3D = MeshInstance3D.new()
 	beacon.name = "TokenRoleBeacon"
 	var mesh: CylinderMesh = CylinderMesh.new()
-	mesh.bottom_radius = 0.28
+	mesh.bottom_radius = 0.2
 	mesh.top_radius = 0.0
-	mesh.height = 0.62
+	mesh.height = 0.42
 	mesh.radial_segments = 4
 	beacon.mesh = mesh
-	beacon.position = Vector3(0.0, 4.25, 0.0)
+	beacon.position = Vector3(0.0, 2.55, 0.0)
 	beacon.rotation_degrees.y = 45.0
 	beacon.material_override = _create_beacon_material(fugitive_emission_color)
 	add_child(beacon)
@@ -318,33 +325,33 @@ func _ensure_presentation_avatar() -> void:
 		avatar_body = MeshInstance3D.new()
 		avatar_body.name = "HeistAvatarBody"
 		var body_mesh: CapsuleMesh = CapsuleMesh.new()
-		body_mesh.radius = 0.58
-		body_mesh.height = 2.35
+		body_mesh.radius = 0.34
+		body_mesh.height = 1.42
 		body_mesh.radial_segments = 24
 		body_mesh.rings = 8
 		avatar_body.mesh = body_mesh
-		avatar_body.position = Vector3(0.0, 2.02, 0.0)
+		avatar_body.position = Vector3(0.0, 1.22, 0.0)
 		add_child(avatar_body)
 
 	if avatar_head == null:
 		avatar_head = MeshInstance3D.new()
 		avatar_head.name = "HeistAvatarHead"
 		var head_mesh: SphereMesh = SphereMesh.new()
-		head_mesh.radius = 0.55
-		head_mesh.height = 0.8
+		head_mesh.radius = 0.32
+		head_mesh.height = 0.48
 		head_mesh.radial_segments = 24
 		head_mesh.rings = 12
 		avatar_head.mesh = head_mesh
-		avatar_head.position = Vector3(0.0, 3.35, -0.03)
+		avatar_head.position = Vector3(0.0, 2.02, -0.02)
 		add_child(avatar_head)
 
 	if avatar_visor == null:
 		avatar_visor = MeshInstance3D.new()
 		avatar_visor.name = "HeistAvatarVisor"
 		var visor_mesh: BoxMesh = BoxMesh.new()
-		visor_mesh.size = Vector3(0.86, 0.16, 0.12)
+		visor_mesh.size = Vector3(0.52, 0.1, 0.08)
 		avatar_visor.mesh = visor_mesh
-		avatar_visor.position = Vector3(0.0, 3.43, -0.47)
+		avatar_visor.position = Vector3(0.0, 2.07, -0.28)
 		add_child(avatar_visor)
 
 	_update_presentation_avatar_palette()
@@ -435,7 +442,7 @@ func _update_token_presence(delta: float) -> void:
 
 	if player_shadow:
 		var shadow_scale: float = 1.0 + move_pulse * 0.18
-		player_shadow.scale = Vector3(1.28 * shadow_scale, 1.0, 0.72 * shadow_scale)
+		player_shadow.scale = Vector3(1.18 * shadow_scale, 1.0, 0.68 * shadow_scale)
 
 	if role_beacon:
 		var beacon_material: StandardMaterial3D = role_beacon.material_override as StandardMaterial3D
@@ -449,9 +456,9 @@ func _update_token_presence(delta: float) -> void:
 	if avatar_body:
 		avatar_body.rotation_degrees.z = sin(visual_pulse_time * 8.0) * 2.5 * move_pulse
 	if avatar_head:
-		avatar_head.position = Vector3(0.0, 3.35 + sin(visual_pulse_time * 7.0) * 0.025 * move_pulse, -0.03)
+		avatar_head.position = Vector3(0.0, 2.02 + sin(visual_pulse_time * 7.0) * 0.018 * move_pulse, -0.02)
 	if avatar_visor:
-		avatar_visor.position = Vector3(0.0, 3.43 + sin(visual_pulse_time * 7.0) * 0.025 * move_pulse, -0.47)
+		avatar_visor.position = Vector3(0.0, 2.07 + sin(visual_pulse_time * 7.0) * 0.018 * move_pulse, -0.28)
 
 	if character_visual:
 		var pop_scale: float = 1.0 + (pop_timer / 0.32) * 0.3

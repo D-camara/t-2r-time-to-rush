@@ -4,8 +4,8 @@
 [ext_resource type="PackedScene" path="res://scenes/player/animated_boneco.tscn" id="2_boneco"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_fugitive"]
-height = 3.8203125
-radius = 0.3930664
+height = 2.25
+radius = 0.28
 
 [node name="FugitivePlayer" type="CharacterBody3D"]
 script = ExtResource("1_fugitive")
@@ -13,5 +13,5 @@ script = ExtResource("1_fugitive")
 [node name="boneco" parent="." instance=ExtResource("2_boneco")]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9908683, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0)
 shape = SubResource("CylinderShape3D_fugitive")

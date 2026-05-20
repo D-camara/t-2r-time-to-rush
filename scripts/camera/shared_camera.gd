@@ -1,19 +1,14 @@
 extends Camera3D
 
-@export var base_height: float = 112.0
-@export var base_distance: float = 10.0
-@export var position_smoothing: float = 6.8
+@export var base_height: float = 24.0
+@export var base_distance: float = 14.0
+@export var position_smoothing: float = 6.2
 @export var focus_smoothing: float = 7.5
-@export var distance_influence: float = 0.22
-@export var max_bonus_height: float = 18.0
-@export var focus_height: float = 1.2
-@export var movement_look_ahead: float = 0.18
-@export var max_look_ahead_distance: float = 2.5
-@export var orthographic_base_size: float = 78.0
-@export var orthographic_distance_influence: float = 0.14
-@export var orthographic_max_size: float = 128.0
-@export var orthographic_smoothing: float = 5.5
-@export var snap_distance: float = 80.0
+@export var distance_influence: float = 0.58
+@export var max_bonus_height: float = 14.0
+@export var focus_height: float = 1.5
+@export var movement_look_ahead: float = 0.4
+@export var max_look_ahead_distance: float = 4.5
 
 @onready var fugitive: FugitivePlayer = get_parent().get_node_or_null("PERSONAGEM")
 @onready var second_fugitive: FugitivePlayer = get_parent().get_node_or_null("FUGITIVO_2")
@@ -24,14 +19,10 @@ var smoothed_focus_point: Vector3 = Vector3.ZERO
 var is_initialized: bool = false
 
 func _ready() -> void:
-	projection = Camera3D.PROJECTION_ORTHOGONAL
-	size = orthographic_base_size
 	if not fugitive:
 		return
 
 	smoothed_focus_point = _get_target_focus_point()
-	global_position = _get_desired_position(smoothed_focus_point, _get_player_separation())
-	look_at(smoothed_focus_point + Vector3.UP * focus_height, Vector3.UP)
 	is_initialized = true
 
 func _process(delta: float) -> void:
@@ -44,35 +35,19 @@ func _process(delta: float) -> void:
 
 	var target_focus_point: Vector3 = _get_target_focus_point()
 	var separation: float = _get_player_separation()
-	if smoothed_focus_point.distance_to(target_focus_point) > snap_distance:
-		smoothed_focus_point = target_focus_point
-		global_position = _get_desired_position(smoothed_focus_point, separation)
-		size = _get_desired_orthographic_size(separation)
-		look_at(smoothed_focus_point + Vector3.UP * focus_height, Vector3.UP)
-		return
+	var bonus_height: float = min(separation * distance_influence, max_bonus_height)
 
 	smoothed_focus_point = smoothed_focus_point.lerp(target_focus_point, delta * focus_smoothing)
-	var desired_position: Vector3 = _get_desired_position(smoothed_focus_point, separation)
-	global_position = global_position.lerp(desired_position, delta * position_smoothing)
-	size = lerp(size, _get_desired_orthographic_size(separation), delta * orthographic_smoothing)
-	look_at(smoothed_focus_point + Vector3.UP * focus_height, Vector3.UP)
-
-func _get_desired_position(focus_point: Vector3, separation: float) -> Vector3:
-	var bonus_height: float = min(separation * distance_influence, max_bonus_height)
-	return focus_point + Vector3(
+	var desired_position: Vector3 = smoothed_focus_point + Vector3(
 		0.0,
 		base_height + bonus_height,
 		base_distance + bonus_height * 0.5
 	)
-
-func _get_desired_orthographic_size(separation: float) -> float:
-	return min(orthographic_base_size + separation * orthographic_distance_influence, orthographic_max_size)
+	global_position = global_position.lerp(desired_position, delta * position_smoothing)
+	look_at(smoothed_focus_point + Vector3.UP * focus_height, Vector3.UP)
 
 func _get_target_focus_point() -> Vector3:
 	var tracked_players: Array[CharacterBody3D] = _get_tracked_players()
-	if tracked_players.is_empty():
-		return global_position
-
 	var midpoint: Vector3 = Vector3.ZERO
 	var average_velocity: Vector3 = Vector3.ZERO
 
@@ -105,11 +80,11 @@ func _get_player_separation() -> float:
 
 func _get_tracked_players() -> Array[CharacterBody3D]:
 	var tracked_players: Array[CharacterBody3D] = []
-	if fugitive and fugitive.is_participating:
+	if fugitive:
 		tracked_players.append(fugitive)
-	if second_fugitive and second_fugitive.is_participating:
+	if second_fugitive:
 		tracked_players.append(second_fugitive)
-	if third_fugitive and third_fugitive.is_participating:
+	if third_fugitive:
 		tracked_players.append(third_fugitive)
 	if police:
 		tracked_players.append(police)

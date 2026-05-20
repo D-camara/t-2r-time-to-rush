@@ -9,15 +9,19 @@ enum RoundState {
 
 @export var round_duration: float = 45.0
 @export var pre_round_countdown: float = 3.0
-@export var capture_distance: float = 1.75
+@export var capture_distance: float = 1.35
 @export var danger_distance: float = 6.0
 @export var low_time_threshold: float = 12.0
 @export var fugitive_speed: float = 11.0
 @export var fugitive_acceleration: float = 13.5
 @export var police_speed: float = 11.9
 @export var police_acceleration: float = 9.2
-@export var infected_hunter_speed: float = 10.4
+@export var infected_hunter_speed: float = 10.8
 @export var infected_hunter_acceleration: float = 8.6
+@export var hunter_speed_loss_per_capture: float = 0.75
+@export var minimum_hunter_speed: float = 9.0
+@export var fugitive_speed_gain_per_capture: float = 0.55
+@export var maximum_fugitive_speed: float = 12.6
 @export var fugitive_spawn: Vector3 = Vector3(0.0, 2.0, 0.0)
 @export var second_fugitive_spawn: Vector3 = Vector3(-12.0, 2.0, -4.0)
 @export var third_fugitive_spawn: Vector3 = Vector3(-2.0, 2.0, -12.0)
@@ -84,13 +88,7 @@ func start_round() -> void:
 	if third_fugitive.is_participating:
 		third_fugitive.reset_state(_get_third_fugitive_spawn_position())
 	police.reset_state(_get_police_spawn_position())
-	if fugitive.is_participating:
-		fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
-	if second_fugitive.is_participating:
-		second_fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
-	if third_fugitive.is_participating:
-		third_fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
-	police.configure_movement(police_speed, police_acceleration)
+	_apply_speed_balance()
 	if hud:
 		hud.hide_round_result()
 		hud.show_round_banner("Roubo em andamento")
@@ -285,16 +283,39 @@ func _get_distance_between(point_a: Vector3, point_b: Vector3) -> float:
 	return Vector2(point_a.x - point_b.x, point_a.z - point_b.z).length()
 
 func _apply_infected_hunter_balance() -> void:
-	police.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
+	_apply_speed_balance()
+
+func _apply_speed_balance() -> void:
+	var capture_count: int = _get_capture_count()
+	var active_fugitive_speed: float = minf(
+		fugitive_speed + float(capture_count) * fugitive_speed_gain_per_capture,
+		maximum_fugitive_speed
+	)
+	var hunter_speed: float = maxf(
+		police_speed - float(capture_count) * hunter_speed_loss_per_capture,
+		minimum_hunter_speed
+	)
+
+	if capture_count > 0:
+		hunter_speed = minf(hunter_speed, infected_hunter_speed)
+
+	if police:
+		police.configure_movement(hunter_speed, police_acceleration if capture_count == 0 else infected_hunter_acceleration)
+
+	for active_fugitive: FugitivePlayer in _get_active_fugitives():
+		active_fugitive.configure_movement(active_fugitive_speed, fugitive_acceleration)
 
 	if fugitive and fugitive.is_infected:
-		fugitive.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
+		fugitive.configure_movement(hunter_speed, infected_hunter_acceleration)
 
 	if second_fugitive and second_fugitive.is_infected:
-		second_fugitive.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
+		second_fugitive.configure_movement(hunter_speed, infected_hunter_acceleration)
 
 	if third_fugitive and third_fugitive.is_infected:
-		third_fugitive.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
+		third_fugitive.configure_movement(hunter_speed, infected_hunter_acceleration)
+
+func _get_capture_count() -> int:
+	return _get_participating_fugitive_count() - _get_active_fugitives().size()
 
 func _configure_players_from_lobby() -> void:
 	var input_manager: Node = get_node_or_null("/root/InputManager")
