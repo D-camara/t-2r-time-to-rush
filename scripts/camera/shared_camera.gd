@@ -48,6 +48,9 @@ func _process(delta: float) -> void:
 
 func _get_target_focus_point() -> Vector3:
 	var tracked_players: Array[CharacterBody3D] = _get_tracked_players()
+	if tracked_players.is_empty():
+		return global_position
+
 	var midpoint: Vector3 = Vector3.ZERO
 	var average_velocity: Vector3 = Vector3.ZERO
 
@@ -80,11 +83,11 @@ func _get_player_separation() -> float:
 
 func _get_tracked_players() -> Array[CharacterBody3D]:
 	var tracked_players: Array[CharacterBody3D] = []
-	if fugitive:
+	if fugitive and fugitive.is_participating:
 		tracked_players.append(fugitive)
-	if second_fugitive:
+	if second_fugitive and second_fugitive.is_participating:
 		tracked_players.append(second_fugitive)
-	if third_fugitive:
+	if third_fugitive and third_fugitive.is_participating:
 		tracked_players.append(third_fugitive)
 	if police:
 		tracked_players.append(police)

@@ -40,6 +40,7 @@ enum RoundState {
 var current_state: int = RoundState.COUNTDOWN
 var remaining_time: float = 0.0
 var countdown_remaining: float = 0.0
+var police_character_name: String = "Policial"
 
 func _ready() -> void:
 	start_round()
@@ -158,7 +159,7 @@ func _process_countdown(delta: float) -> void:
 
 func _get_countdown_message() -> String:
 	if countdown_remaining > 0.0:
-		return "A rodada comeca em %d" % int(ceil(countdown_remaining))
+		return "%s virou policial | A rodada comeca em %d" % [police_character_name, int(ceil(countdown_remaining))]
 	return "Valendo!"
 
 func _get_playing_status_message() -> String:
@@ -192,7 +193,7 @@ func _get_status_color() -> Color:
 	return RoundHud.COLOR_DEFAULT
 
 func _get_controls_hint() -> String:
-	return "Controle 1 vira Policia | Capturados viram pegadores | R: Reiniciar"
+	return "%s e o policial inicial | Capturados viram pegadores | R: Reiniciar" % police_character_name
 
 func _get_fugitive_spawn_position() -> Vector3:
 	if fugitive_spawn_marker:
@@ -330,11 +331,39 @@ func _configure_players_from_lobby() -> void:
 	if joined_devices.is_empty():
 		return
 
+	if input_manager.has_method("get_police_device") and input_manager.has_method("get_fugitive_devices"):
+		var chosen_police_device: int = int(input_manager.call("get_police_device"))
+		if chosen_police_device != -1:
+			police.device_id = chosen_police_device
+			var police_name_result: Variant = input_manager.call("get_police_character_name")
+			var selected_police_name: String = str(police_name_result)
+			if not selected_police_name.is_empty():
+				police_character_name = selected_police_name
+
+			var fugitive_result: Variant = input_manager.call("get_fugitive_devices")
+			if fugitive_result is Array:
+				var fugitive_devices: Array = fugitive_result
+				_assign_fugitive_from_device_list(fugitive, fugitive_devices, 0)
+				_assign_fugitive_from_device_list(second_fugitive, fugitive_devices, 1)
+				_assign_fugitive_from_device_list(third_fugitive, fugitive_devices, 2)
+				return
+
 	police.device_id = int(joined_devices[0])
+	police_character_name = "Controle %d" % police.device_id
 
 	_assign_fugitive_slot(fugitive, joined_devices, 1)
 	_assign_fugitive_slot(second_fugitive, joined_devices, 2)
 	_assign_fugitive_slot(third_fugitive, joined_devices, 3)
+
+func _assign_fugitive_from_device_list(player: FugitivePlayer, fugitive_devices: Array, fugitive_index: int) -> void:
+	player.use_keyboard_input = false
+	if fugitive_devices.size() > fugitive_index:
+		player.device_id = int(fugitive_devices[fugitive_index])
+		player.is_participating = true
+		player.visible = true
+		return
+
+	player.deactivate_slot()
 
 func _assign_fugitive_slot(player: FugitivePlayer, joined_devices: Array, joined_index: int) -> void:
 	player.use_keyboard_input = false
@@ -345,5 +374,4 @@ func _assign_fugitive_slot(player: FugitivePlayer, joined_devices: Array, joined
 		return
 
 	player.device_id = -1
-	player.is_participating = true
-	player.visible = true
+	player.deactivate_slot()
