@@ -29,8 +29,10 @@ func _draw() -> void:
 
 	_draw_layered_gradient(rect_size)
 	_draw_tactical_grid(rect_size)
+	_draw_floating_bills(rect_size)
 	_draw_light_beams(rect_size)
 	_draw_security_lanes(rect_size)
+	_draw_bank_facade(Vector2(rect_size.x * 0.5, rect_size.y * 0.17), min(rect_size.x, rect_size.y) * 0.22)
 	_draw_vault_door(Vector2(rect_size.x * 0.78, rect_size.y * 0.42), min(rect_size.x, rect_size.y) * 0.245)
 	_draw_money_stack(Vector2(rect_size.x * 0.12, rect_size.y * 0.78), min(rect_size.x, rect_size.y) * 0.19)
 	_draw_alarm_panel(Vector2(rect_size.x * 0.58, rect_size.y * 0.16), min(rect_size.x, rect_size.y) * 0.115)
@@ -74,6 +76,34 @@ func _draw_light_beams(rect_size: Vector2) -> void:
 			Vector2(start_x + rect_size.x * 0.17, rect_size.y),
 		])
 		draw_colored_polygon(points, beam_color)
+
+func _draw_floating_bills(rect_size: Vector2) -> void:
+	for index: int in range(24):
+		var wave: float = sin(animation_time * 0.8 + float(index) * 1.7)
+		var x: float = fposmod(float(index) * rect_size.x * 0.149 + animation_time * 24.0, rect_size.x + 90.0) - 45.0
+		var y: float = rect_size.y * (0.18 + fposmod(float(index) * 0.137, 0.68)) + wave * 18.0
+		var bill_size: Vector2 = Vector2(46.0 + float(index % 3) * 8.0, 20.0)
+		var bill: Rect2 = Rect2(Vector2(x, y), bill_size)
+		draw_rect(Rect2(bill.position + Vector2(4.0, 5.0), bill.size), Color(0.0, 0.0, 0.0, 0.12))
+		draw_rect(bill, Color(MONEY_GREEN.r, MONEY_GREEN.g, MONEY_GREEN.b, 0.16))
+		draw_rect(Rect2(bill.position + Vector2(bill.size.x * 0.42, 0.0), Vector2(bill.size.x * 0.16, bill.size.y)), Color(GOLD.r, GOLD.g, GOLD.b, 0.12))
+
+func _draw_bank_facade(center: Vector2, radius: float) -> void:
+	var base_rect: Rect2 = Rect2(center - Vector2(radius * 1.4, radius * 0.42), Vector2(radius * 2.8, radius * 0.84))
+	draw_rect(Rect2(base_rect.position + Vector2(14.0, 16.0), base_rect.size), Color(0.0, 0.0, 0.0, 0.22))
+	draw_rect(base_rect, Color(PANEL_DARK.r, PANEL_DARK.g, PANEL_DARK.b, 0.38))
+	draw_line(base_rect.position, base_rect.position + Vector2(base_rect.size.x, 0.0), Color(GOLD.r, GOLD.g, GOLD.b, 0.22), 4.0)
+	draw_line(base_rect.position + Vector2(0.0, base_rect.size.y), base_rect.position + base_rect.size, Color(CYAN.r, CYAN.g, CYAN.b, 0.17), 3.0)
+
+	var roof: PackedVector2Array = PackedVector2Array([
+		Vector2(center.x - radius * 1.55, base_rect.position.y),
+		Vector2(center.x, base_rect.position.y - radius * 0.42),
+		Vector2(center.x + radius * 1.55, base_rect.position.y),
+	])
+	draw_colored_polygon(roof, Color(GOLD.r, GOLD.g, GOLD.b, 0.18))
+	for column: int in range(5):
+		var x: float = center.x - radius * 1.05 + float(column) * radius * 0.52
+		draw_rect(Rect2(x, base_rect.position.y + radius * 0.12, radius * 0.16, radius * 0.54), Color(CYAN.r, CYAN.g, CYAN.b, 0.12))
 
 func _draw_security_lanes(rect_size: Vector2) -> void:
 	var pulse: float = (sin(animation_time * 4.0) + 1.0) * 0.5

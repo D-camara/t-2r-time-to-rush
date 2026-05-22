@@ -15,9 +15,9 @@ grow_vertical = 2
 
 [node name="TopLeft" type="MarginContainer" parent="Control"]
 layout_mode = 1
-offset_left = 24.0
+offset_left = 88.0
 offset_top = 20.0
-offset_right = 360.0
+offset_right = 442.0
 offset_bottom = 170.0
 
 [node name="InfoColumn" type="VBoxContainer" parent="Control/TopLeft"]
@@ -26,12 +26,12 @@ layout_mode = 2
 [node name="TimeLabel" type="Label" parent="Control/TopLeft/InfoColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-text = "Tempo: 45"
+text = "COFRE  45"
 
 [node name="FugitivesLabel" type="Label" parent="Control/TopLeft/InfoColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "Fugitivos livres: 3/3"
+text = "EQUIPE  3/3    GUARDAS  1"
 
 [node name="SkillLabel" type="Label" parent="Control/TopLeft/InfoColumn"]
 layout_mode = 2
@@ -52,9 +52,9 @@ text = "Fuja ate o tempo acabar"
 
 [node name="BottomLeft" type="MarginContainer" parent="Control"]
 layout_mode = 1
-offset_left = 24.0
+offset_left = 88.0
 offset_top = 636.0
-offset_right = 620.0
+offset_right = 684.0
 offset_bottom = 700.0
 
 [node name="ControlsLabel" type="Label" parent="Control/BottomLeft"]

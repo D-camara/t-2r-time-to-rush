@@ -15,7 +15,7 @@ func try_activate() -> void:
 
 	var target: CharacterBody3D = _get_nearest_hunter()
 	if target == null:
-		_show_message("Nenhum pegador no alcance")
+		_show_message("Nenhum guarda no alcance")
 		return
 
 	if target.has_method("apply_hunter_disruption"):

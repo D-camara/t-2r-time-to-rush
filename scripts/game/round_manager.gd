@@ -92,7 +92,7 @@ func start_round() -> void:
 	_apply_speed_balance()
 	if hud:
 		hud.hide_round_result()
-		hud.show_round_banner("Roubo em andamento")
+		hud.show_round_banner("Assalto ao banco iniciado")
 	if fugitive.is_participating:
 		fugitive.set_input_enabled(false)
 	if second_fugitive.is_participating:
@@ -118,14 +118,14 @@ func _finish_round(result: int) -> void:
 
 	if result == RoundState.POLICE_WIN:
 		if hud:
-			hud.show_round_result("Pegadores venceram", "Todos os fugitivos foram convertidos antes do cofre fechar.", false)
-		_update_hud("Pegadores venceram! Aperte R para reiniciar")
+			hud.show_round_result("Seguranca venceu", "Todos os fugitivos foram interceptados antes da fuga.", false)
+		_update_hud("Seguranca venceu! Aperte R para reiniciar")
 		return
 
 	remaining_time = 0.0
 	if hud:
-		hud.show_round_result("Fugitivos venceram", "Pelo menos um jogador escapou ate o fim da operacao.", true)
-	_update_hud("Fugitivos venceram! Aperte R para reiniciar")
+		hud.show_round_result("Assalto concluido", "Pelo menos um fugitivo escapou com o cofre aberto.", true)
+	_update_hud("Assalto concluido! Aperte R para reiniciar")
 
 func _update_hud(status_message: String) -> void:
 	if not hud:
@@ -160,20 +160,20 @@ func _process_countdown(delta: float) -> void:
 
 func _get_countdown_message() -> String:
 	if countdown_remaining > 0.0:
-		return "%s virou policial | A rodada comeca em %d" % [police_character_name, int(ceil(countdown_remaining))]
-	return "Valendo!"
+		return "%s virou guarda | Invasao em %d" % [police_character_name, int(ceil(countdown_remaining))]
+	return "Cofre aberto!"
 
 func _get_playing_status_message() -> String:
 	if _get_active_fugitives().size() == 1:
-		return "So restou um fugitivo livre"
+		return "Ultimo fugitivo com acesso ao cofre"
 
 	if _is_any_fugitive_in_danger():
-		return "Perigo! Os pegadores estao perto"
+		return "Alerta! Guardas perto do cofre"
 
 	if remaining_time <= low_time_threshold:
-		return "Ultimos segundos! Continuem fugindo"
+		return "Ultimos segundos para fugir do banco"
 
-	return "Fujam ate o tempo acabar"
+	return "Segurem o cofre ate o timer zerar"
 
 func _get_status_color() -> Color:
 	if current_state == RoundState.COUNTDOWN:
@@ -194,7 +194,7 @@ func _get_status_color() -> Color:
 	return RoundHud.COLOR_DEFAULT
 
 func _get_controls_hint() -> String:
-	return "%s e o policial inicial | Capturados viram pegadores | R: Reiniciar" % police_character_name
+	return "%s e o guarda inicial | Capturados viram seguranca | R: Reiniciar" % police_character_name
 
 func show_skill_message(_player: FugitivePlayer, message: String) -> void:
 	if hud:
@@ -260,13 +260,13 @@ func _infect_fugitive(target: FugitivePlayer) -> void:
 	target.infect()
 	_apply_infected_hunter_balance()
 	if hud:
-		hud.show_capture_flash("Contagio confirmado")
+		hud.show_capture_flash("Fugitivo interceptado")
 
 	if _get_active_fugitives().is_empty():
 		_finish_round(RoundState.POLICE_WIN)
 		return
 
-	_update_hud("Contagio! Mais um pegador entrou na perseguicao")
+	_update_hud("Alarme reforcado! Mais um guarda na perseguicao")
 
 func _is_any_fugitive_in_danger() -> bool:
 	for active_fugitive: FugitivePlayer in _get_active_fugitives():

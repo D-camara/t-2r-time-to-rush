@@ -1,6 +1,9 @@
 class_name RoundHud
 extends CanvasLayer
 
+const FONT_ARCADE: FontFile = preload("res://assets/ui/fonts/PressStart2P-Regular.ttf")
+const FONT_UI: FontFile = preload("res://assets/ui/fonts/KenneyFuture.ttf")
+
 @onready var time_label: Label = $Control/TopLeft/InfoColumn/TimeLabel
 @onready var fugitives_label: Label = $Control/TopLeft/InfoColumn/FugitivesLabel
 @onready var skill_label: Label = $Control/TopLeft/InfoColumn/SkillLabel
@@ -24,6 +27,10 @@ var result_title_label: Label = null
 var result_subtitle_label: Label = null
 var danger_flash: ColorRect = null
 var banner_label: Label = null
+var vault_icon: HeistIcon = null
+var cash_icon: HeistIcon = null
+var alarm_icon: HeistIcon = null
+var keycard_icon: HeistIcon = null
 var hud_time: float = 0.0
 var capture_flash_time: float = 0.0
 var banner_time: float = 0.0
@@ -34,13 +41,19 @@ func _ready() -> void:
 	_apply_hud_style()
 	timer_base_position = time_label.position
 	status_base_position = status_label.position
-	controls_label.text = "Controle 1 vira Policia | Capturados viram pegadores | R: Reiniciar"
+	controls_label.text = "Controle 1 vira guarda | Capturados viram seguranca | R: Reiniciar"
 	skill_label.text = ""
 	status_label.modulate = COLOR_DEFAULT
 	time_label.modulate = COLOR_DEFAULT
 
 func _process(delta: float) -> void:
 	hud_time += delta
+	if vault_icon:
+		vault_icon.rotation = sin(hud_time * 0.9) * 0.025
+	if cash_icon:
+		cash_icon.modulate.a = 0.7 + (sin(hud_time * 2.6) + 1.0) * 0.12
+	if alarm_icon:
+		alarm_icon.visible = capture_flash_time > 0.0 or time_label.modulate == COLOR_WARNING
 	if capture_flash_time > 0.0:
 		capture_flash_time = max(capture_flash_time - delta, 0.0)
 		if danger_flash:
@@ -64,7 +77,7 @@ func _process(delta: float) -> void:
 			banner_label.visible = false
 
 func update_timer(time_left: float, is_warning: bool = false) -> void:
-	time_label.text = "T-MINUS  %02d" % int(ceil(time_left))
+	time_label.text = "COFRE  %02d" % int(ceil(time_left))
 	time_label.modulate = COLOR_WARNING if is_warning else COLOR_DEFAULT
 	if is_warning:
 		var pulse: float = (sin(float(Time.get_ticks_msec()) * 0.012) + 1.0) * 0.5
@@ -78,10 +91,10 @@ func update_timer(time_left: float, is_warning: bool = false) -> void:
 		time_label.add_theme_color_override("font_shadow_color", Color(0.918, 0.702, 0.031, 0.55))
 
 func update_active_fugitives(active_count: int, total_count: int) -> void:
-	fugitives_label.text = "RUNNERS  %d/%d" % [active_count, total_count]
+	fugitives_label.text = "EQUIPE  %d/%d" % [active_count, total_count]
 
 func update_round_counts(active_fugitives: int, total_fugitives: int, hunter_count: int) -> void:
-	fugitives_label.text = "RUNNERS  %d/%d    CHASERS  %d" % [active_fugitives, total_fugitives, hunter_count]
+	fugitives_label.text = "EQUIPE  %d/%d    GUARDAS  %d" % [active_fugitives, total_fugitives, hunter_count]
 
 func update_skill_status(message: String) -> void:
 	skill_label.text = message
@@ -105,7 +118,7 @@ func show_round_result(title: String, subtitle: String, is_success: bool) -> voi
 	var accent: Color = COLOR_SUCCESS if is_success else COLOR_DANGER
 	result_title_label.add_theme_color_override("font_color", accent)
 	result_overlay.add_theme_stylebox_override("panel", _make_result_style(accent))
-	_show_banner("OPERACAO FINALIZADA", accent)
+	_show_banner("OPERACAO DO COFRE FINALIZADA", accent)
 
 func hide_round_result() -> void:
 	if result_overlay:
@@ -123,28 +136,34 @@ func _apply_hud_style() -> void:
 	_create_panel_for(top_center, Color(0.094, 0.133, 0.208, 0.78))
 	_create_panel_for(bottom_left, Color(0.043, 0.063, 0.125, 0.72))
 	_create_screen_flash()
+	_create_hud_heist_icons()
 	_create_banner()
 	_create_result_overlay()
 
 	time_label.add_theme_color_override("font_color", COLOR_WARNING)
+	time_label.add_theme_font_override("font", FONT_ARCADE)
 	time_label.add_theme_color_override("font_shadow_color", Color(0.918, 0.702, 0.031, 0.55))
 	time_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
 	time_label.add_theme_constant_override("outline_size", 7)
 	time_label.add_theme_constant_override("shadow_offset_x", 0)
 	time_label.add_theme_constant_override("shadow_offset_y", 5)
-	time_label.add_theme_font_size_override("font_size", 34)
+	time_label.add_theme_font_size_override("font_size", 32)
 	fugitives_label.add_theme_color_override("font_color", COLOR_SUCCESS)
+	fugitives_label.add_theme_font_override("font", FONT_UI)
 	fugitives_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
 	fugitives_label.add_theme_constant_override("outline_size", 5)
-	fugitives_label.add_theme_font_size_override("font_size", 25)
+	fugitives_label.add_theme_font_size_override("font_size", 24)
 	skill_label.add_theme_color_override("font_color", COLOR_CYAN)
+	skill_label.add_theme_font_override("font", FONT_UI)
 	skill_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
 	skill_label.add_theme_constant_override("outline_size", 4)
 	skill_label.add_theme_font_size_override("font_size", 20)
 	status_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.75))
+	status_label.add_theme_font_override("font", FONT_UI)
 	status_label.add_theme_constant_override("outline_size", 6)
 	status_label.add_theme_font_size_override("font_size", 30)
 	controls_label.add_theme_color_override("font_color", COLOR_MUTED)
+	controls_label.add_theme_font_override("font", FONT_UI)
 	controls_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.65))
 	controls_label.add_theme_constant_override("outline_size", 3)
 
@@ -221,6 +240,31 @@ func _create_screen_flash() -> void:
 	$Control.add_child(danger_flash)
 	$Control.move_child(danger_flash, 0)
 
+func _create_hud_heist_icons() -> void:
+	vault_icon = _make_hud_icon("VaultTimerIcon", HeistIcon.IconType.VAULT, Vector2(0.012, 0.026), Vector2(0.05, 0.082), COLOR_WARNING, 0.95)
+	cash_icon = _make_hud_icon("CashCrewIcon", HeistIcon.IconType.MONEY_STACK, Vector2(0.014, 0.108), Vector2(0.054, 0.072), COLOR_SUCCESS, 0.88)
+	alarm_icon = _make_hud_icon("AlarmDangerIcon", HeistIcon.IconType.ALARM, Vector2(0.47, 0.085), Vector2(0.06, 0.086), COLOR_DANGER, 0.95)
+	keycard_icon = _make_hud_icon("KeycardControlsIcon", HeistIcon.IconType.KEYCARD, Vector2(0.012, 0.9), Vector2(0.052, 0.07), COLOR_CYAN, 0.75)
+	alarm_icon.visible = false
+
+func _make_hud_icon(icon_name: String, icon_type: int, anchor_position: Vector2, anchor_size: Vector2, accent: Color, opacity: float) -> HeistIcon:
+	var icon: HeistIcon = HeistIcon.new()
+	icon.name = icon_name
+	icon.icon_type = icon_type
+	icon.accent = accent
+	icon.opacity = opacity
+	icon.anchor_left = anchor_position.x
+	icon.anchor_top = anchor_position.y
+	icon.anchor_right = anchor_position.x + anchor_size.x
+	icon.anchor_bottom = anchor_position.y + anchor_size.y
+	icon.offset_left = 0.0
+	icon.offset_top = 0.0
+	icon.offset_right = 0.0
+	icon.offset_bottom = 0.0
+	$Control.add_child(icon)
+	$Control.move_child(icon, 1)
+	return icon
+
 func _create_banner() -> void:
 	banner_label = Label.new()
 	banner_label.name = "ArcadeImpactBanner"
@@ -233,6 +277,7 @@ func _create_banner() -> void:
 	banner_label.offset_right = 330.0
 	banner_label.offset_bottom = 176.0
 	banner_label.add_theme_font_size_override("font_size", 42)
+	banner_label.add_theme_font_override("font", FONT_ARCADE)
 	banner_label.add_theme_color_override("font_color", COLOR_WARNING)
 	banner_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.92))
 	banner_label.add_theme_constant_override("outline_size", 9)
@@ -270,6 +315,7 @@ func _create_result_overlay() -> void:
 	result_title_label.name = "ResultTitle"
 	result_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	result_title_label.add_theme_font_size_override("font_size", 50)
+	result_title_label.add_theme_font_override("font", FONT_ARCADE)
 	result_title_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.82))
 	result_title_label.add_theme_constant_override("outline_size", 9)
 	column.add_child(result_title_label)
@@ -279,6 +325,7 @@ func _create_result_overlay() -> void:
 	result_subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	result_subtitle_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	result_subtitle_label.add_theme_font_size_override("font_size", 24)
+	result_subtitle_label.add_theme_font_override("font", FONT_UI)
 	result_subtitle_label.add_theme_color_override("font_color", COLOR_DEFAULT)
 	result_subtitle_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
 	result_subtitle_label.add_theme_constant_override("outline_size", 3)

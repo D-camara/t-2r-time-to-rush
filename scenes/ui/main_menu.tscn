@@ -38,17 +38,17 @@ theme_override_constants/separation = 16
 [node name="Title" type="Label" parent="Root/Columns/MenuPanel/MenuColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 42
-text = "T2R: Time to Rush"
+text = "TIME TO RUSH"
 
 [node name="Subtitle" type="Label" parent="Root/Columns/MenuPanel/MenuColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "Perseguicao assimetrica em tempo real"
+text = "ASSALTO AO BANCO // COFRE"
 
 [node name="PlayButton" type="Button" parent="Root/Columns/MenuPanel/MenuColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "Jogar"
+text = "Selecionar personagens"
 
 [node name="SettingsButton" type="Button" parent="Root/Columns/MenuPanel/MenuColumn"]
 layout_mode = 2
@@ -77,7 +77,7 @@ theme_override_constants/separation = 12
 [node name="LobbyTitle" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
-text = "Lobby"
+text = "HEIST LOBBY"
 
 [node name="ConnectedLabel" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
 layout_mode = 2
@@ -93,22 +93,22 @@ autowrap_mode = 3
 [node name="Slot1" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Jogador 1: Aperte X para entrar"
+text = "Operador 1: Aperte X para entrar"
 
 [node name="Slot2" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Jogador 2: Aperte X para entrar"
+text = "Operador 2: Aperte X para entrar"
 
 [node name="Slot3" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Jogador 3: Aperte X para entrar"
+text = "Operador 3: Aperte X para entrar"
 
 [node name="Slot4" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Jogador 4: Aperte X para entrar"
+text = "Operador 4: Aperte X para entrar"
 
 [node name="CharacterPanel" type="PanelContainer" parent="Root/Columns"]
 visible = false
@@ -122,12 +122,12 @@ theme_override_constants/separation = 14
 [node name="CharacterTitle" type="Label" parent="Root/Columns/CharacterPanel/CharacterColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
-text = "Selecao de personagem"
+text = "HEIST CREW"
 
 [node name="CharacterTurnLabel" type="Label" parent="Root/Columns/CharacterPanel/CharacterColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "Escolha seu personagem"
+text = "Escolha sua funcao no assalto"
 autowrap_mode = 3
 
 [node name="CharacterGrid" type="GridContainer" parent="Root/Columns/CharacterPanel/CharacterColumn"]
@@ -225,7 +225,7 @@ theme_override_constants/separation = 18
 [node name="RevealTitle" type="Label" parent="RevealOverlay/RevealColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 34
-text = "Policial definido"
+text = "ALARME DO BANCO"
 horizontal_alignment = 1
 
 [node name="RevealLabel" type="Label" parent="RevealOverlay/RevealColumn"]

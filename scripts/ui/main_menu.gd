@@ -1,8 +1,13 @@
 extends Control
 
+const FONT_ARCADE: FontFile = preload("res://assets/ui/fonts/PressStart2P-Regular.ttf")
+const FONT_UI: FontFile = preload("res://assets/ui/fonts/KenneyFuture.ttf")
+const ICON_PLAY: Texture2D = preload("res://assets/ui/kenney/icon_play.png")
+const ICON_REPEAT: Texture2D = preload("res://assets/ui/kenney/icon_repeat.png")
+const CARD_DIVIDER: Texture2D = preload("res://assets/ui/kenney/divider.png")
 const GAME_SCENE_PATH: String = "res://scenes/player/move.tscn"
 const MAX_PLAYERS: int = 4
-const MIN_PLAYERS_TO_START: int = 2
+const MIN_PLAYERS_TO_START: int = 1
 const CHARACTER_IDS: Array[String] = ["sagui", "coelha", "tigre", "raposa"]
 const COLOR_SURFACE: Color = Color(0.094, 0.133, 0.208, 0.94)
 const COLOR_SURFACE_HOVER: Color = Color(0.118, 0.169, 0.267, 1.0)
@@ -17,6 +22,40 @@ const COLOR_ORANGE: Color = Color(0.976, 0.451, 0.086, 1.0)
 const COLOR_CYAN: Color = Color(0.22, 0.741, 0.973, 1.0)
 const COLOR_TEXT: Color = Color(0.898, 0.933, 0.973, 1.0)
 const COLOR_MUTED: Color = Color(0.58, 0.639, 0.722, 1.0)
+const COLOR_BLACK: Color = Color(0.006, 0.008, 0.02, 1.0)
+
+# Fonte visual da tela de selecao. Edite estes campos para trocar nome,
+# habilidade, altura/peso/cooldown e cor dos cards. Veja docs/character_select_ui.md.
+const CHARACTER_CARD_DATA: Dictionary = {
+	"sagui": {
+		"name": "SAGUI",
+		"role": "TRAP DO ALARME",
+		"skill": "Banana holografica",
+		"stats": "SETOR VENTILACAO\nRISCO MEDIO\nCD 45s",
+		"color": Color(0.29, 0.871, 0.502, 1.0),
+	},
+	"coelha": {
+		"name": "COELHA",
+		"role": "ROTA DO COFRE",
+		"skill": "Ponto de fuga",
+		"stats": "SETOR COFRE\nRISCO ALTO\nCD 60s",
+		"color": Color(0.22, 0.741, 0.973, 1.0),
+	},
+	"tigre": {
+		"name": "TIGRE",
+		"role": "QUEBRA GUARDA",
+		"skill": "Soco no guarda",
+		"stats": "SETOR SAGUAO\nRISCO CRITICO\nCD 45s",
+		"color": Color(0.976, 0.451, 0.086, 1.0),
+	},
+	"raposa": {
+		"name": "RAPOSA",
+		"role": "FUGA RAPIDA",
+		"skill": "+10% fuga",
+		"stats": "SETOR GARAGEM\nRISCO BAIXO\nCD 30s",
+		"color": Color(0.937, 0.267, 0.267, 1.0),
+	},
+}
 
 enum MenuState {
 	LOBBY_CONTROLS,
@@ -45,6 +84,7 @@ enum MenuState {
 @onready var character_title_label: Label = $Root/Columns/CharacterPanel/CharacterColumn/CharacterTitle
 @onready var character_turn_label: Label = $Root/Columns/CharacterPanel/CharacterColumn/CharacterTurnLabel
 @onready var character_status_label: Label = $Root/Columns/CharacterPanel/CharacterColumn/CharacterStatusLabel
+@onready var character_grid: GridContainer = $Root/Columns/CharacterPanel/CharacterColumn/CharacterGrid
 @onready var character_buttons: Array[Button] = [
 	$Root/Columns/CharacterPanel/CharacterColumn/CharacterGrid/SaguiButton,
 	$Root/Columns/CharacterPanel/CharacterColumn/CharacterGrid/CoelhaButton,
@@ -63,6 +103,13 @@ var panel_targets: Array[Control] = []
 var current_state: int = MenuState.LOBBY_CONTROLS
 var selecting_player_index: int = 0
 var character_cursor_index: int = 0
+var character_name_labels: Array[Label] = []
+var character_role_labels: Array[Label] = []
+var character_skill_labels: Array[Label] = []
+var character_stat_labels: Array[Label] = []
+var character_portrait_panels: Array[Panel] = []
+var character_lock_labels: Array[Label] = []
+var menu_decals: Array[Control] = []
 
 func _ready() -> void:
 	_apply_visual_style()
@@ -105,7 +152,7 @@ func _input(event: InputEvent) -> void:
 func _on_play_pressed() -> void:
 	var joined_players: Array[int] = InputManager.get_joined_devices()
 	if joined_players.size() < MIN_PLAYERS_TO_START:
-		status_label.text = "Entre com pelo menos 2 controles para iniciar"
+		status_label.text = "Entre com pelo menos 1 controle para iniciar o assalto"
 		return
 
 	InputManager.reset_match_setup()
@@ -141,21 +188,21 @@ func _update_lobby_ui() -> void:
 	if ready_players >= MIN_PLAYERS_TO_START:
 		play_button.text = "Selecionar personagens"
 	else:
-		play_button.text = "Jogar (min. 2)"
+		play_button.text = "Jogar (min. 1)"
 
 	for slot_index: int in range(slot_labels.size()):
 		if slot_index < ready_players:
 			slot_labels[slot_index].text = "Jogador %d: Controle %d entrou" % [slot_index + 1, joined_players[slot_index]]
 			continue
 
-		slot_labels[slot_index].text = "Jogador %d: Aperte X para entrar" % [slot_index + 1]
+		slot_labels[slot_index].text = "Operador %d: Aperte X para entrar" % [slot_index + 1]
 
 	if connected_devices.is_empty():
-		status_label.text = "Conecte os controles para montar a partida"
+		status_label.text = "Conecte os controles para montar a equipe do assalto"
 	elif ready_players < MIN_PLAYERS_TO_START:
-		status_label.text = "Entre com pelo menos 2 controles. O policial sera sorteado depois."
+		status_label.text = "Entre com pelo menos 1 controle. O guarda infiltrado sera sorteado depois."
 	else:
-		status_label.text = "Tudo pronto. Aperte Selecionar personagens."
+		status_label.text = "Equipe pronta. Aperte Selecionar personagens."
 
 func _sync_volume_slider() -> void:
 	var master_bus_index: int = AudioServer.get_bus_index("Master")
@@ -169,8 +216,8 @@ func _set_menu_state(new_state: int) -> void:
 	current_state = new_state
 	var is_character_select: bool = current_state == MenuState.CHARACTER_SELECT
 	var is_reveal: bool = current_state == MenuState.POLICE_REVEAL
-	menu_panel.visible = not is_reveal
-	lobby_panel.visible = not is_reveal
+	menu_panel.visible = not is_character_select and not is_reveal
+	lobby_panel.visible = not is_character_select and not is_reveal
 	character_panel.visible = is_character_select and not is_reveal
 	reveal_panel.visible = is_reveal
 	settings_panel.visible = false
@@ -239,22 +286,17 @@ func _update_character_select_ui() -> void:
 	if selecting_player_index < joined_players.size():
 		current_player_label = "Jogador %d | Controle %d" % [selecting_player_index + 1, joined_players[selecting_player_index]]
 
-	character_title_label.text = "ESCOLHA SEU PERSONAGEM"
-	character_turn_label.text = "%s: escolha um personagem unico" % current_player_label
-	character_status_label.text = "Use D-Pad para navegar e X/A para confirmar. Mouse tambem funciona."
+	character_title_label.text = "HEIST CREW"
+	character_turn_label.text = "%s" % current_player_label.to_upper()
+	character_status_label.text = "D-PAD MOVE  //  X/A CONFIRMA  //  CADA FUNCAO SO ENTRA UMA VEZ"
 
 	for character_index: int in range(character_buttons.size()):
 		var character_id: String = CHARACTER_IDS[character_index]
 		var button: Button = character_buttons[character_index]
-		var display_name: String = InputManager.get_character_display_name(character_id)
 		var is_selected: bool = character_id in selected_ids
 		var is_cursor: bool = character_index == character_cursor_index
 		button.disabled = is_selected
-		button.text = "%s%s%s" % [
-			"> " if is_cursor and not is_selected else "",
-			display_name,
-			" (Escolhido)" if is_selected else ""
-		]
+		_apply_character_card_state(character_index, is_cursor, is_selected)
 
 func _start_police_reveal() -> void:
 	var police_device: int = InputManager.pick_random_police()
@@ -263,14 +305,16 @@ func _start_police_reveal() -> void:
 		return
 
 	var police_character_name: String = InputManager.get_police_character_name()
-	reveal_label.text = "%s VIROU POLICIAL" % police_character_name.to_upper()
-	status_label.text = "Sorteio concluido. Carregando arena..."
+	reveal_label.text = "%s VIROU GUARDA" % police_character_name.to_upper()
+	status_label.text = "Alarme disparado. Carregando banco..."
 	_set_menu_state(MenuState.POLICE_REVEAL)
 	await get_tree().create_timer(2.2).timeout
 	get_tree().change_scene_to_file(GAME_SCENE_PATH)
 
 func _apply_visual_style() -> void:
 	_add_background()
+	_add_heist_decals()
+	_build_character_cards()
 	button_targets = [play_button, settings_button, quit_button]
 	for character_button: Button in character_buttons:
 		button_targets.append(character_button)
@@ -283,12 +327,15 @@ func _apply_visual_style() -> void:
 	_style_button(play_button, COLOR_GREEN, COLOR_GREEN_HIGHLIGHT, true)
 	_style_button(settings_button, COLOR_GOLD, Color(1.0, 0.82, 0.2, 1.0), false)
 	_style_button(quit_button, COLOR_RED, COLOR_ORANGE, false)
+	play_button.icon = ICON_PLAY
+	settings_button.icon = ICON_REPEAT
 	for character_button: Button in character_buttons:
-		_style_button(character_button, COLOR_SURFACE_HOVER, COLOR_GOLD, false)
+		_style_character_button(character_button, COLOR_BORDER, false, false)
 	_style_slider(volume_slider)
 	_connect_button_feedback()
 
 	title_label.text = "TIME TO RUSH"
+	title_label.add_theme_font_override("font", FONT_ARCADE)
 	title_label.add_theme_color_override("font_color", COLOR_TEXT)
 	title_label.add_theme_color_override("font_shadow_color", Color(COLOR_GREEN.r, COLOR_GREEN.g, COLOR_GREEN.b, 0.75))
 	title_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.88))
@@ -296,38 +343,58 @@ func _apply_visual_style() -> void:
 	title_label.add_theme_constant_override("shadow_offset_x", 0)
 	title_label.add_theme_constant_override("shadow_offset_y", 7)
 	title_label.add_theme_font_size_override("font_size", 62)
-	subtitle_label.text = "VAULT RUN // HEIST MODE"
+	subtitle_label.text = "ASSALTO AO BANCO // COFRE"
+	subtitle_label.add_theme_font_override("font", FONT_UI)
 	subtitle_label.add_theme_color_override("font_color", COLOR_GOLD)
 	subtitle_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
 	subtitle_label.add_theme_constant_override("outline_size", 4)
 	status_label.add_theme_color_override("font_color", COLOR_MUTED)
+	status_label.add_theme_font_override("font", FONT_UI)
 	status_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.62))
 	status_label.add_theme_constant_override("outline_size", 3)
 	connected_label.add_theme_color_override("font_color", COLOR_GREEN_HIGHLIGHT)
+	connected_label.add_theme_font_override("font", FONT_UI)
 	join_hint_label.add_theme_color_override("font_color", COLOR_GOLD)
-	lobby_title_label.text = "TACTICAL LOBBY"
+	join_hint_label.add_theme_font_override("font", FONT_UI)
+	join_hint_label.text = "Aperte X no controle para entrar na equipe"
+	lobby_title_label.text = "HEIST LOBBY"
+	lobby_title_label.add_theme_font_override("font", FONT_ARCADE)
 	lobby_title_label.add_theme_color_override("font_color", COLOR_CYAN)
 	lobby_title_label.add_theme_color_override("font_shadow_color", Color(COLOR_CYAN.r, COLOR_CYAN.g, COLOR_CYAN.b, 0.5))
 	lobby_title_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.78))
 	lobby_title_label.add_theme_constant_override("outline_size", 5)
 	lobby_title_label.add_theme_font_size_override("font_size", 34)
-	character_title_label.text = "CHARACTER SELECT"
+	character_title_label.text = "HEIST CREW"
+	character_title_label.add_theme_font_override("font", FONT_ARCADE)
 	character_title_label.add_theme_color_override("font_color", COLOR_GOLD)
-	character_title_label.add_theme_color_override("font_shadow_color", Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, 0.5))
+	character_title_label.add_theme_color_override("font_shadow_color", Color(COLOR_CYAN.r, COLOR_CYAN.g, COLOR_CYAN.b, 0.8))
 	character_title_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.78))
-	character_title_label.add_theme_constant_override("outline_size", 5)
+	character_title_label.add_theme_constant_override("outline_size", 8)
+	character_title_label.add_theme_constant_override("shadow_offset_y", 5)
+	character_title_label.add_theme_font_size_override("font_size", 44)
 	character_turn_label.add_theme_color_override("font_color", COLOR_TEXT)
+	character_turn_label.add_theme_font_override("font", FONT_UI)
+	character_turn_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.78))
+	character_turn_label.add_theme_constant_override("outline_size", 4)
+	character_turn_label.add_theme_font_size_override("font_size", 24)
 	character_status_label.add_theme_color_override("font_color", COLOR_MUTED)
+	character_status_label.add_theme_font_override("font", FONT_UI)
+	character_status_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
+	character_status_label.add_theme_constant_override("outline_size", 3)
+	reveal_title_label.text = "ALARME DO BANCO"
+	reveal_title_label.add_theme_font_override("font", FONT_ARCADE)
 	reveal_title_label.add_theme_color_override("font_color", COLOR_GOLD)
 	reveal_title_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.82))
 	reveal_title_label.add_theme_constant_override("outline_size", 5)
 	reveal_label.add_theme_color_override("font_color", COLOR_RED)
+	reveal_label.add_theme_font_override("font", FONT_ARCADE)
 	reveal_label.add_theme_color_override("font_shadow_color", Color(COLOR_RED.r, COLOR_RED.g, COLOR_RED.b, 0.7))
 	reveal_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
 	reveal_label.add_theme_constant_override("outline_size", 8)
 
 	for label: Label in slot_labels:
 		label.add_theme_color_override("font_color", COLOR_TEXT)
+		label.add_theme_font_override("font", FONT_UI)
 		label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.7))
 		label.add_theme_constant_override("outline_size", 3)
 		label.add_theme_font_size_override("font_size", 20)
@@ -345,9 +412,76 @@ func _add_background() -> void:
 	add_child(background)
 	move_child(background, 0)
 
+func _add_heist_decals() -> void:
+	if not menu_decals.is_empty():
+		return
+
+	var cash_trail: HeistIcon = _make_screen_decal(HeistIcon.IconType.CASH_TRAIL, Vector2(0.0, 0.77), Vector2(1.0, 0.16), COLOR_GREEN_HIGHLIGHT, 0.64)
+	cash_trail.name = "MenuCashTrail"
+	menu_decals.append(cash_trail)
+
+	var vault_icon: HeistIcon = _make_screen_decal(HeistIcon.IconType.VAULT, Vector2(0.79, 0.08), Vector2(0.16, 0.24), COLOR_GOLD, 0.84)
+	vault_icon.name = "MenuVaultIcon"
+	menu_decals.append(vault_icon)
+
+	var alarm_icon: HeistIcon = _make_screen_decal(HeistIcon.IconType.ALARM, Vector2(0.05, 0.11), Vector2(0.11, 0.17), COLOR_RED, 0.78)
+	alarm_icon.name = "MenuAlarmIcon"
+	menu_decals.append(alarm_icon)
+
+	var bag_icon: HeistIcon = _make_screen_decal(HeistIcon.IconType.MONEY_BAG, Vector2(0.07, 0.64), Vector2(0.14, 0.2), COLOR_GREEN, 0.82)
+	bag_icon.name = "MenuMoneyBagIcon"
+	menu_decals.append(bag_icon)
+
+	menu_decals.append(_make_screen_label("ALVO: COFRE CENTRAL", Vector2(0.67, 0.33), Vector2(0.22, 0.055), COLOR_GOLD))
+	menu_decals.append(_make_screen_label("ALARME ARMADO", Vector2(0.08, 0.31), Vector2(0.18, 0.055), COLOR_RED))
+	menu_decals.append(_make_screen_label("SAIDA: GARAGEM", Vector2(0.68, 0.7), Vector2(0.2, 0.055), COLOR_GREEN_HIGHLIGHT))
+
+func _make_screen_decal(icon_type: int, anchor_position: Vector2, anchor_size: Vector2, accent: Color, opacity: float) -> HeistIcon:
+	var icon: HeistIcon = HeistIcon.new()
+	icon.icon_type = icon_type
+	icon.accent = accent
+	icon.opacity = opacity
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.anchor_left = anchor_position.x
+	icon.anchor_top = anchor_position.y
+	icon.anchor_right = anchor_position.x + anchor_size.x
+	icon.anchor_bottom = anchor_position.y + anchor_size.y
+	icon.offset_left = 0.0
+	icon.offset_top = 0.0
+	icon.offset_right = 0.0
+	icon.offset_bottom = 0.0
+	add_child(icon)
+	move_child(icon, 1)
+	return icon
+
+func _make_screen_label(text: String, anchor_position: Vector2, anchor_size: Vector2, color: Color) -> Label:
+	var label: Label = Label.new()
+	label.text = text
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_override("font", FONT_UI)
+	label.add_theme_font_size_override("font_size", 19)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", COLOR_BLACK)
+	label.add_theme_constant_override("outline_size", 4)
+	label.anchor_left = anchor_position.x
+	label.anchor_top = anchor_position.y
+	label.anchor_right = anchor_position.x + anchor_size.x
+	label.anchor_bottom = anchor_position.y + anchor_size.y
+	label.offset_left = 0.0
+	label.offset_top = 0.0
+	label.offset_right = 0.0
+	label.offset_bottom = 0.0
+	add_child(label)
+	move_child(label, 2)
+	return label
+
 func _style_panel(panel: PanelContainer, accent: Color) -> void:
 	var style_box: StyleBoxFlat = StyleBoxFlat.new()
-	style_box.bg_color = Color(COLOR_SURFACE.r, COLOR_SURFACE.g, COLOR_SURFACE.b, 0.9)
+	style_box.bg_color = Color(0.018, 0.026, 0.055, 0.92)
+	if panel == character_panel:
+		style_box.bg_color = Color(0.006, 0.008, 0.02, 0.94)
 	style_box.border_color = Color(accent.r, accent.g, accent.b, 0.85)
 	style_box.set_border_width_all(4)
 	style_box.corner_radius_top_left = 18
@@ -362,9 +496,211 @@ func _style_panel(panel: PanelContainer, accent: Color) -> void:
 	style_box.content_margin_bottom = 30
 	panel.add_theme_stylebox_override("panel", style_box)
 
+func _build_character_cards() -> void:
+	character_grid.columns = 4
+	character_grid.add_theme_constant_override("h_separation", 18)
+	character_grid.add_theme_constant_override("v_separation", 18)
+	character_name_labels.clear()
+	character_role_labels.clear()
+	character_skill_labels.clear()
+	character_stat_labels.clear()
+	character_portrait_panels.clear()
+	character_lock_labels.clear()
+
+	for character_index: int in range(character_buttons.size()):
+		var button: Button = character_buttons[character_index]
+		var character_id: String = CHARACTER_IDS[character_index]
+		var data: Dictionary = CHARACTER_CARD_DATA[character_id] as Dictionary
+		var accent: Color = data["color"] as Color
+		button.text = ""
+		button.custom_minimum_size = Vector2(188.0, 330.0)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.focus_mode = Control.FOCUS_ALL
+
+		for child: Node in button.get_children():
+			child.queue_free()
+
+		var margin: MarginContainer = MarginContainer.new()
+		margin.name = "CardMargin"
+		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+		margin.add_theme_constant_override("margin_left", 10)
+		margin.add_theme_constant_override("margin_top", 10)
+		margin.add_theme_constant_override("margin_right", 10)
+		margin.add_theme_constant_override("margin_bottom", 10)
+		button.add_child(margin)
+
+		var column: VBoxContainer = VBoxContainer.new()
+		column.name = "CardColumn"
+		column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		column.alignment = BoxContainer.ALIGNMENT_BEGIN
+		column.add_theme_constant_override("separation", 7)
+		margin.add_child(column)
+
+		var name_label: Label = _make_card_label(str(data["name"]), 25, COLOR_GOLD, HORIZONTAL_ALIGNMENT_CENTER)
+		column.add_child(name_label)
+		character_name_labels.append(name_label)
+
+		var portrait: Panel = Panel.new()
+		portrait.name = "Portrait"
+		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		portrait.custom_minimum_size = Vector2(0.0, 138.0)
+		portrait.add_theme_stylebox_override("panel", _make_portrait_style(accent, false))
+		column.add_child(portrait)
+		character_portrait_panels.append(portrait)
+
+		_add_portrait_shapes(portrait, accent, character_index)
+		_add_card_heist_icon(portrait, character_id)
+
+		var divider: TextureRect = TextureRect.new()
+		divider.name = "CardDivider"
+		divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		divider.texture = CARD_DIVIDER
+		divider.expand_mode = TextureRect.EXPAND_FIT_WIDTH
+		divider.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		divider.custom_minimum_size = Vector2(0.0, 10.0)
+		column.add_child(divider)
+
+		var role_label: Label = _make_card_label(str(data["role"]), 17, COLOR_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+		column.add_child(role_label)
+		character_role_labels.append(role_label)
+
+		var skill_label: Label = _make_card_label(str(data["skill"]), 15, accent.lightened(0.24), HORIZONTAL_ALIGNMENT_CENTER)
+		column.add_child(skill_label)
+		character_skill_labels.append(skill_label)
+
+		var stat_label: Label = _make_card_label(str(data["stats"]), 15, COLOR_TEXT, HORIZONTAL_ALIGNMENT_LEFT)
+		stat_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		column.add_child(stat_label)
+		character_stat_labels.append(stat_label)
+
+		var lock_label: Label = _make_card_label("", 17, COLOR_RED, HORIZONTAL_ALIGNMENT_CENTER)
+		column.add_child(lock_label)
+		character_lock_labels.append(lock_label)
+
+func _make_card_label(text: String, font_size: int, color: Color, alignment: int) -> Label:
+	var label: Label = Label.new()
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.text = text
+	label.horizontal_alignment = alignment
+	label.add_theme_font_override("font", FONT_UI)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.86))
+	label.add_theme_constant_override("outline_size", 4)
+	return label
+
+func _add_portrait_shapes(parent: Panel, accent: Color, character_index: int) -> void:
+	var back_glow: ColorRect = _make_portrait_rect(Color(accent.r, accent.g, accent.b, 0.3), Vector2(0.08, 0.1), Vector2(0.84, 0.78))
+	parent.add_child(back_glow)
+
+	var head: ColorRect = _make_portrait_rect(accent.lightened(0.28), Vector2(0.34, 0.12), Vector2(0.32, 0.24))
+	parent.add_child(head)
+
+	var body: ColorRect = _make_portrait_rect(accent.darkened(0.18), Vector2(0.25, 0.38), Vector2(0.5, 0.46))
+	parent.add_child(body)
+
+	var visor: ColorRect = _make_portrait_rect(Color(0.88, 0.96, 1.0, 1.0), Vector2(0.28, 0.24), Vector2(0.44, 0.08))
+	parent.add_child(visor)
+
+	var stripe_x: float = 0.17 + float(character_index % 2) * 0.5
+	var stripe: ColorRect = _make_portrait_rect(COLOR_BLACK, Vector2(stripe_x, 0.38), Vector2(0.08, 0.44))
+	parent.add_child(stripe)
+
+func _add_card_heist_icon(parent: Panel, character_id: String) -> void:
+	var icon: HeistIcon = HeistIcon.new()
+	match character_id:
+		"sagui":
+			icon.icon_type = HeistIcon.IconType.ALARM
+			icon.opacity = 0.92
+		"coelha":
+			icon.icon_type = HeistIcon.IconType.KEYCARD
+			icon.opacity = 0.9
+		"tigre":
+			icon.icon_type = HeistIcon.IconType.MONEY_BAG
+			icon.opacity = 0.86
+		"raposa":
+			icon.icon_type = HeistIcon.IconType.MONEY_STACK
+			icon.opacity = 0.88
+		_:
+			icon.icon_type = HeistIcon.IconType.MONEY_STACK
+	icon.anchor_left = 0.56
+	icon.anchor_top = 0.46
+	icon.anchor_right = 0.96
+	icon.anchor_bottom = 0.96
+	icon.offset_left = 0.0
+	icon.offset_top = 0.0
+	icon.offset_right = 0.0
+	icon.offset_bottom = 0.0
+	parent.add_child(icon)
+
+func _make_portrait_rect(color: Color, anchor_position: Vector2, anchor_size: Vector2) -> ColorRect:
+	var rect: ColorRect = ColorRect.new()
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.color = color
+	rect.anchor_left = anchor_position.x
+	rect.anchor_top = anchor_position.y
+	rect.anchor_right = anchor_position.x + anchor_size.x
+	rect.anchor_bottom = anchor_position.y + anchor_size.y
+	rect.offset_left = 0.0
+	rect.offset_top = 0.0
+	rect.offset_right = 0.0
+	rect.offset_bottom = 0.0
+	return rect
+
+func _apply_character_card_state(character_index: int, is_cursor: bool, is_selected: bool) -> void:
+	var button: Button = character_buttons[character_index]
+	var character_id: String = CHARACTER_IDS[character_index]
+	var data: Dictionary = CHARACTER_CARD_DATA[character_id] as Dictionary
+	var accent: Color = data["color"] as Color
+	_style_character_button(button, accent, is_cursor, is_selected)
+
+	if character_portrait_panels.size() > character_index:
+		character_portrait_panels[character_index].add_theme_stylebox_override("panel", _make_portrait_style(accent, is_cursor))
+	if character_name_labels.size() > character_index:
+		character_name_labels[character_index].add_theme_color_override("font_color", COLOR_GOLD if not is_selected else COLOR_MUTED)
+	if character_lock_labels.size() > character_index:
+		character_lock_labels[character_index].text = "ESCOLHIDO" if is_selected else ("1 PLAYER" if is_cursor else "")
+
+func _style_character_button(button: Button, accent: Color, highlighted: bool, disabled_card: bool) -> void:
+	button.add_theme_stylebox_override("normal", _make_character_card_style(accent, highlighted, disabled_card))
+	button.add_theme_stylebox_override("hover", _make_character_card_style(accent, true, disabled_card))
+	button.add_theme_stylebox_override("focus", _make_character_card_style(accent, true, disabled_card))
+	button.add_theme_stylebox_override("pressed", _make_character_card_style(accent.darkened(0.12), true, disabled_card))
+	button.add_theme_stylebox_override("disabled", _make_character_card_style(COLOR_MUTED, false, true))
+
+func _make_character_card_style(accent: Color, highlighted: bool, disabled_card: bool) -> StyleBoxFlat:
+	var style_box: StyleBoxFlat = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.018, 0.022, 0.05, 0.96) if not disabled_card else Color(0.02, 0.02, 0.026, 0.82)
+	style_box.border_color = COLOR_GOLD if highlighted and not disabled_card else Color(accent.r, accent.g, accent.b, 0.82)
+	style_box.set_border_width_all(7 if highlighted and not disabled_card else 3)
+	style_box.corner_radius_top_left = 2
+	style_box.corner_radius_top_right = 2
+	style_box.corner_radius_bottom_right = 2
+	style_box.corner_radius_bottom_left = 2
+	style_box.shadow_color = Color(style_box.border_color.r, style_box.border_color.g, style_box.border_color.b, 0.52)
+	style_box.shadow_size = 20 if highlighted and not disabled_card else 8
+	style_box.content_margin_left = 8
+	style_box.content_margin_right = 8
+	style_box.content_margin_top = 8
+	style_box.content_margin_bottom = 8
+	return style_box
+
+func _make_portrait_style(accent: Color, highlighted: bool) -> StyleBoxFlat:
+	var style_box: StyleBoxFlat = StyleBoxFlat.new()
+	style_box.bg_color = Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.16, 0.98)
+	style_box.border_color = COLOR_GOLD if highlighted else Color(accent.r, accent.g, accent.b, 0.9)
+	style_box.set_border_width_all(4 if highlighted else 2)
+	style_box.corner_radius_top_left = 0
+	style_box.corner_radius_top_right = 0
+	style_box.corner_radius_bottom_right = 0
+	style_box.corner_radius_bottom_left = 0
+	return style_box
+
 func _style_button(button: Button, accent: Color, hover: Color, is_primary: bool) -> void:
 	var text_color: Color = Color(0.018, 0.027, 0.055, 1.0)
 	button.focus_mode = Control.FOCUS_ALL
+	button.add_theme_font_override("font", FONT_UI)
 	button.add_theme_font_size_override("font_size", 30 if is_primary else 24)
 	button.add_theme_color_override("font_color", text_color)
 	button.add_theme_color_override("font_hover_color", text_color)
