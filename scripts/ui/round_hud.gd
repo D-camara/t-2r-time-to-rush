@@ -9,6 +9,7 @@ const FONT_UI: FontFile = preload("res://assets/ui/fonts/KenneyFuture.ttf")
 @onready var skill_label: Label = $Control/TopLeft/InfoColumn/SkillLabel
 @onready var status_label: Label = $Control/TopCenter/StatusLabel
 @onready var controls_label: Label = $Control/BottomLeft/ControlsLabel
+@onready var info_column: VBoxContainer = $Control/TopLeft/InfoColumn
 @onready var top_left: MarginContainer = $Control/TopLeft
 @onready var top_center: CenterContainer = $Control/TopCenter
 @onready var bottom_left: MarginContainer = $Control/BottomLeft
@@ -31,6 +32,8 @@ var vault_icon: HeistIcon = null
 var cash_icon: HeistIcon = null
 var alarm_icon: HeistIcon = null
 var keycard_icon: HeistIcon = null
+var match_label: Label = null
+var score_label: Label = null
 var hud_time: float = 0.0
 var capture_flash_time: float = 0.0
 var banner_time: float = 0.0
@@ -41,7 +44,7 @@ func _ready() -> void:
 	_apply_hud_style()
 	timer_base_position = time_label.position
 	status_base_position = status_label.position
-	controls_label.text = "Controle 1 vira guarda | Capturados viram seguranca | R: Reiniciar"
+	controls_label.text = "Policial inicial muda por rodada | Capturados viram pegadores | R: Avancar"
 	skill_label.text = ""
 	status_label.modulate = COLOR_DEFAULT
 	time_label.modulate = COLOR_DEFAULT
@@ -91,10 +94,21 @@ func update_timer(time_left: float, is_warning: bool = false) -> void:
 		time_label.add_theme_color_override("font_shadow_color", Color(0.918, 0.702, 0.031, 0.55))
 
 func update_active_fugitives(active_count: int, total_count: int) -> void:
-	fugitives_label.text = "EQUIPE  %d/%d" % [active_count, total_count]
+	fugitives_label.text = "FUGITIVOS  %d/%d" % [active_count, total_count]
 
 func update_round_counts(active_fugitives: int, total_fugitives: int, hunter_count: int) -> void:
-	fugitives_label.text = "EQUIPE  %d/%d    GUARDAS  %d" % [active_fugitives, total_fugitives, hunter_count]
+	fugitives_label.text = "FUGITIVOS  %d/%d    PEGADORES  %d" % [active_fugitives, total_fugitives, hunter_count]
+
+func update_match_info(round_index: int, total_rounds: int, police_name: String) -> void:
+	if match_label == null:
+		return
+	match_label.text = "RODADA %d/%d  |  POLICIAL: %s" % [round_index, total_rounds, police_name.to_upper()]
+
+func update_scoreboard(score_text: String) -> void:
+	if score_label == null:
+		return
+	score_label.text = score_text
+	score_label.visible = not score_text.is_empty()
 
 func update_skill_status(message: String) -> void:
 	skill_label.text = message
@@ -132,6 +146,7 @@ func show_round_banner(message: String) -> void:
 	_show_banner(message, COLOR_WARNING)
 
 func _apply_hud_style() -> void:
+	_create_match_labels()
 	_create_panel_for(top_left, Color(0.094, 0.133, 0.208, 0.9))
 	_create_panel_for(top_center, Color(0.094, 0.133, 0.208, 0.78))
 	_create_panel_for(bottom_left, Color(0.043, 0.063, 0.125, 0.72))
@@ -166,6 +181,32 @@ func _apply_hud_style() -> void:
 	controls_label.add_theme_font_override("font", FONT_UI)
 	controls_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.65))
 	controls_label.add_theme_constant_override("outline_size", 3)
+
+func _create_match_labels() -> void:
+	if match_label == null:
+		match_label = Label.new()
+		match_label.name = "MatchLabel"
+		info_column.add_child(match_label)
+		info_column.move_child(match_label, 0)
+
+	if score_label == null:
+		score_label = Label.new()
+		score_label.name = "ScoreLabel"
+		info_column.add_child(score_label)
+
+	_style_match_info_label(match_label)
+	_style_match_info_label(score_label)
+
+	match_label.add_theme_color_override("font_color", COLOR_WARNING)
+	match_label.add_theme_font_size_override("font_size", 19)
+	score_label.add_theme_color_override("font_color", COLOR_CYAN)
+	score_label.add_theme_font_size_override("font_size", 18)
+	score_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+func _style_match_info_label(label: Label) -> void:
+	label.add_theme_font_override("font", FONT_UI)
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
+	label.add_theme_constant_override("outline_size", 3)
 
 func _create_panel_for(target: Control, fill: Color) -> void:
 	var parent: Control = target.get_parent() as Control

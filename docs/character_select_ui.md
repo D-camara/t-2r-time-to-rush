@@ -8,7 +8,7 @@ Este guia explica onde editar a tela `HEIST CREW` do menu, agora com tema de ass
 - Cena do menu: `scenes/ui/main_menu.tscn`
 - Assets de UI: `assets/ui/`
 - Licencas dos assets: `docs/licenses/`
-- Fluxo atual: lobby -> selecao -> sorteio do guarda -> arena
+- Fluxo atual: lobby -> selecao -> sorteio do policial -> arena
 
 A tela de selecao usa os botoes que ja existem em `main_menu.tscn`, mas o visual dos cards e montado por codigo em `main_menu.gd`.
 Para fontes, icones e divisores baixados, veja tambem `docs/ui_assets.md`.
@@ -83,4 +83,4 @@ Se mudar a ordem aqui, confira tambem se todos os ids continuam existindo em:
 - Nao remova os botoes `SaguiButton`, `CoelhaButton`, `TigreButton` e `RaposaButton` da cena sem atualizar o array `character_buttons`.
 - Nao renomeie ids como `raposa`, `tigre`, `sagui`, `coelha` sem atualizar `InputManager` e o sistema de habilidades.
 - Mantenha textos curtos; cards apertados podem quebrar visualmente em resolucoes menores.
-- Preserve a fantasia principal: equipe tentando fugir com o cofre aberto contra guardas/seguranca.
+- Preserve a fantasia principal: fugitivos tentando escapar depois do assalto contra policiais/pegadores.

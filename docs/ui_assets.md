@@ -63,8 +63,8 @@ Para fotos dos personagens, use o guia:
 
 ## Direcao visual atual
 
-- Tema: assalto ao banco, cofre, alarme, seguranca e fuga.
+- Tema: assalto ao banco, cofre, alarme, policiais e fuga.
 - Menu inicial: `TIME TO RUSH` com subtitulo `ASSALTO AO BANCO // COFRE`.
 - Selecao: cards de equipe com funcao, habilidade e setor do assalto.
-- HUD: timer de cofre, contagem de equipe e seguranca, alerta de captura.
+- HUD: timer de cofre, contagem de fugitivos e pegadores, alerta de captura.
 - Fullscreen: configurado em `project.godot` na secao `[display]`.

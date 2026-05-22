@@ -43,8 +43,8 @@ const CHARACTER_CARD_DATA: Dictionary = {
 	},
 	"tigre": {
 		"name": "TIGRE",
-		"role": "QUEBRA GUARDA",
-		"skill": "Soco no guarda",
+		"role": "QUEBRA POLICIAL",
+		"skill": "Soco no policial",
 		"stats": "SETOR SAGUAO\nRISCO CRITICO\nCD 45s",
 		"color": Color(0.976, 0.451, 0.086, 1.0),
 	},
@@ -200,7 +200,7 @@ func _update_lobby_ui() -> void:
 	if connected_devices.is_empty():
 		status_label.text = "Conecte os controles para montar a equipe do assalto"
 	elif ready_players < MIN_PLAYERS_TO_START:
-		status_label.text = "Entre com pelo menos 1 controle. O guarda infiltrado sera sorteado depois."
+		status_label.text = "Entre com pelo menos 1 controle. O policial da rodada sera sorteado depois."
 	else:
 		status_label.text = "Equipe pronta. Aperte Selecionar personagens."
 
@@ -305,7 +305,7 @@ func _start_police_reveal() -> void:
 		return
 
 	var police_character_name: String = InputManager.get_police_character_name()
-	reveal_label.text = "%s VIROU GUARDA" % police_character_name.to_upper()
+	reveal_label.text = "%s VIROU POLICIAL" % police_character_name.to_upper()
 	status_label.text = "Alarme disparado. Carregando banco..."
 	_set_menu_state(MenuState.POLICE_REVEAL)
 	await get_tree().create_timer(2.2).timeout

@@ -17,8 +17,8 @@ grow_vertical = 2
 layout_mode = 1
 offset_left = 88.0
 offset_top = 20.0
-offset_right = 442.0
-offset_bottom = 170.0
+offset_right = 520.0
+offset_bottom = 220.0
 
 [node name="InfoColumn" type="VBoxContainer" parent="Control/TopLeft"]
 layout_mode = 2
@@ -31,7 +31,7 @@ text = "COFRE  45"
 [node name="FugitivesLabel" type="Label" parent="Control/TopLeft/InfoColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "EQUIPE  3/3    GUARDAS  1"
+text = "FUGITIVOS  3/3    PEGADORES  1"
 
 [node name="SkillLabel" type="Label" parent="Control/TopLeft/InfoColumn"]
 layout_mode = 2
