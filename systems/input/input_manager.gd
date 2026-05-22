@@ -7,6 +7,15 @@ const CHARACTER_IDS: Array[String] = ["sagui", "coelha", "tigre", "raposa"]
 var joined_devices: Array[int] = []
 var selected_characters: Dictionary = {}
 var police_device: int = -1
+var ability_pressed_devices: Array[int] = []
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventJoypadButton:
+		var joypad_event: InputEventJoypadButton = event
+		if joypad_event.pressed and _is_ability_button(joypad_event.button_index):
+			var resolved_device: int = _resolve_device(joypad_event.device)
+			if resolved_device != -1 and resolved_device not in ability_pressed_devices:
+				ability_pressed_devices.append(resolved_device)
 
 func has_device(device_id: int) -> bool:
 	return _resolve_device(device_id) != -1
@@ -32,6 +41,7 @@ func get_connected_devices() -> PackedInt32Array:
 
 func clear_joined_devices() -> void:
 	joined_devices.clear()
+	ability_pressed_devices.clear()
 	reset_match_setup()
 
 func get_joined_devices() -> Array[int]:
@@ -137,6 +147,19 @@ func get_fugitive_devices() -> Array[int]:
 		if joined_device != police_device:
 			fugitive_devices.append(joined_device)
 	return fugitive_devices
+
+func consume_ability_pressed(device_id: int) -> bool:
+	var resolved_device: int = _resolve_device(device_id)
+	if resolved_device == -1:
+		return false
+	if resolved_device not in ability_pressed_devices:
+		return false
+
+	ability_pressed_devices.erase(resolved_device)
+	return true
+
+func _is_ability_button(button_index: int) -> bool:
+	return button_index == JOY_BUTTON_RIGHT_SHOULDER
 
 func _resolve_device(device_id: int) -> int:
 	var connected_devices: PackedInt32Array = Input.get_connected_joypads()

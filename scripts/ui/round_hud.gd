@@ -3,6 +3,7 @@ extends CanvasLayer
 
 @onready var time_label: Label = $Control/TopLeft/InfoColumn/TimeLabel
 @onready var fugitives_label: Label = $Control/TopLeft/InfoColumn/FugitivesLabel
+@onready var skill_label: Label = $Control/TopLeft/InfoColumn/SkillLabel
 @onready var status_label: Label = $Control/TopCenter/StatusLabel
 @onready var controls_label: Label = $Control/BottomLeft/ControlsLabel
 @onready var top_left: MarginContainer = $Control/TopLeft
@@ -14,6 +15,7 @@ const COLOR_WARNING: Color = Color(0.918, 0.702, 0.031, 1.0)
 const COLOR_DANGER: Color = Color(0.976, 0.451, 0.086, 1.0)
 const COLOR_SUCCESS: Color = Color(0.133, 0.773, 0.369, 1.0)
 const COLOR_INFO: Color = Color(0.29, 0.871, 0.502, 1.0)
+const COLOR_CYAN: Color = Color(0.22, 0.741, 0.973, 1.0)
 const COLOR_BORDER: Color = Color(0.165, 0.224, 0.325, 0.95)
 const COLOR_MUTED: Color = Color(0.58, 0.639, 0.722, 1.0)
 
@@ -33,6 +35,7 @@ func _ready() -> void:
 	timer_base_position = time_label.position
 	status_base_position = status_label.position
 	controls_label.text = "Controle 1 vira Policia | Capturados viram pegadores | R: Reiniciar"
+	skill_label.text = ""
 	status_label.modulate = COLOR_DEFAULT
 	time_label.modulate = COLOR_DEFAULT
 
@@ -79,6 +82,10 @@ func update_active_fugitives(active_count: int, total_count: int) -> void:
 
 func update_round_counts(active_fugitives: int, total_fugitives: int, hunter_count: int) -> void:
 	fugitives_label.text = "RUNNERS  %d/%d    CHASERS  %d" % [active_fugitives, total_fugitives, hunter_count]
+
+func update_skill_status(message: String) -> void:
+	skill_label.text = message
+	skill_label.visible = not message.is_empty()
 
 func set_status(message: String, color: Color = COLOR_DEFAULT) -> void:
 	status_label.text = message
@@ -130,6 +137,10 @@ func _apply_hud_style() -> void:
 	fugitives_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
 	fugitives_label.add_theme_constant_override("outline_size", 5)
 	fugitives_label.add_theme_font_size_override("font_size", 25)
+	skill_label.add_theme_color_override("font_color", COLOR_CYAN)
+	skill_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
+	skill_label.add_theme_constant_override("outline_size", 4)
+	skill_label.add_theme_font_size_override("font_size", 20)
 	status_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.75))
 	status_label.add_theme_constant_override("outline_size", 6)
 	status_label.add_theme_font_size_override("font_size", 30)

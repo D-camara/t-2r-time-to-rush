@@ -137,6 +137,7 @@ func _update_hud(status_message: String) -> void:
 	var timer_warning: bool = current_state == RoundState.PLAYING and remaining_time <= low_time_threshold
 	hud.update_timer(remaining_time, timer_warning)
 	hud.update_round_counts(active_fugitives, participating_fugitives, hunter_count)
+	hud.update_skill_status(_get_skill_status_text())
 	hud.set_status(status_message, _get_status_color())
 	hud.set_controls_hint(_get_controls_hint())
 
@@ -194,6 +195,13 @@ func _get_status_color() -> Color:
 
 func _get_controls_hint() -> String:
 	return "%s e o policial inicial | Capturados viram pegadores | R: Reiniciar" % police_character_name
+
+func show_skill_message(_player: FugitivePlayer, message: String) -> void:
+	if hud:
+		hud.show_round_banner(message)
+
+func get_skill_hunters(_player: FugitivePlayer) -> Array[CharacterBody3D]:
+	return _get_hunters()
 
 func _get_fugitive_spawn_position() -> Vector3:
 	if fugitive_spawn_marker:
@@ -318,6 +326,20 @@ func _apply_speed_balance() -> void:
 func _get_capture_count() -> int:
 	return _get_participating_fugitive_count() - _get_active_fugitives().size()
 
+func _get_skill_status_text() -> String:
+	var status_parts: Array[String] = []
+	for player: FugitivePlayer in [fugitive, second_fugitive, third_fugitive]:
+		if player == null or not player.is_participating or player.is_infected:
+			continue
+		var skill_status: String = player.get_skill_status_text()
+		if not skill_status.is_empty():
+			status_parts.append(skill_status)
+
+	if status_parts.is_empty():
+		return ""
+
+	return "SKILLS  %s" % "  |  ".join(status_parts)
+
 func _configure_players_from_lobby() -> void:
 	var input_manager: Node = get_node_or_null("/root/InputManager")
 	if input_manager == null or not input_manager.has_method("get_joined_devices"):
@@ -343,9 +365,9 @@ func _configure_players_from_lobby() -> void:
 			var fugitive_result: Variant = input_manager.call("get_fugitive_devices")
 			if fugitive_result is Array:
 				var fugitive_devices: Array = fugitive_result
-				_assign_fugitive_from_device_list(fugitive, fugitive_devices, 0)
-				_assign_fugitive_from_device_list(second_fugitive, fugitive_devices, 1)
-				_assign_fugitive_from_device_list(third_fugitive, fugitive_devices, 2)
+				_assign_fugitive_from_device_list(fugitive, fugitive_devices, 0, input_manager)
+				_assign_fugitive_from_device_list(second_fugitive, fugitive_devices, 1, input_manager)
+				_assign_fugitive_from_device_list(third_fugitive, fugitive_devices, 2, input_manager)
 				return
 
 	police.device_id = int(joined_devices[0])
@@ -355,14 +377,19 @@ func _configure_players_from_lobby() -> void:
 	_assign_fugitive_slot(second_fugitive, joined_devices, 2)
 	_assign_fugitive_slot(third_fugitive, joined_devices, 3)
 
-func _assign_fugitive_from_device_list(player: FugitivePlayer, fugitive_devices: Array, fugitive_index: int) -> void:
+func _assign_fugitive_from_device_list(player: FugitivePlayer, fugitive_devices: Array, fugitive_index: int, input_manager: Node) -> void:
 	player.use_keyboard_input = false
 	if fugitive_devices.size() > fugitive_index:
 		player.device_id = int(fugitive_devices[fugitive_index])
 		player.is_participating = true
 		player.visible = true
+		var character_id: String = ""
+		if input_manager.has_method("get_character_for_device"):
+			character_id = str(input_manager.call("get_character_for_device", player.device_id))
+		player.configure_skill(character_id, self)
 		return
 
+	player.clear_skill()
 	player.deactivate_slot()
 
 func _assign_fugitive_slot(player: FugitivePlayer, joined_devices: Array, joined_index: int) -> void:
@@ -371,7 +398,9 @@ func _assign_fugitive_slot(player: FugitivePlayer, joined_devices: Array, joined
 		player.device_id = int(joined_devices[joined_index])
 		player.is_participating = true
 		player.visible = true
+		player.clear_skill()
 		return
 
 	player.device_id = -1
+	player.clear_skill()
 	player.deactivate_slot()

@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/banana_trap.gd" id="1_trap"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_trap"]
+top_radius = 1.6
+bottom_radius = 1.6
+height = 0.06
+radial_segments = 48
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_trap"]
+albedo_color = Color(0.918, 0.702, 0.031, 0.58)
+transparency = 1
+emission_enabled = true
+emission = Color(0.918, 0.702, 0.031, 1)
+emission_energy_multiplier = 1.4
+
+[node name="BananaTrap" type="Node3D"]
+script = ExtResource("1_trap")
+
+[node name="Visual" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_trap")
+material_override = SubResource("StandardMaterial3D_trap")

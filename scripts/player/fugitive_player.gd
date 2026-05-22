@@ -24,6 +24,10 @@ const DEFAULT_STUN: float = 2.0
 @onready var view: Node3D = get_node_or_null(camera_path)
 
 var movement_velocity: Vector3 = Vector3.ZERO
+var base_move_speed: float = 10.0
+var skill_speed_multiplier: float = 1.0
+var disruption_speed_multiplier: float = 1.0
+var disruption_slow_timer: float = 0.0
 var gravity: float = 0.0
 var rotation_direction: float = 0.0
 var is_stunned: bool = false
@@ -43,8 +47,10 @@ var avatar_head: MeshInstance3D = null
 var avatar_visor: MeshInstance3D = null
 var pop_timer: float = 0.0
 var visual_base_position: Vector3 = Vector3.ZERO
+var skill_controller: SkillController = null
 
 func _ready() -> void:
+	base_move_speed = move_speed
 	if character_visual:
 		visual_base_position = character_visual.position
 		character_visual.scale = Vector3.ONE * visual_scale
@@ -61,6 +67,7 @@ func _physics_process(delta: float) -> void:
 	visual_pulse_time += delta
 	_update_player_ring()
 	_update_token_presence(delta)
+	_update_disruption(delta)
 
 	if global_position.y < _get_current_fall_limit():
 		_restore_to_spawn()
@@ -103,7 +110,7 @@ func handle_input() -> void:
 	if view:
 		input = input.rotated(Vector3.UP, view.rotation.y)
 
-	movement_velocity = input.normalized() * move_speed if input.length() > 0.0 else Vector3.ZERO
+	movement_velocity = input.normalized() * _get_effective_move_speed() if input.length() > 0.0 else Vector3.ZERO
 
 func apply_gravity(delta: float) -> void:
 	if not is_on_floor():
@@ -133,8 +140,42 @@ func set_input_enabled(enabled: bool) -> void:
 		movement_velocity = Vector3.ZERO
 
 func configure_movement(speed: float, new_acceleration: float) -> void:
-	move_speed = speed
+	base_move_speed = speed
+	move_speed = _get_effective_move_speed()
 	acceleration = new_acceleration
+
+func set_skill_speed_multiplier(multiplier: float) -> void:
+	skill_speed_multiplier = maxf(multiplier, 0.0)
+	move_speed = _get_effective_move_speed()
+
+func get_forward_direction() -> Vector3:
+	var forward: Vector3 = -global_transform.basis.z
+	forward.y = 0.0
+	if forward.length() <= 0.001:
+		return Vector3.FORWARD
+	return forward.normalized()
+
+func configure_skill(character_id: String, round_manager: Node) -> void:
+	clear_skill()
+	if character_id.is_empty():
+		return
+
+	skill_controller = SkillController.new()
+	skill_controller.name = "SkillController"
+	add_child(skill_controller)
+	skill_controller.setup(self, character_id, round_manager)
+
+func clear_skill() -> void:
+	if skill_controller:
+		skill_controller.cancel()
+		skill_controller.queue_free()
+		skill_controller = null
+	set_skill_speed_multiplier(1.0)
+
+func get_skill_status_text() -> String:
+	if skill_controller == null:
+		return ""
+	return skill_controller.get_status_text()
 
 func capture() -> void:
 	infect()
@@ -146,6 +187,7 @@ func infect() -> void:
 	is_stunned = false
 	stun_timer = 0.0
 	input_enabled = true
+	clear_skill()
 	_apply_current_palette()
 	_flash_role_change()
 
@@ -164,6 +206,8 @@ func reset_state(spawn_position: Vector3) -> void:
 	is_captured = false
 	is_infected = false
 	is_in_danger_visual = false
+	disruption_speed_multiplier = 1.0
+	disruption_slow_timer = 0.0
 	if character_visual:
 		character_visual.scale = Vector3.ONE * visual_scale
 	_apply_current_palette()
@@ -178,6 +222,7 @@ func deactivate_slot() -> void:
 	is_in_danger_visual = false
 	is_stunned = false
 	stun_timer = 0.0
+	clear_skill()
 	velocity = Vector3.ZERO
 	movement_velocity = Vector3.ZERO
 
@@ -213,6 +258,30 @@ func _get_keyboard_direction() -> Vector3:
 
 func _get_input_manager() -> Node:
 	return get_node_or_null("/root/InputManager")
+
+func apply_hunter_disruption(stun_seconds: float, slow_multiplier: float, slow_seconds: float) -> void:
+	if not is_infected:
+		return
+
+	if stun_seconds > 0.0:
+		is_stunned = true
+		stun_timer = maxf(stun_timer, stun_seconds)
+	if slow_seconds > 0.0:
+		disruption_speed_multiplier = clampf(slow_multiplier, 0.0, 1.0)
+		disruption_slow_timer = maxf(disruption_slow_timer, slow_seconds)
+	move_speed = _get_effective_move_speed()
+
+func _update_disruption(delta: float) -> void:
+	if disruption_slow_timer <= 0.0:
+		return
+
+	disruption_slow_timer = maxf(disruption_slow_timer - delta, 0.0)
+	if disruption_slow_timer <= 0.0:
+		disruption_speed_multiplier = 1.0
+		move_speed = _get_effective_move_speed()
+
+func _get_effective_move_speed() -> float:
+	return base_move_speed * skill_speed_multiplier * disruption_speed_multiplier
 
 func _apply_current_palette() -> void:
 	var palette_material: StandardMaterial3D = StandardMaterial3D.new()

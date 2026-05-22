@@ -18,7 +18,7 @@ layout_mode = 1
 offset_left = 24.0
 offset_top = 20.0
 offset_right = 360.0
-offset_bottom = 140.0
+offset_bottom = 170.0
 
 [node name="InfoColumn" type="VBoxContainer" parent="Control/TopLeft"]
 layout_mode = 2
@@ -32,6 +32,11 @@ text = "Tempo: 45"
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Fugitivos livres: 3/3"
+
+[node name="SkillLabel" type="Label" parent="Control/TopLeft/InfoColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = ""
 
 [node name="TopCenter" type="CenterContainer" parent="Control"]
 layout_mode = 1

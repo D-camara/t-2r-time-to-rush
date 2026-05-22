@@ -16,6 +16,10 @@ extends CharacterBody3D
 @onready var character_visual: Node3D = find_child("boneco", true, false) as Node3D
 
 var gravity: float = 0.0
+var base_move_speed: float = 11.0
+var disruption_speed_multiplier: float = 1.0
+var disruption_slow_timer: float = 0.0
+var disruption_stun_timer: float = 0.0
 var input_enabled: bool = true
 var rotation_direction: float = 0.0
 var respawn_position: Vector3 = Vector3.ZERO
@@ -29,6 +33,7 @@ var avatar_visor: MeshInstance3D = null
 var visual_base_position: Vector3 = Vector3.ZERO
 
 func _ready() -> void:
+	base_move_speed = move_speed
 	if character_visual:
 		visual_base_position = character_visual.position
 		character_visual.scale = Vector3.ONE * visual_scale
@@ -42,14 +47,17 @@ func _physics_process(delta: float) -> void:
 	visual_pulse_time += delta
 	_update_player_ring()
 	_update_token_presence(delta)
+	_update_disruption(delta)
 
 	if global_position.y < _get_current_fall_limit():
 		_restore_to_spawn()
 		return
 
-	if input_enabled:
+	if disruption_stun_timer > 0.0:
+		velocity = Vector3.ZERO
+	elif input_enabled:
 		var direction: Vector3 = _get_move_direction()
-		var target_velocity: Vector3 = Vector3(direction.x, 0.0, direction.z) * move_speed
+		var target_velocity: Vector3 = Vector3(direction.x, 0.0, direction.z) * _get_effective_move_speed()
 		var applied_velocity: Vector3 = velocity.lerp(target_velocity, delta * acceleration)
 		applied_velocity.y = _get_vertical_velocity(delta)
 		velocity = applied_velocity
@@ -77,14 +85,26 @@ func set_input_enabled(enabled: bool) -> void:
 
 func reset_state(spawn_position: Vector3) -> void:
 	respawn_position = spawn_position
+	disruption_speed_multiplier = 1.0
+	disruption_slow_timer = 0.0
+	disruption_stun_timer = 0.0
 	if character_visual:
 		character_visual.scale = Vector3.ONE * visual_scale
 	_restore_to_spawn()
 	input_enabled = true
 
 func configure_movement(speed: float, new_acceleration: float) -> void:
-	move_speed = speed
+	base_move_speed = speed
+	move_speed = _get_effective_move_speed()
 	acceleration = new_acceleration
+
+func apply_hunter_disruption(stun_seconds: float, slow_multiplier: float, slow_seconds: float) -> void:
+	if stun_seconds > 0.0:
+		disruption_stun_timer = maxf(disruption_stun_timer, stun_seconds)
+	if slow_seconds > 0.0:
+		disruption_speed_multiplier = clampf(slow_multiplier, 0.0, 1.0)
+		disruption_slow_timer = maxf(disruption_slow_timer, slow_seconds)
+	move_speed = _get_effective_move_speed()
 
 func is_controller_connected() -> bool:
 	var input_manager: Node = _get_input_manager()
@@ -109,6 +129,21 @@ func _get_move_direction() -> Vector3:
 
 func _get_input_manager() -> Node:
 	return get_node_or_null("/root/InputManager")
+
+func _update_disruption(delta: float) -> void:
+	if disruption_stun_timer > 0.0:
+		disruption_stun_timer = maxf(disruption_stun_timer - delta, 0.0)
+
+	if disruption_slow_timer <= 0.0:
+		return
+
+	disruption_slow_timer = maxf(disruption_slow_timer - delta, 0.0)
+	if disruption_slow_timer <= 0.0:
+		disruption_speed_multiplier = 1.0
+		move_speed = _get_effective_move_speed()
+
+func _get_effective_move_speed() -> float:
+	return base_move_speed * disruption_speed_multiplier
 
 func _handle_animation() -> void:
 	if not animator or not is_on_floor():
