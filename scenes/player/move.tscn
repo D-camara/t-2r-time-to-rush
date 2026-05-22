@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/player/police_player.tscn" id="5_police"]
 [ext_resource type="PackedScene" path="res://scenes/ui/round_hud.tscn" id="6_hud"]
 [ext_resource type="PackedScene" path="res://scenes/player/fugitive_player.tscn" id="7_fugitive"]
-[ext_resource type="PackedScene" uid="uid://d1y5vbdvtw0ad" path="res://scenes/mapacheli.tscn" id="9_hqmky"]
+[ext_resource type="PackedScene" uid="uid://ds0qg120uvn0j" path="res://scenes/MAPAQSEDEF.tscn" id="9_hqmky"]
 [ext_resource type="PackedScene" uid="uid://cua7818nxcsdt" path="res://scenes/POLICIAVERMELH.tscn" id="10_b5ksb"]
 
 [sub_resource type="Animation" id="Animation_tohxk"]
@@ -455,7 +455,7 @@ glow_enabled = true
 script = ExtResource("3_round")
 
 [node name="PERSONAGEM" type="CharacterBody3D" parent="." unique_id=353522985]
-transform = Transform3D(-0.015519096, 0, 1.1998997, 0, 1.1999999, 0, -1.1998997, 0, -0.015519096, -61.627388, 63.78357, 188.9846)
+transform = Transform3D(-0.015519096, 0, 1.1998997, 0, 1.1999999, 0, -1.1998997, 0, -0.015519096, -52.842342, 63.78357, 191.20811)
 script = ExtResource("1_86tx1")
 metadata/_edit_group_ = true
 
@@ -476,9 +476,10 @@ script = ExtResource("4_camera")
 environment = SubResource("Environment_c43ro")
 
 [node name="POLICIAL" parent="." unique_id=1667643868 instance=ExtResource("5_police")]
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 0, 0, 0)
 
 [node name="FUGITIVO_2" parent="." unique_id=1693917688 instance=ExtResource("7_fugitive")]
-transform = Transform3D(0.9718229, -0.021768482, 0.2347045, 0.043267045, 0.995282, -0.086841635, -0.23170674, 0.09454967, 0.9681798, 0, 0, 0)
+transform = Transform3D(1.1661876, -0.026122186, 0.28164542, 0.051920462, 1.1943386, -0.10420998, -0.27804813, 0.11345962, 1.1618159, 0, 0, 0)
 use_keyboard_input = false
 device_id = 1
 
@@ -513,5 +514,5 @@ transform = Transform3D(-0.19525063, -0.004969263, 0.98074067, 0.019270116, 0.99
 [node name="police5" parent="police" unique_id=442689984 instance=ExtResource("10_b5ksb")]
 transform = Transform3D(0.99964786, -0.0049692625, -0.026063114, 0.0044286493, 0.99977446, -0.020759866, 0.0261603, 0.020637117, 0.9994446, 7.895319, 0.071989596, -1.5864296)
 
-[node name="MAPACHELI2" parent="." unique_id=630825168 instance=ExtResource("9_hqmky")]
-transform = Transform3D(-3.5, 0, 3.059797e-07, 0, 3.5, 0, -3.059797e-07, 0, -3.5, 0, 0, 0)
+[node name="maopaglb2" parent="." unique_id=1113979294 instance=ExtResource("9_hqmky")]
+transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, 0, 0, 0)
