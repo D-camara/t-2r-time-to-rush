@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/player/police_player.tscn" id="5_police"]
 [ext_resource type="PackedScene" path="res://scenes/ui/round_hud.tscn" id="6_hud"]
 [ext_resource type="PackedScene" path="res://scenes/player/fugitive_player.tscn" id="7_fugitive"]
-[ext_resource type="PackedScene" uid="uid://ds0qg120uvn0j" path="res://scenes/MAPAQSEDEF.tscn" id="9_hqmky"]
+[ext_resource type="PackedScene" uid="uid://4g7jxiwxlr88" path="res://scenes/MAPADEFINITIVO.tscn" id="9_hqmky"]
 [ext_resource type="PackedScene" uid="uid://cua7818nxcsdt" path="res://scenes/POLICIAVERMELH.tscn" id="10_b5ksb"]
 
 [sub_resource type="Animation" id="Animation_tohxk"]
@@ -451,6 +451,8 @@ reflected_light_source = 2
 ssao_enabled = true
 glow_enabled = true
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_hqmky"]
+
 [node name="JOGO" type="Node3D" unique_id=446853248]
 script = ExtResource("3_round")
 
@@ -514,5 +516,12 @@ transform = Transform3D(-0.19525063, -0.004969263, 0.98074067, 0.019270116, 0.99
 [node name="police5" parent="police" unique_id=442689984 instance=ExtResource("10_b5ksb")]
 transform = Transform3D(0.99964786, -0.0049692625, -0.026063114, 0.0044286493, 0.99977446, -0.020759866, 0.0261603, 0.020637117, 0.9994446, 7.895319, 0.071989596, -1.5864296)
 
-[node name="maopaglb2" parent="." unique_id=1113979294 instance=ExtResource("9_hqmky")]
+[node name="MAPADEFINITIVO" parent="." unique_id=2082928804 instance=ExtResource("9_hqmky")]
 transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, 0, 0, 0)
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=345733139]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 22.488272, 65.25548, 195.51212)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1969109245]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.34319544, 0, 0)
+shape = SubResource("BoxShape3D_hqmky")
