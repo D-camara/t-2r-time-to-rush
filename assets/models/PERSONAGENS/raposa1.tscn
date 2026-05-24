@@ -1,37 +1,8 @@
-[gd_scene format=3 uid="uid://1rmlwk2viatv"]
+[gd_scene format=3 uid="uid://q7yaa45jxbkh"]
 
-[ext_resource type="Script" uid="uid://bq1rke32ox34t" path="res://scripts/player/fugitive_player.gd" id="1_86tx1"]
-[ext_resource type="PackedScene" uid="uid://4led6548jgpe" path="res://assets/models/PERSONAGENS/coelha1.tscn" id="3_b5ksb"]
-[ext_resource type="Script" uid="uid://bslobc5jomij4" path="res://scripts/game/round_manager.gd" id="3_round"]
-[ext_resource type="Script" uid="uid://b6cm462xjml4r" path="res://scripts/camera/shared_camera.gd" id="4_camera"]
-[ext_resource type="PackedScene" path="res://scenes/ui/round_hud.tscn" id="6_hud"]
-[ext_resource type="PackedScene" uid="uid://diwvst2tve6jx" path="res://assets/models/PERSONAGENS/sagui1.tscn" id="8_b5ksb"]
-[ext_resource type="Script" uid="uid://ct7gf8ai26p2v" path="res://scripts/player/police_player.gd" id="8_hqmky"]
-[ext_resource type="PackedScene" uid="uid://drg3x51sjuvng" path="res://assets/models/PERSONAGENS/policef1.tscn" id="8_krkws"]
-[ext_resource type="PackedScene" uid="uid://4g7jxiwxlr88" path="res://scenes/MAPADEFINITIVO.tscn" id="9_hqmky"]
-[ext_resource type="PackedScene" uid="uid://q7yaa45jxbkh" path="res://assets/models/PERSONAGENS/raposa1.tscn" id="9_rhbmy"]
-[ext_resource type="PackedScene" uid="uid://cua7818nxcsdt" path="res://scenes/POLICIAVERMELH.tscn" id="10_b5ksb"]
-[ext_resource type="PackedScene" uid="uid://bre4fu4nvoloq" path="res://assets/models/PERSONAGENS/tigre1.tscn" id="10_rayke"]
+[ext_resource type="PackedScene" uid="uid://byiwv8j7o0qvn" path="res://assets/models/PERSONAGENS/raposa.glb" id="1_k2qcy"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_hqmky"]
-
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_86tx1"]
-sky_top_color = Color(0.8219605, 0.9431423, 0.9282102, 1)
-sky_horizon_color = Color(0.058343045, 0.3046049, 0.24021697, 1)
-
-[sub_resource type="Sky" id="Sky_2syaa"]
-sky_material = SubResource("ProceduralSkyMaterial_86tx1")
-
-[sub_resource type="Environment" id="Environment_c43ro"]
-sky = SubResource("Sky_2syaa")
-ambient_light_source = 3
-ambient_light_color = Color(0.6923086, 0.00042326184, 0.7062721, 1)
-ambient_light_energy = 2.15
-reflected_light_source = 2
-ssao_enabled = true
-glow_enabled = true
-
-[sub_resource type="Animation" id="Animation_tohxk"]
+[sub_resource type="Animation" id="Animation_hgn3f"]
 resource_name = "FastRun"
 length = 0.6666667
 loop_mode = 1
@@ -239,7 +210,7 @@ tracks/28/interp = 1
 tracks/28/loop_wrap = true
 tracks/28/keys = PackedFloat32Array(0, 1, -5.268356e-08, 0.9924206, 0.12288767, 5.268356e-08, 0.033333335, 1, -5.268356e-08, 0.9924206, 0.12288767, 5.268356e-08, 0.06666667, 1, 7.902534e-09, 0.97663546, 0.21490297, 1.317089e-08, 0.1, 1, 2.6341779e-08, 0.9612093, 0.27582029, 6.8488625e-08, 0.13333334, 1, -1.1326966e-07, 0.9913119, 0.13153207, 7.9025355e-09, 0.16666667, 1, -1.0009876e-07, 0.9998878, 0.014966577, -5.268358e-09, 0.2, 1, -3.1610135e-08, 0.9998429, -0.017726868, 3.1610135e-08, 0.23333333, 1, -9.4830405e-08, 0.9991399, -0.041464478, -3.1610135e-08, 0.26666668, 1, -1.5805068e-07, 0.9982004, -0.059963793, 1.0536709e-08, 0.3, 1, 1.5805067e-08, 0.9976491, -0.06853071, -3.6878493e-08, 0.33333334, 1, -4.2146848e-08, 0.99979365, -0.02031532, 4.2146848e-08, 0.36666667, 1, -1.0536712e-07, 0.99999976, 0.00065532327, -6.322027e-08, 0.4, 1, -3.6878493e-08, 0.99996686, -0.008126229, 1.5805067e-08, 0.43333334, 1, -8.4293696e-08, 0.9999987, -0.0015963018, 0, 0.46666667, 1, 5.268356e-09, 0.9999995, 0.0009820163, 1.5805067e-08, 0.5, 1, -2.634178e-08, 0.9997683, 0.021520078, 4.7415206e-08, 0.53333336, 1, -4.7415202e-08, 0.999876, 0.015738994, 4.7415202e-08, 0.56666666, 1, -5.268356e-09, 0.9999908, 0.0043030083, -1.5805067e-08, 0.6, 1, -1.5805067e-08, 0.99955, 0.0299972, 1.5805067e-08, 0.6333333, 1, -6.8488625e-08, 0.998054, 0.06235397, 4.7415202e-08, 0.6666667, 1, 2.634178e-08, 0.99242055, 0.12288764, 5.7951915e-08)
 
-[sub_resource type="Animation" id="Animation_aba8x"]
+[sub_resource type="Animation" id="Animation_bd6ix"]
 resource_name = "Idle"
 length = 2.0
 tracks/0/type = "position_3d"
@@ -446,137 +417,58 @@ tracks/28/interp = 1
 tracks/28/loop_wrap = true
 tracks/28/keys = PackedFloat32Array(0, 1, 0.0031294457, 0.999869, 0.015612334, -0.0029287, 1.5333333, 1, 0.0037289213, 0.9998567, 0.01611033, -0.0035966013, 2, 1, 0.0030675267, 0.99986947, 0.015585154, -0.0029557531)
 
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_c43ro"]
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_4sfu4"]
 _data = {
-&"FastRun": SubResource("Animation_tohxk"),
-&"Idle": SubResource("Animation_aba8x")
+&"FastRun": SubResource("Animation_hgn3f"),
+&"Idle": SubResource("Animation_bd6ix")
 }
 
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_spp8y"]
-height = 3.8203125
-radius = 0.3930664
+[node name="raposa" unique_id=1937919183 instance=ExtResource("1_k2qcy")]
 
-[node name="JOGO" type="Node3D" unique_id=446853248]
-script = ExtResource("3_round")
+[node name="GeneralSkeleton" parent="Armature" parent_id_path=PackedInt32Array(779195893) index="0" unique_id=348846238]
+bones/0/position = Vector3(0.0003534359, 2.3210661, -0.0023855586)
+bones/0/rotation = Quaternion(0.1592045, -0.11982815, 0.005401742, 0.9799317)
+bones/1/rotation = Quaternion(0.054122563, 0.05539164, -0.012879152, 0.9969136)
+bones/2/rotation = Quaternion(0.035077035, 0.023052081, 0.00016542204, 0.99911875)
+bones/3/rotation = Quaternion(0.035103478, 0.022959912, 0.001279752, 0.9991191)
+bones/4/rotation = Quaternion(-0.054464716, 0.002710158, 0.003004672, 0.9985075)
+bones/5/rotation = Quaternion(-0.1467461, 0.022789596, -0.010532358, 0.98885554)
+bones/7/rotation = Quaternion(0.4861362, 0.48523915, 0.6144781, -0.38811243)
+bones/8/rotation = Quaternion(-0.012239931, 0.7760867, -0.48829907, -0.39887804)
+bones/9/rotation = Quaternion(0.22637282, -0.66989213, 0.22637285, 0.669892)
+bones/10/rotation = Quaternion(0.0050942684, 0.4880306, 0.0055836774, 0.8727939)
+bones/11/rotation = Quaternion(-0.14344001, 0.6846033, 0.2880993, 0.65402)
+bones/12/rotation = Quaternion(0.014079928, 0.011172668, -0.08315602, 0.9963744)
+bones/12/scale = Vector3(1.0000168, 0.99998343, 0.9999998)
+bones/13/rotation = Quaternion(-0.00056643784, -0.000509277, 0.0043924153, 0.9999901)
+bones/14/rotation = Quaternion(0.16900277, -0.68400425, 0.12488691, 0.69855535)
+bones/15/rotation = Quaternion(0.49518454, 4.61936e-07, -0.050744534, 0.8673047)
+bones/16/rotation = Quaternion(0.41175097, 1.0728836e-06, -0.042194724, 0.91031903)
+bones/17/rotation = Quaternion(-0.053678744, 0.004689216, -0.040274378, 0.9977348)
+bones/18/position = Vector3(-0.0013970062, 0.050936446, 0.007792137)
+bones/18/rotation = Quaternion(0.07503918, 0.020125836, -0.011670671, 0.99690914)
+bones/19/rotation = Quaternion(0.40412867, -0.5521587, -0.6276171, -0.37134573)
+bones/20/rotation = Quaternion(-0.2111699, 0.81311053, -0.5088122, -0.18806592)
+bones/21/rotation = Quaternion(0.41529685, 0.5723011, -0.4152969, 0.5723011)
+bones/22/rotation = Quaternion(0.06826701, -0.5371545, -0.1712753, 0.8230854)
+bones/23/rotation = Quaternion(-0.14220007, -0.6871655, -0.28259894, 0.6540034)
+bones/24/rotation = Quaternion(-0.0037101796, -0.0046132356, 0.07164477, 0.9974127)
+bones/24/scale = Vector3(1.0000124, 0.9999873, 0.99999994)
+bones/25/rotation = Quaternion(0.0048454558, -0.0053509627, 0.03710598, 0.99928534)
+bones/26/rotation = Quaternion(0.1963474, 0.6820326, -0.14418682, 0.68955743)
+bones/27/rotation = Quaternion(0.49613416, 0, 0.04041624, 0.8673047)
+bones/28/rotation = Quaternion(0.41254073, -1.4901161e-07, 0.03360638, 0.91031903)
+bones/29/rotation = Quaternion(-0.057796404, -0.0009174347, 0.034777567, 0.997722)
+bones/30/position = Vector3(0.003627099, 0.048796777, 0.007315048)
+bones/30/rotation = Quaternion(0.07300592, -0.020463135, -0.014102786, 0.99702185)
+bones/31/rotation = Quaternion(0.13530521, 0.5750069, 0.8035332, -0.0734437)
+bones/32/rotation = Quaternion(-0.06473623, 0.4586667, -0.8857964, 0.028265165)
+bones/33/rotation = Quaternion(0.032897983, 0.8911026, -0.45173675, -0.028066387)
+bones/34/rotation = Quaternion(-5.268357e-09, 0.9998512, 0.017251821, 4.7415213e-08)
+bones/36/rotation = Quaternion(-0.046642665, 0.09521312, 0.9939317, -0.029302116)
+bones/37/rotation = Quaternion(-0.01784799, 0.9720309, -0.22934556, 0.047308374)
+bones/38/rotation = Quaternion(-0.0033874437, 0.55108386, -0.8297517, 0.08835942)
+bones/39/rotation = Quaternion(-5.268356e-08, 0.9924206, 0.12288767, 5.268356e-08)
 
-[node name="MAPADEFINITIVO" parent="." unique_id=2082928804 instance=ExtResource("9_hqmky")]
-transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, 0, 0, 0)
-
-[node name="HUD" parent="." unique_id=1214818089 instance=ExtResource("6_hud")]
-
-[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=345733139]
-transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 22.488272, 65.25548, 195.51212)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1969109245]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.34319544, 0, 0)
-shape = SubResource("BoxShape3D_hqmky")
-
-[node name="CAMERA" type="Camera3D" parent="." unique_id=143584397]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 37.512016, -3.0241508)
-script = ExtResource("4_camera")
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="CAMERA" unique_id=1808334499]
-environment = SubResource("Environment_c43ro")
-
-[node name="police" parent="." unique_id=70608505 instance=ExtResource("10_b5ksb")]
-transform = Transform3D(-4.96833, -0.09410382, 3.3625655, -0.029815657, 5.998649, 0.12382283, -3.3637505, 0.08582256, -4.9676785, -33.998917, 0, 241.9494)
-
-[node name="police7" parent="police" unique_id=2097401597 instance=ExtResource("10_b5ksb")]
-transform = Transform3D(0.18076581, -0.004969263, 0.9835135, 0.021195497, 0.9997746, 0.0011557899, -0.9832976, 0.02063712, 0.18083033, -1.9298382, -0.09034097, 3.9119148)
-
-[node name="police2" parent="police" unique_id=1485156738 instance=ExtResource("10_b5ksb")]
-transform = Transform3D(0.5345595, -0.0049692644, 0.8451161, 0.020097047, 0.9997749, -0.0068332744, -0.8448918, 0.020637125, 0.5345388, -6.012768, -0.14889735, 5.765564)
-
-[node name="police3" parent="police" unique_id=793585675 instance=ExtResource("10_b5ksb")]
-transform = Transform3D(0.8336588, -0.004969263, -0.5522574, -0.0072554406, 0.9997746, -0.019948523, 0.552232, 0.02063712, 0.83343494, 4.6218147, 0.03354633, -0.51226425)
-
-[node name="police4" parent="police" unique_id=558597190 instance=ExtResource("10_b5ksb")]
-transform = Transform3D(-0.19525063, -0.004969263, 0.98074067, 0.019270116, 0.9997746, 0.008902108, -0.9805639, 0.02063712, -0.19511098, -7.228464, -0.24388683, 10.074636)
-
-[node name="police5" parent="police" unique_id=442689984 instance=ExtResource("10_b5ksb")]
-transform = Transform3D(0.99964786, -0.0049692625, -0.026063114, 0.0044286493, 0.99977446, -0.020759866, 0.0261603, 0.020637117, 0.9994446, 7.895319, 0.071989596, -1.5864296)
-
-[node name="LADRAO1" type="CharacterBody3D" parent="." unique_id=353522985]
-transform = Transform3D(-0.015519096, 0, 1.1998997, 0, 1.1999999, 0, -1.1998997, 0, -0.015519096, -52.842342, 63.78357, 191.20811)
-script = ExtResource("1_86tx1")
-use_keyboard_input = false
-device_id = 1
-metadata/_edit_group_ = true
-
-[node name="coelha2" parent="LADRAO1" unique_id=1684053325 instance=ExtResource("3_b5ksb")]
-
-[node name="AnimationPlayer2" type="AnimationPlayer" parent="LADRAO1/coelha2" unique_id=1663350897]
-"libraries/animaçoesfim" = SubResource("AnimationLibrary_c43ro")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="LADRAO1" unique_id=1628756445]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9908638, 0)
-shape = SubResource("CylinderShape3D_spp8y")
-
-[node name="LADRAO2" type="CharacterBody3D" parent="." unique_id=1066375027]
-transform = Transform3D(-0.015519096, 0, 1.1998997, 0, 1.1999999, 0, -1.1998997, 0, -0.015519096, -49.765064, 63.78357, 191.20811)
-script = ExtResource("1_86tx1")
-metadata/_custom_type_script = "uid://bq1rke32ox34t"
-metadata/_edit_group_ = true
-
-[node name="sagui" parent="LADRAO2" unique_id=1076187309 instance=ExtResource("8_b5ksb")]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="LADRAO2" unique_id=1504575421]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9908638, 0)
-shape = SubResource("CylinderShape3D_spp8y")
-
-[node name="LADRAO3" type="CharacterBody3D" parent="." unique_id=562800504]
-transform = Transform3D(-0.015519096, 0, 1.1998997, 0, 1.1999999, 0, -1.1998997, 0, -0.015519096, -52.842342, 63.78357, 191.20811)
-script = ExtResource("1_86tx1")
-use_keyboard_input = false
-device_id = 1
-metadata/_edit_group_ = true
-
-[node name="raposa" parent="LADRAO3" unique_id=1937919183 instance=ExtResource("9_rhbmy")]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="LADRAO3" unique_id=2087134345]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9908638, 0)
-shape = SubResource("CylinderShape3D_spp8y")
-
-[node name="LADRAO4" type="CharacterBody3D" parent="." unique_id=1384938982]
-transform = Transform3D(-0.015519096, 0, 1.1998997, 0, 1.1999999, 0, -1.1998997, 0, -0.015519096, -52.842342, 63.78357, 191.20811)
-script = ExtResource("1_86tx1")
-use_keyboard_input = false
-device_id = 1
-metadata/_edit_group_ = true
-
-[node name="tigre" parent="LADRAO4" unique_id=2115978592 instance=ExtResource("10_rayke")]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="LADRAO4" unique_id=1418342801]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9908638, 0)
-shape = SubResource("CylinderShape3D_spp8y")
-
-[node name="POLICIAL" type="CharacterBody3D" parent="." unique_id=389062375]
-transform = Transform3D(-0.015519096, 0, 1.1998997, 0, 1.1999999, 0, -1.1998997, 0, -0.015519096, -52.842342, 63.78357, 191.20811)
-script = ExtResource("8_hqmky")
-metadata/_edit_group_ = true
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="POLICIAL" unique_id=1574128932]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9908638, 0)
-shape = SubResource("CylinderShape3D_spp8y")
-
-[node name="policef" parent="POLICIAL" unique_id=244454321 instance=ExtResource("8_krkws")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9908638, 0)
-
-[node name="AnimationPlayer2" type="AnimationPlayer" parent="POLICIAL/policef" unique_id=1514128193]
-root_node = NodePath("../..")
-"libraries/animaçoesfim" = SubResource("AnimationLibrary_c43ro")
-
-[node name="LADRAO1_SPAWN" type="Node3D" parent="." unique_id=391150257]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.084122, 66.74017, 190.49883)
-
-[node name="LADRAO2_SPAWN" type="Node3D" parent="." unique_id=344666412]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1907578, 66.35538, 201.66258)
-
-[node name="LADRAO3_SPAWN" type="Node3D" parent="." unique_id=1393104001]
-transform = Transform3D(-0.9016515, -0.4324634, 0, 0.4324634, -0.9016515, 0, 0, 0, 1, -33.936043, 64.62743, 201.66258)
-
-[node name="LADRAO4_SPAWN" type="Node3D" parent="." unique_id=1779601184]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.87708, 66.00539, 190.49883)
-
-[node name="POLICIAL_SPAWN" type="Node3D" parent="." unique_id=1241531624]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.877434, 65.071884, 206.1393)
+[node name="AnimationPlayer" parent="." index="1" unique_id=1906343575]
+"libraries/animaçoesfim" = SubResource("AnimationLibrary_4sfu4")

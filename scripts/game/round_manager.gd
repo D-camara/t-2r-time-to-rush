@@ -22,13 +22,19 @@ enum RoundState {
 @export var second_fugitive_spawn: Vector3 = Vector3(-12.0, 2.0, -4.0)
 @export var police_spawn: Vector3 = Vector3(7.0, 2.0, 0.0)
 
-@onready var fugitive: FugitivePlayer = $PERSONAGEM
-@onready var second_fugitive: FugitivePlayer = $FUGITIVO_2
+@onready var fugitive: FugitivePlayer = $LADRAO1
+@onready var second_fugitive: FugitivePlayer = $LADRAO2
+@onready var third_fugitive: FugitivePlayer = $LADRAO3
+@onready var fourth_fugitive: FugitivePlayer = $LADRAO4
+
 @onready var police: PolicePlayer = $POLICIAL
 @onready var hud: RoundHud = $HUD
-@onready var fugitive_spawn_marker: Node3D = get_node_or_null("FUGITIVE_SPAWN")
-@onready var second_fugitive_spawn_marker: Node3D = get_node_or_null("FUGITIVE_2_SPAWN")
-@onready var police_spawn_marker: Node3D = get_node_or_null("POLICE_SPAWN")
+
+@onready var fugitive_spawn_marker: Node3D = get_node_or_null("LADRAO1_SPAWN")
+@onready var second_fugitive_spawn_marker: Node3D = get_node_or_null("LADRAO2_SPAWN")
+@onready var third_fugitive_spawn_marker: Node3D = get_node_or_null("LADRAO3_SPAWN")
+@onready var fourth_fugitive_spawn_marker: Node3D = get_node_or_null("LADRAO4_SPAWN")
+@onready var police_spawn_marker: Node3D = get_node_or_null("POLICIAL_SPAWN")
 
 var current_state: int = RoundState.COUNTDOWN
 var remaining_time: float = 0.0
@@ -72,15 +78,21 @@ func start_round() -> void:
 	current_state = RoundState.COUNTDOWN
 	remaining_time = round_duration
 	countdown_remaining = pre_round_countdown
+
 	fugitive.reset_state(_get_fugitive_spawn_position())
 	second_fugitive.reset_state(_get_second_fugitive_spawn_position())
+	third_fugitive.reset_state(_get_third_fugitive_spawn_position())
+	fourth_fugitive.reset_state(_get_fourth_fugitive_spawn_position())
 	police.reset_state(_get_police_spawn_position())
+
 	fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
 	second_fugitive.configure_movement(fugitive_speed, fugitive_acceleration)
 	police.configure_movement(police_speed, police_acceleration)
+
 	fugitive.set_input_enabled(false)
 	second_fugitive.set_input_enabled(false)
 	police.set_input_enabled(false)
+
 	_update_hud(_get_countdown_message())
 
 func _finish_round(result: int) -> void:
@@ -88,6 +100,7 @@ func _finish_round(result: int) -> void:
 		return
 
 	current_state = result
+
 	fugitive.set_input_enabled(false)
 	second_fugitive.set_input_enabled(false)
 	police.set_input_enabled(false)
@@ -105,8 +118,9 @@ func _update_hud(status_message: String) -> void:
 
 	var active_fugitives: int = _get_active_fugitives().size()
 	var timer_warning: bool = current_state == RoundState.PLAYING and remaining_time <= low_time_threshold
+
 	hud.update_timer(remaining_time, timer_warning)
-	hud.update_active_fugitives(active_fugitives, 2)
+	hud.update_active_fugitives(active_fugitives, 4)
 	hud.set_status(status_message, _get_status_color())
 	hud.set_controls_hint(_get_controls_hint())
 
@@ -118,9 +132,11 @@ func _process_countdown(delta: float) -> void:
 		return
 
 	current_state = RoundState.PLAYING
+
 	fugitive.set_input_enabled(true)
 	second_fugitive.set_input_enabled(true)
 	police.set_input_enabled(true)
+
 	_update_hud("Valendo! Sobrevivam ate o tempo acabar")
 
 func _get_countdown_message() -> String:
@@ -171,6 +187,16 @@ func _get_second_fugitive_spawn_position() -> Vector3:
 		return second_fugitive_spawn_marker.global_position
 	return second_fugitive_spawn
 
+func _get_third_fugitive_spawn_position() -> Vector3:
+	if third_fugitive_spawn_marker:
+		return third_fugitive_spawn_marker.global_position
+	return Vector3.ZERO
+
+func _get_fourth_fugitive_spawn_position() -> Vector3:
+	if fourth_fugitive_spawn_marker:
+		return fourth_fugitive_spawn_marker.global_position
+	return Vector3.ZERO
+
 func _get_police_spawn_position() -> Vector3:
 	if police_spawn_marker:
 		return police_spawn_marker.global_position
@@ -178,18 +204,36 @@ func _get_police_spawn_position() -> Vector3:
 
 func _get_active_fugitives() -> Array[FugitivePlayer]:
 	var active_fugitives: Array[FugitivePlayer] = []
+
 	if fugitive and not fugitive.is_captured:
 		active_fugitives.append(fugitive)
+
 	if second_fugitive and not second_fugitive.is_captured:
 		active_fugitives.append(second_fugitive)
+
+	if third_fugitive and not third_fugitive.is_captured:
+		active_fugitives.append(third_fugitive)
+
+	if fourth_fugitive and not fourth_fugitive.is_captured:
+		active_fugitives.append(fourth_fugitive)
+
 	return active_fugitives
 
 func _get_hunters() -> Array[CharacterBody3D]:
 	var hunters: Array[CharacterBody3D] = [police]
+
 	if fugitive and fugitive.is_infected:
 		hunters.append(fugitive)
+
 	if second_fugitive and second_fugitive.is_infected:
 		hunters.append(second_fugitive)
+
+	if third_fugitive and third_fugitive.is_infected:
+		hunters.append(third_fugitive)
+
+	if fourth_fugitive and fourth_fugitive.is_infected:
+		hunters.append(fourth_fugitive)
+
 	return hunters
 
 func _infect_fugitive(target: FugitivePlayer) -> void:
@@ -210,6 +254,7 @@ func _is_any_fugitive_in_danger() -> bool:
 		for hunter: CharacterBody3D in _get_hunters():
 			if _get_distance_between(active_fugitive.global_position, hunter.global_position) <= danger_distance:
 				return true
+
 	return false
 
 func _get_distance_between(point_a: Vector3, point_b: Vector3) -> float:
@@ -223,3 +268,9 @@ func _apply_infected_hunter_balance() -> void:
 
 	if second_fugitive and second_fugitive.is_infected:
 		second_fugitive.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
+
+	if third_fugitive and third_fugitive.is_infected:
+		third_fugitive.configure_movement(infected_hunter_speed, infected_hunter_acceleration)
+
+	if fourth_fugitive and fourth_fugitive.is_infected:
+		fourth_fugitive.configure_movement(infected_hunter_speed, infected_hunter_acceleration)

@@ -9,12 +9,6 @@ const DEFAULT_STUN: float = 2.0
 @export var acceleration: float = 14.0
 @export var rotation_lerp_speed: float = 12.0
 @export var camera_path: NodePath = ^"../CAMERA"
-@export var fugitive_body_color: Color = Color(0.92, 0.18, 0.15, 1.0)
-@export var fugitive_emission_color: Color = Color(0.42, 0.06, 0.05, 1.0)
-@export var fugitive_emission_energy: float = 0.65
-@export var hunter_body_color: Color = Color(0.15, 0.78, 0.32, 1.0)
-@export var hunter_emission_color: Color = Color(0.04, 0.32, 0.09, 1.0)
-@export var hunter_emission_energy: float = 1.1
 @export var fall_limit_y: float = -5.0
 
 @onready var animator: AnimationPlayer = find_child("AnimationPlayer", true, false) as AnimationPlayer
@@ -31,7 +25,7 @@ var is_infected: bool = false
 var respawn_position: Vector3 = Vector3.ZERO
 
 func _ready() -> void:
-	_apply_current_palette()
+	pass
 
 func _physics_process(delta: float) -> void:
 	if global_position.y < fall_limit_y:
@@ -117,7 +111,6 @@ func infect() -> void:
 	is_stunned = false
 	stun_timer = 0.0
 	input_enabled = true
-	_apply_current_palette()
 
 func reset_state(spawn_position: Vector3) -> void:
 	respawn_position = spawn_position
@@ -130,7 +123,6 @@ func reset_state(spawn_position: Vector3) -> void:
 	input_enabled = true
 	is_captured = false
 	is_infected = false
-	_apply_current_palette()
 
 func is_controller_connected() -> bool:
 	if device_id < 0:
@@ -164,29 +156,6 @@ func _get_keyboard_direction() -> Vector3:
 
 func _get_input_manager() -> Node:
 	return get_node_or_null("/root/InputManager")
-
-func _apply_current_palette() -> void:
-	var palette_material: StandardMaterial3D = StandardMaterial3D.new()
-	if is_infected:
-		palette_material.albedo_color = hunter_body_color
-		palette_material.emission = hunter_emission_color
-		palette_material.emission_energy_multiplier = hunter_emission_energy
-	else:
-		palette_material.albedo_color = fugitive_body_color
-		palette_material.emission = fugitive_emission_color
-		palette_material.emission_energy_multiplier = fugitive_emission_energy
-
-	palette_material.roughness = 0.28
-	palette_material.metallic = 0.05
-	palette_material.emission_enabled = palette_material.emission_energy_multiplier > 0.0
-	_apply_palette_to_meshes(self, palette_material)
-
-func _apply_palette_to_meshes(node: Node, palette_material: Material) -> void:
-	for child: Node in node.get_children():
-		if child is MeshInstance3D:
-			var mesh_instance: MeshInstance3D = child
-			mesh_instance.material_override = palette_material
-		_apply_palette_to_meshes(child, palette_material)
 
 func _restore_to_spawn() -> void:
 	global_position = respawn_position

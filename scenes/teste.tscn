@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://cfy0cg6fhitkd"]
+
+[ext_resource type="PackedScene" uid="uid://cd85q8s8wppv6" path="res://scenes/player/boneco.glb" id="1_kta4m"]
+
+[node name="boneco" unique_id=1806399338 instance=ExtResource("1_kta4m")]

@@ -5,9 +5,6 @@ extends CharacterBody3D
 @export var move_speed: float = 11.0
 @export var acceleration: float = 9.5
 @export var rotation_lerp_speed: float = 9.0
-@export var body_color: Color = Color(0.15, 0.78, 0.32, 1.0)
-@export var emission_color: Color = Color(0.04, 0.32, 0.09, 1.0)
-@export var emission_energy: float = 1.1
 @export var fall_limit_y: float = -5.0
 
 @onready var animator: AnimationPlayer = find_child("AnimationPlayer", true, false) as AnimationPlayer
@@ -18,7 +15,7 @@ var rotation_direction: float = 0.0
 var respawn_position: Vector3 = Vector3.ZERO
 
 func _ready() -> void:
-	_apply_visual_palette()
+	pass
 
 func _physics_process(delta: float) -> void:
 	if global_position.y < fall_limit_y:
@@ -100,23 +97,6 @@ func _play_animation_by_suffix(suffix: String) -> void:
 		if animation_name.ends_with("/" + suffix) or animation_name == suffix:
 			animator.play(animation_name, 0.3)
 			return
-
-func _apply_visual_palette() -> void:
-	var palette_material := StandardMaterial3D.new()
-	palette_material.albedo_color = body_color
-	palette_material.roughness = 0.22
-	palette_material.metallic = 0.08
-	palette_material.emission_enabled = emission_energy > 0.0
-	palette_material.emission = emission_color
-	palette_material.emission_energy_multiplier = emission_energy
-	_apply_palette_to_meshes(self, palette_material)
-
-func _apply_palette_to_meshes(node: Node, palette_material: Material) -> void:
-	for child: Node in node.get_children():
-		if child is MeshInstance3D:
-			var mesh_instance: MeshInstance3D = child
-			mesh_instance.material_override = palette_material
-		_apply_palette_to_meshes(child, palette_material)
 
 func _restore_to_spawn() -> void:
 	global_position = respawn_position

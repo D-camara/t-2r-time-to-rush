@@ -10,8 +10,8 @@ extends Camera3D
 @export var movement_look_ahead: float = 0.4
 @export var max_look_ahead_distance: float = 4.5
 
-@onready var fugitive: FugitivePlayer = get_parent().get_node_or_null("PERSONAGEM")
-@onready var second_fugitive: FugitivePlayer = get_parent().get_node_or_null("FUGITIVO_2")
+@onready var fugitive: FugitivePlayer = get_parent().get_node_or_null("LADRAO1")
+@onready var second_fugitive: FugitivePlayer = get_parent().get_node_or_null("LADRAO2")
 @onready var police: PolicePlayer = get_parent().get_node_or_null("POLICIAL")
 
 var smoothed_focus_point: Vector3 = Vector3.ZERO
