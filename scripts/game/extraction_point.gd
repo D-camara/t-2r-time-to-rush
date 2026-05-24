@@ -4,6 +4,8 @@ extends Area3D
 signal fugitive_entered(player: FugitivePlayer, point: ExtractionPoint)
 
 @export var label_text: String = "EXTRACAO"
+@export var detection_radius: float = 2.4
+@export var visual_radius: float = 2.2
 @export var active_color: Color = Color(0.15, 0.9, 1.0, 0.78)
 @export var inactive_color: Color = Color(0.15, 0.2, 0.26, 0.18)
 
@@ -17,6 +19,7 @@ var pulse_time: float = 0.0
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
+	_apply_radius_settings()
 	if label:
 		label.text = label_text
 	set_extraction_active(false)
@@ -67,3 +70,12 @@ func _apply_material(target: MeshInstance3D, color: Color, emission_energy: floa
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.no_depth_test = true
 	target.material_override = material
+
+func _apply_radius_settings() -> void:
+	if collision_shape and collision_shape.shape is CylinderShape3D:
+		var shape: CylinderShape3D = collision_shape.shape as CylinderShape3D
+		shape.radius = detection_radius
+	if ring and ring.mesh is CylinderMesh:
+		var mesh: CylinderMesh = ring.mesh as CylinderMesh
+		mesh.top_radius = visual_radius
+		mesh.bottom_radius = visual_radius
