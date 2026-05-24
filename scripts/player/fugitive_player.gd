@@ -2,8 +2,13 @@ class_name FugitivePlayer
 extends CharacterBody3D
 
 const DEFAULT_STUN: float = 2.0
+const CHARACTER_VISUAL_SCENES: Dictionary = {
+	"sagui": preload("res://assets/models/PERSONAGENS/sagui1.tscn"),
+	"coelha": preload("res://assets/models/PERSONAGENS/coelha1.tscn"),
+	"tigre": preload("res://assets/models/PERSONAGENS/tigre1.tscn"),
+	"raposa": preload("res://assets/models/PERSONAGENS/raposa1.tscn"),
+}
 
-@export var use_keyboard_input: bool = true
 @export var device_id: int = -1
 @export var move_speed: float = 10.0
 @export var acceleration: float = 14.0
@@ -48,16 +53,23 @@ var avatar_visor: MeshInstance3D = null
 var pop_timer: float = 0.0
 var visual_base_position: Vector3 = Vector3.ZERO
 var skill_controller: SkillController = null
+var idle_animation_name: String = ""
+var run_animation_name: String = ""
+var input_manager_ref: Node = null
+var uses_imported_character_visual: bool = false
 
 func _ready() -> void:
 	base_move_speed = move_speed
+	input_manager_ref = get_node_or_null("/root/InputManager")
+	_cache_animation_names()
 	if character_visual:
 		visual_base_position = character_visual.position
 		character_visual.scale = Vector3.ONE * visual_scale
 	_ensure_player_shadow()
 	_ensure_player_ring()
 	_ensure_role_beacon()
-	_ensure_presentation_avatar()
+	if character_visual == null:
+		_ensure_presentation_avatar()
 	_apply_current_palette()
 
 func _physics_process(delta: float) -> void:
@@ -110,7 +122,7 @@ func handle_input() -> void:
 	if view:
 		input = input.rotated(Vector3.UP, view.rotation.y)
 
-	movement_velocity = input.normalized() * _get_effective_move_speed() if input.length() > 0.0 else Vector3.ZERO
+	movement_velocity = input.normalized() * _get_effective_move_speed() if input.length_squared() > 0.0 else Vector3.ZERO
 
 func apply_gravity(delta: float) -> void:
 	if not is_on_floor():
@@ -128,10 +140,18 @@ func handle_animation() -> void:
 		_play_animation_by_suffix("FastRun")
 
 func _play_animation_by_suffix(suffix: String) -> void:
+	var animation_name: String = idle_animation_name if suffix == "Idle" else run_animation_name
+	if not animation_name.is_empty() and animator.current_animation != animation_name:
+		animator.play(animation_name, 0.3)
+
+func _cache_animation_names() -> void:
+	if not animator:
+		return
 	for animation_name: String in animator.get_animation_list():
-		if animation_name.ends_with("/" + suffix) or animation_name == suffix:
-			animator.play(animation_name, 0.3)
-			return
+		if animation_name.ends_with("/Idle") or animation_name == "Idle":
+			idle_animation_name = animation_name
+		elif animation_name.ends_with("/FastRun") or animation_name == "FastRun":
+			run_animation_name = animation_name
 
 func set_input_enabled(enabled: bool) -> void:
 	input_enabled = enabled
@@ -157,6 +177,7 @@ func get_forward_direction() -> Vector3:
 
 func configure_skill(character_id: String, round_manager: Node) -> void:
 	clear_skill()
+	configure_character_visual(character_id)
 	if character_id.is_empty():
 		return
 
@@ -164,6 +185,31 @@ func configure_skill(character_id: String, round_manager: Node) -> void:
 	skill_controller.name = "SkillController"
 	add_child(skill_controller)
 	skill_controller.setup(self, character_id, round_manager)
+
+func configure_character_visual(character_id: String) -> void:
+	if not CHARACTER_VISUAL_SCENES.has(character_id):
+		return
+
+	var visual_scene: PackedScene = CHARACTER_VISUAL_SCENES[character_id] as PackedScene
+	var new_visual: Node3D = visual_scene.instantiate() as Node3D
+	if new_visual == null:
+		return
+
+	if character_visual:
+		var visual_parent: Node = character_visual.get_parent()
+		if visual_parent != null:
+			visual_parent.remove_child(character_visual)
+		character_visual.queue_free()
+
+	new_visual.name = "boneco"
+	add_child(new_visual)
+	character_visual = new_visual
+	uses_imported_character_visual = true
+	visual_base_position = Vector3.ZERO
+	character_visual.scale = Vector3.ONE * visual_scale
+	animator = find_child("AnimationPlayer", true, false) as AnimationPlayer
+	_cache_animation_names()
+	_remove_presentation_avatar()
 
 func clear_skill() -> void:
 	if skill_controller:
@@ -236,9 +282,6 @@ func is_controller_connected() -> bool:
 	return bool(input_manager.call("has_device", device_id))
 
 func _get_input_direction() -> Vector3:
-	if use_keyboard_input:
-		return _get_keyboard_direction()
-
 	if device_id < 0:
 		return Vector3.ZERO
 
@@ -250,14 +293,8 @@ func _get_input_direction() -> Vector3:
 
 	return Vector3.ZERO
 
-func _get_keyboard_direction() -> Vector3:
-	var input: Vector3 = Vector3.ZERO
-	input.x = Input.get_axis("move_left", "move_right")
-	input.z = Input.get_axis("move_foward", "move_backwards")
-	return input
-
 func _get_input_manager() -> Node:
-	return get_node_or_null("/root/InputManager")
+	return input_manager_ref
 
 func apply_hunter_disruption(stun_seconds: float, slow_multiplier: float, slow_seconds: float) -> void:
 	if not is_infected:
@@ -301,6 +338,9 @@ func _apply_current_palette() -> void:
 	_update_presentation_avatar_palette()
 
 func _apply_palette_to_meshes(node: Node, palette_material: Material) -> void:
+	if uses_imported_character_visual and character_visual != null:
+		if node == character_visual or character_visual.is_ancestor_of(node):
+			return
 	for child: Node in node.get_children():
 		if _is_visual_helper(child):
 			continue
@@ -338,7 +378,7 @@ func _ensure_player_ring() -> void:
 	mesh.top_radius = 0.48
 	mesh.bottom_radius = 0.48
 	mesh.height = 0.045
-	mesh.radial_segments = 48
+	mesh.radial_segments = 24
 	ring.mesh = mesh
 	ring.position = Vector3(0.0, 0.075, 0.0)
 	ring.material_override = _create_ring_material()
@@ -357,7 +397,7 @@ func _ensure_player_shadow() -> void:
 	mesh.top_radius = 0.58
 	mesh.bottom_radius = 0.58
 	mesh.height = 0.028
-	mesh.radial_segments = 48
+	mesh.radial_segments = 24
 	shadow.mesh = mesh
 	shadow.scale = Vector3(1.18, 1.0, 0.68)
 	shadow.position = Vector3(0.1, 0.035, 0.14)
@@ -396,8 +436,8 @@ func _ensure_presentation_avatar() -> void:
 		var body_mesh: CapsuleMesh = CapsuleMesh.new()
 		body_mesh.radius = 0.34
 		body_mesh.height = 1.42
-		body_mesh.radial_segments = 24
-		body_mesh.rings = 8
+		body_mesh.radial_segments = 16
+		body_mesh.rings = 6
 		avatar_body.mesh = body_mesh
 		avatar_body.position = Vector3(0.0, 1.22, 0.0)
 		add_child(avatar_body)
@@ -408,8 +448,8 @@ func _ensure_presentation_avatar() -> void:
 		var head_mesh: SphereMesh = SphereMesh.new()
 		head_mesh.radius = 0.32
 		head_mesh.height = 0.48
-		head_mesh.radial_segments = 24
-		head_mesh.rings = 12
+		head_mesh.radial_segments = 16
+		head_mesh.rings = 8
 		avatar_head.mesh = head_mesh
 		avatar_head.position = Vector3(0.0, 2.02, -0.02)
 		add_child(avatar_head)
@@ -424,6 +464,17 @@ func _ensure_presentation_avatar() -> void:
 		add_child(avatar_visor)
 
 	_update_presentation_avatar_palette()
+
+func _remove_presentation_avatar() -> void:
+	if avatar_body:
+		avatar_body.queue_free()
+		avatar_body = null
+	if avatar_head:
+		avatar_head.queue_free()
+		avatar_head = null
+	if avatar_visor:
+		avatar_visor.queue_free()
+		avatar_visor = null
 
 func _update_presentation_avatar_palette() -> void:
 	var role_body_color: Color = hunter_body_color if is_infected else fugitive_body_color

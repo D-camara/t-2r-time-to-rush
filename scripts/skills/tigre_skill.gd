@@ -25,10 +25,10 @@ func try_activate() -> void:
 
 func _get_nearest_hunter() -> CharacterBody3D:
 	var nearest_hunter: CharacterBody3D = null
-	var nearest_distance: float = HIT_RANGE
+	var nearest_distance_squared: float = HIT_RANGE * HIT_RANGE
 	for hunter: CharacterBody3D in _get_hunters():
-		var distance_to_hunter: float = _planar_distance(owner_player.global_position, hunter.global_position)
-		if distance_to_hunter <= nearest_distance:
-			nearest_distance = distance_to_hunter
+		var distance_to_hunter_squared: float = _planar_distance_squared(owner_player.global_position, hunter.global_position)
+		if distance_to_hunter_squared <= nearest_distance_squared:
+			nearest_distance_squared = distance_to_hunter_squared
 			nearest_hunter = hunter
 	return nearest_hunter

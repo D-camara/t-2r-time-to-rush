@@ -1,6 +1,8 @@
 class_name PolicePlayer
 extends CharacterBody3D
 
+const POLICE_VISUAL_SCENE: PackedScene = preload("res://assets/models/PERSONAGENS/policef1.tscn")
+
 @export var device_id: int = 0
 @export var move_speed: float = 11.0
 @export var acceleration: float = 9.5
@@ -31,16 +33,24 @@ var avatar_body: MeshInstance3D = null
 var avatar_head: MeshInstance3D = null
 var avatar_visor: MeshInstance3D = null
 var visual_base_position: Vector3 = Vector3.ZERO
+var idle_animation_name: String = ""
+var run_animation_name: String = ""
+var input_manager_ref: Node = null
+var uses_imported_character_visual: bool = false
 
 func _ready() -> void:
 	base_move_speed = move_speed
+	input_manager_ref = get_node_or_null("/root/InputManager")
+	_use_imported_police_visual()
+	_cache_animation_names()
 	if character_visual:
 		visual_base_position = character_visual.position
 		character_visual.scale = Vector3.ONE * visual_scale
 	_ensure_player_shadow()
 	_ensure_player_ring()
 	_ensure_role_beacon()
-	_ensure_presentation_avatar()
+	if character_visual == null:
+		_ensure_presentation_avatar()
 	_apply_visual_palette()
 
 func _physics_process(delta: float) -> void:
@@ -113,22 +123,16 @@ func is_controller_connected() -> bool:
 	return bool(input_manager.call("has_device", device_id))
 
 func _get_move_direction() -> Vector3:
-	var controller_direction: Vector3 = Vector3.ZERO
 	var input_manager: Node = _get_input_manager()
 	if input_manager != null and input_manager.has_method("get_movement"):
 		var movement_result: Variant = input_manager.call("get_movement", device_id)
 		if movement_result is Vector3:
-			controller_direction = movement_result
-	if controller_direction.length() > 0.0:
-		return controller_direction
+			return movement_result
 
-	var keyboard_direction: Vector3 = Vector3.ZERO
-	keyboard_direction.x = Input.get_axis("police_left", "police_right")
-	keyboard_direction.z = Input.get_axis("police_foward", "police_backwards")
-	return keyboard_direction.normalized() if keyboard_direction.length() > 0.0 else Vector3.ZERO
+	return Vector3.ZERO
 
 func _get_input_manager() -> Node:
-	return get_node_or_null("/root/InputManager")
+	return input_manager_ref
 
 func _update_disruption(delta: float) -> void:
 	if disruption_stun_timer > 0.0:
@@ -155,10 +159,18 @@ func _handle_animation() -> void:
 		_play_animation_by_suffix("FastRun")
 
 func _play_animation_by_suffix(suffix: String) -> void:
+	var animation_name: String = idle_animation_name if suffix == "Idle" else run_animation_name
+	if not animation_name.is_empty() and animator.current_animation != animation_name:
+		animator.play(animation_name, 0.3)
+
+func _cache_animation_names() -> void:
+	if not animator:
+		return
 	for animation_name: String in animator.get_animation_list():
-		if animation_name.ends_with("/" + suffix) or animation_name == suffix:
-			animator.play(animation_name, 0.3)
-			return
+		if animation_name.ends_with("/Idle") or animation_name == "Idle":
+			idle_animation_name = animation_name
+		elif animation_name.ends_with("/FastRun") or animation_name == "FastRun":
+			run_animation_name = animation_name
 
 func _apply_visual_palette() -> void:
 	var palette_material: StandardMaterial3D = StandardMaterial3D.new()
@@ -172,6 +184,9 @@ func _apply_visual_palette() -> void:
 	_update_presentation_avatar_palette()
 
 func _apply_palette_to_meshes(node: Node, palette_material: Material) -> void:
+	if uses_imported_character_visual and character_visual != null:
+		if node == character_visual or character_visual.is_ancestor_of(node):
+			return
 	for child: Node in node.get_children():
 		if _is_visual_helper(child):
 			continue
@@ -205,7 +220,7 @@ func _ensure_player_ring() -> void:
 	mesh.top_radius = 0.5
 	mesh.bottom_radius = 0.5
 	mesh.height = 0.045
-	mesh.radial_segments = 48
+	mesh.radial_segments = 24
 	ring.mesh = mesh
 	ring.position = Vector3(0.0, 0.075, 0.0)
 	ring.material_override = _create_ring_material()
@@ -224,7 +239,7 @@ func _ensure_player_shadow() -> void:
 	mesh.top_radius = 0.62
 	mesh.bottom_radius = 0.62
 	mesh.height = 0.028
-	mesh.radial_segments = 48
+	mesh.radial_segments = 24
 	shadow.mesh = mesh
 	shadow.scale = Vector3(1.22, 1.0, 0.7)
 	shadow.position = Vector3(0.1, 0.035, 0.14)
@@ -263,8 +278,8 @@ func _ensure_presentation_avatar() -> void:
 		var body_mesh: CapsuleMesh = CapsuleMesh.new()
 		body_mesh.radius = 0.36
 		body_mesh.height = 1.5
-		body_mesh.radial_segments = 24
-		body_mesh.rings = 8
+		body_mesh.radial_segments = 16
+		body_mesh.rings = 6
 		avatar_body.mesh = body_mesh
 		avatar_body.position = Vector3(0.0, 1.26, 0.0)
 		add_child(avatar_body)
@@ -275,8 +290,8 @@ func _ensure_presentation_avatar() -> void:
 		var head_mesh: SphereMesh = SphereMesh.new()
 		head_mesh.radius = 0.34
 		head_mesh.height = 0.5
-		head_mesh.radial_segments = 24
-		head_mesh.rings = 12
+		head_mesh.radial_segments = 16
+		head_mesh.rings = 8
 		avatar_head.mesh = head_mesh
 		avatar_head.position = Vector3(0.0, 2.12, -0.02)
 		add_child(avatar_head)
@@ -291,6 +306,23 @@ func _ensure_presentation_avatar() -> void:
 		add_child(avatar_visor)
 
 	_update_presentation_avatar_palette()
+
+func _use_imported_police_visual() -> void:
+	var new_visual: Node3D = POLICE_VISUAL_SCENE.instantiate() as Node3D
+	if new_visual == null:
+		return
+
+	if character_visual:
+		var visual_parent: Node = character_visual.get_parent()
+		if visual_parent != null:
+			visual_parent.remove_child(character_visual)
+		character_visual.queue_free()
+
+	new_visual.name = "boneco"
+	add_child(new_visual)
+	character_visual = new_visual
+	uses_imported_character_visual = true
+	animator = find_child("AnimationPlayer", true, false) as AnimationPlayer
 
 func _update_presentation_avatar_palette() -> void:
 	if avatar_body:

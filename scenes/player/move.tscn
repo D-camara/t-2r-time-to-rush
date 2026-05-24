@@ -435,6 +435,8 @@ _data = {
 height = 3.8203125
 radius = 0.3930664
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_hqmky"]
+
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_86tx1"]
 sky_top_color = Color(0.8219605, 0.9431423, 0.9282102, 1)
 sky_horizon_color = Color(0.058343045, 0.3046049, 0.24021697, 1)
@@ -457,7 +459,7 @@ glow_enabled = true
 script = ExtResource("3_round")
 
 [node name="PERSONAGEM" type="CharacterBody3D" parent="." unique_id=353522985]
-transform = Transform3D(-0.015519096, 0, 1.1998997, 0, 1.1999999, 0, -1.1998997, 0, -0.015519096, -52.842342, 63.78357, 191.20811)
+transform = Transform3D(-0.015519096, 0, 1.1998997, 0, 1.1999999, 0, -1.1998997, 0, -0.015519096, -17.084122, 66.74017, 190.49883)
 script = ExtResource("1_86tx1")
 metadata/_edit_group_ = true
 
@@ -478,31 +480,30 @@ script = ExtResource("4_camera")
 environment = SubResource("Environment_c43ro")
 
 [node name="POLICIAL" parent="." unique_id=1667643868 instance=ExtResource("5_police")]
-transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 0, 0, 0)
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, -22.877434, 65.071884, 206.1393)
 
 [node name="FUGITIVO_2" parent="." unique_id=1693917688 instance=ExtResource("7_fugitive")]
-transform = Transform3D(1.1661876, -0.026122186, 0.28164542, 0.051920462, 1.1943386, -0.10420998, -0.27804813, 0.11345962, 1.1618159, 0, 0, 0)
-use_keyboard_input = false
+transform = Transform3D(1.1661876, -0.026122186, 0.28164542, 0.051920462, 1.1943386, -0.10420998, -0.27804813, 0.11345962, 1.1618159, -1.1907578, 66.35538, 201.66258)
 device_id = 1
 
 [node name="FUGITIVO_3" parent="." instance=ExtResource("7_fugitive")]
-use_keyboard_input = false
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, -33.936043, 64.62743, 201.66258)
 device_id = 2
 
 [node name="HUD" parent="." unique_id=1214818089 instance=ExtResource("6_hud")]
 
 [node name="FUGITIVE_2_SPAWN" type="Node3D" parent="." unique_id=344666412]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1907578, 74.94262, 201.66258)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1907578, 66.35538, 201.66258)
 
 [node name="FUGITIVE_3_SPAWN" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.809242, 74.94262, 201.66258)
+transform = Transform3D(-0.9016515, -0.4324634, 0, 0.4324634, -0.9016515, 0, 0, 0, 1, -33.936043, 64.62743, 201.66258)
 
 [node name="POLICE_SPAWN" type="Node3D" parent="." unique_id=1241531624]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.877434, 66.685875, 204.88779)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.877434, 65.071884, 206.1393)
 metadata/_edit_group_ = true
 
 [node name="FUGITIVE_SPAWN" type="Node3D" parent="." unique_id=391150257]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.49781, 62.085136, 190.49883)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.084122, 66.74017, 190.49883)
 visible = false
 
 [node name="police" parent="." unique_id=70608505 instance=ExtResource("10_b5ksb")]

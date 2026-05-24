@@ -8,14 +8,34 @@ var joined_devices: Array[int] = []
 var selected_characters: Dictionary = {}
 var police_device: int = -1
 var ability_pressed_devices: Array[int] = []
+var confirm_pressed_devices: Array[int] = []
+var cancel_pressed_devices: Array[int] = []
+var start_pressed_devices: Array[int] = []
+var connected_devices_cache: PackedInt32Array = PackedInt32Array()
+
+func _ready() -> void:
+	_refresh_connected_devices()
+	if not Input.joy_connection_changed.is_connected(_on_joy_connection_changed):
+		Input.joy_connection_changed.connect(_on_joy_connection_changed)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventJoypadButton:
 		var joypad_event: InputEventJoypadButton = event
-		if joypad_event.pressed and _is_ability_button(joypad_event.button_index):
-			var resolved_device: int = _resolve_device(joypad_event.device)
-			if resolved_device != -1 and resolved_device not in ability_pressed_devices:
-				ability_pressed_devices.append(resolved_device)
+		if not joypad_event.pressed:
+			return
+
+		var resolved_device: int = _resolve_device(joypad_event.device)
+		if resolved_device == -1:
+			return
+
+		if _is_ability_button(joypad_event.button_index):
+			_add_pressed_device(ability_pressed_devices, resolved_device)
+		elif _is_confirm_button(joypad_event.button_index):
+			_add_pressed_device(confirm_pressed_devices, resolved_device)
+		elif _is_cancel_button(joypad_event.button_index):
+			_add_pressed_device(cancel_pressed_devices, resolved_device)
+		elif _is_start_button(joypad_event.button_index):
+			_add_pressed_device(start_pressed_devices, resolved_device)
 
 func has_device(device_id: int) -> bool:
 	return _resolve_device(device_id) != -1
@@ -31,17 +51,17 @@ func get_movement(device_id: int) -> Vector3:
 	var dir: Vector3 = Vector3(x, 0, y)
 
 	# deadzone
-	if dir.length() < DEADZONE:
+	if dir.length_squared() < DEADZONE * DEADZONE:
 		return Vector3.ZERO
 
 	return dir.normalized()
 
 func get_connected_devices() -> PackedInt32Array:
-	return Input.get_connected_joypads()
+	return connected_devices_cache
 
 func clear_joined_devices() -> void:
 	joined_devices.clear()
-	ability_pressed_devices.clear()
+	clear_pressed_buttons()
 	reset_match_setup()
 
 func get_joined_devices() -> Array[int]:
@@ -149,24 +169,70 @@ func get_fugitive_devices() -> Array[int]:
 	return fugitive_devices
 
 func consume_ability_pressed(device_id: int) -> bool:
+	return _consume_pressed_device(ability_pressed_devices, device_id)
+
+func consume_confirm_pressed(device_id: int) -> bool:
+	return _consume_pressed_device(confirm_pressed_devices, device_id)
+
+func consume_cancel_pressed(device_id: int) -> bool:
+	return _consume_pressed_device(cancel_pressed_devices, device_id)
+
+func consume_start_pressed(device_id: int) -> bool:
+	return _consume_pressed_device(start_pressed_devices, device_id)
+
+func consume_match_advance_pressed() -> bool:
+	return _consume_pressed_from_joined(start_pressed_devices) or _consume_pressed_from_joined(confirm_pressed_devices)
+
+func clear_pressed_buttons() -> void:
+	ability_pressed_devices.clear()
+	confirm_pressed_devices.clear()
+	cancel_pressed_devices.clear()
+	start_pressed_devices.clear()
+
+func _consume_pressed_device(pressed_devices: Array[int], device_id: int) -> bool:
 	var resolved_device: int = _resolve_device(device_id)
 	if resolved_device == -1:
 		return false
-	if resolved_device not in ability_pressed_devices:
+	if resolved_device not in pressed_devices:
 		return false
 
-	ability_pressed_devices.erase(resolved_device)
+	pressed_devices.erase(resolved_device)
 	return true
+
+func _consume_pressed_from_joined(pressed_devices: Array[int]) -> bool:
+	for joined_device: int in joined_devices:
+		if joined_device in pressed_devices:
+			pressed_devices.erase(joined_device)
+			return true
+	return false
+
+func _add_pressed_device(pressed_devices: Array[int], device_id: int) -> void:
+	if device_id not in pressed_devices:
+		pressed_devices.append(device_id)
 
 func _is_ability_button(button_index: int) -> bool:
 	return button_index == JOY_BUTTON_RIGHT_SHOULDER
 
+func _is_confirm_button(button_index: int) -> bool:
+	return button_index == JOY_BUTTON_A or button_index == JOY_BUTTON_X
+
+func _is_cancel_button(button_index: int) -> bool:
+	return button_index == JOY_BUTTON_B
+
+func _is_start_button(button_index: int) -> bool:
+	return button_index == JOY_BUTTON_START
+
 func _resolve_device(device_id: int) -> int:
-	var connected_devices: PackedInt32Array = Input.get_connected_joypads()
-	if device_id in connected_devices:
+	if device_id in connected_devices_cache:
 		return device_id
 
-	if device_id >= 0 and device_id < connected_devices.size():
-		return connected_devices[device_id]
+	if device_id >= 0 and device_id < connected_devices_cache.size():
+		return connected_devices_cache[device_id]
 
 	return -1
+
+func _refresh_connected_devices() -> void:
+	connected_devices_cache = Input.get_connected_joypads()
+
+func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
+	_refresh_connected_devices()

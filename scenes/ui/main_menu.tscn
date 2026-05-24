@@ -201,7 +201,7 @@ value = 1.0
 [node name="CloseHint" type="Label" parent="SettingsOverlay/SettingsColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Clique em Configuracoes novamente para fechar"
+text = "Volte pelo controle depois de ajustar"
 
 [node name="RevealOverlay" type="PanelContainer" parent="."]
 visible = false

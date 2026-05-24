@@ -9,10 +9,12 @@ const COELHA_SKILL: Script = preload("res://scripts/skills/coelha_skill.gd")
 var owner_player: FugitivePlayer = null
 var round_manager: Node = null
 var skill: SkillBase = null
+var input_manager: Node = null
 
 func setup(new_owner: FugitivePlayer, character_id: String, new_round_manager: Node) -> void:
 	owner_player = new_owner
 	round_manager = new_round_manager
+	input_manager = get_node_or_null("/root/InputManager")
 	var skill_script: Script = _get_skill_script(character_id)
 	if skill_script == null:
 		return
@@ -30,7 +32,6 @@ func _process(_delta: float) -> void:
 	if owner_player.is_infected or not owner_player.input_enabled:
 		return
 
-	var input_manager: Node = get_node_or_null("/root/InputManager")
 	if input_manager == null or not input_manager.has_method("consume_ability_pressed"):
 		return
 

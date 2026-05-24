@@ -1,16 +1,16 @@
 class_name HeistBackground
 extends Control
 
-const BG_TOP: Color = Color(0.02, 0.031, 0.086, 1.0)
-const BG_BOTTOM: Color = Color(0.043, 0.063, 0.125, 1.0)
-const PANEL_DARK: Color = Color(0.067, 0.094, 0.153, 0.72)
-const MONEY_GREEN: Color = Color(0.133, 0.773, 0.369, 1.0)
-const GREEN_GLOW: Color = Color(0.29, 0.871, 0.502, 1.0)
-const GOLD: Color = Color(0.918, 0.702, 0.031, 1.0)
-const ALARM: Color = Color(0.937, 0.267, 0.267, 1.0)
-const CHASE_ORANGE: Color = Color(0.976, 0.451, 0.086, 1.0)
-const CYAN: Color = Color(0.22, 0.741, 0.973, 1.0)
-const GRID: Color = Color(0.133, 0.196, 0.322, 0.26)
+const BG_TOP: Color = Color(0.005, 0.007, 0.008, 1.0)
+const BG_BOTTOM: Color = Color(0.027, 0.031, 0.018, 1.0)
+const PANEL_DARK: Color = Color(0.026, 0.031, 0.023, 0.76)
+const MONEY_GREEN: Color = Color(0.075, 0.56, 0.255, 1.0)
+const GREEN_GLOW: Color = Color(0.22, 0.86, 0.42, 1.0)
+const GOLD: Color = Color(0.94, 0.68, 0.16, 1.0)
+const ALARM: Color = Color(0.94, 0.12, 0.095, 1.0)
+const CHASE_ORANGE: Color = Color(0.98, 0.35, 0.08, 1.0)
+const CYAN: Color = Color(0.31, 0.78, 0.74, 1.0)
+const GRID: Color = Color(0.56, 0.405, 0.105, 0.2)
 
 var animation_time: float = 0.0
 
@@ -35,6 +35,7 @@ func _draw() -> void:
 	_draw_bank_facade(Vector2(rect_size.x * 0.5, rect_size.y * 0.17), min(rect_size.x, rect_size.y) * 0.22)
 	_draw_vault_door(Vector2(rect_size.x * 0.78, rect_size.y * 0.42), min(rect_size.x, rect_size.y) * 0.245)
 	_draw_money_stack(Vector2(rect_size.x * 0.12, rect_size.y * 0.78), min(rect_size.x, rect_size.y) * 0.19)
+	_draw_money_bags(Vector2(rect_size.x * 0.2, rect_size.y * 0.68), min(rect_size.x, rect_size.y) * 0.12)
 	_draw_alarm_panel(Vector2(rect_size.x * 0.58, rect_size.y * 0.16), min(rect_size.x, rect_size.y) * 0.115)
 	_draw_physical_table(Vector2(rect_size.x * 0.36, rect_size.y * 0.62), min(rect_size.x, rect_size.y) * 0.28)
 	_draw_vignette(rect_size)
@@ -47,9 +48,9 @@ func _draw_layered_gradient(rect_size: Vector2) -> void:
 		draw_rect(Rect2(0.0, rect_size.y * weight, rect_size.x, rect_size.y / float(bands) + 1.0), band_color)
 
 	var pulse: float = (sin(animation_time * 1.35) + 1.0) * 0.5
-	draw_circle(Vector2(rect_size.x * 0.24, rect_size.y * 0.22), rect_size.y * 0.34, Color(MONEY_GREEN.r, MONEY_GREEN.g, MONEY_GREEN.b, 0.08 + pulse * 0.035))
-	draw_circle(Vector2(rect_size.x * 0.83, rect_size.y * 0.72), rect_size.y * 0.42, Color(GOLD.r, GOLD.g, GOLD.b, 0.07))
-	draw_circle(Vector2(rect_size.x * 0.62, rect_size.y * 0.18), rect_size.y * 0.25, Color(ALARM.r, ALARM.g, ALARM.b, 0.06 + pulse * 0.03))
+	draw_circle(Vector2(rect_size.x * 0.22, rect_size.y * 0.25), rect_size.y * 0.34, Color(MONEY_GREEN.r, MONEY_GREEN.g, MONEY_GREEN.b, 0.1 + pulse * 0.04))
+	draw_circle(Vector2(rect_size.x * 0.82, rect_size.y * 0.68), rect_size.y * 0.45, Color(GOLD.r, GOLD.g, GOLD.b, 0.095))
+	draw_circle(Vector2(rect_size.x * 0.6, rect_size.y * 0.16), rect_size.y * 0.25, Color(ALARM.r, ALARM.g, ALARM.b, 0.065 + pulse * 0.035))
 
 func _draw_tactical_grid(rect_size: Vector2) -> void:
 	var grid_gap: float = 42.0
@@ -82,11 +83,11 @@ func _draw_floating_bills(rect_size: Vector2) -> void:
 		var wave: float = sin(animation_time * 0.8 + float(index) * 1.7)
 		var x: float = fposmod(float(index) * rect_size.x * 0.149 + animation_time * 24.0, rect_size.x + 90.0) - 45.0
 		var y: float = rect_size.y * (0.18 + fposmod(float(index) * 0.137, 0.68)) + wave * 18.0
-		var bill_size: Vector2 = Vector2(46.0 + float(index % 3) * 8.0, 20.0)
+		var bill_size: Vector2 = Vector2(54.0 + float(index % 3) * 9.0, 23.0)
 		var bill: Rect2 = Rect2(Vector2(x, y), bill_size)
-		draw_rect(Rect2(bill.position + Vector2(4.0, 5.0), bill.size), Color(0.0, 0.0, 0.0, 0.12))
-		draw_rect(bill, Color(MONEY_GREEN.r, MONEY_GREEN.g, MONEY_GREEN.b, 0.16))
-		draw_rect(Rect2(bill.position + Vector2(bill.size.x * 0.42, 0.0), Vector2(bill.size.x * 0.16, bill.size.y)), Color(GOLD.r, GOLD.g, GOLD.b, 0.12))
+		draw_rect(Rect2(bill.position + Vector2(4.0, 5.0), bill.size), Color(0.0, 0.0, 0.0, 0.18))
+		draw_rect(bill, Color(MONEY_GREEN.r, MONEY_GREEN.g, MONEY_GREEN.b, 0.24))
+		draw_rect(Rect2(bill.position + Vector2(bill.size.x * 0.42, 0.0), Vector2(bill.size.x * 0.16, bill.size.y)), Color(GOLD.r, GOLD.g, GOLD.b, 0.18))
 
 func _draw_bank_facade(center: Vector2, radius: float) -> void:
 	var base_rect: Rect2 = Rect2(center - Vector2(radius * 1.4, radius * 0.42), Vector2(radius * 2.8, radius * 0.84))
@@ -141,6 +142,16 @@ func _draw_money_stack(center: Vector2, radius: float) -> void:
 		draw_rect(rect, Color(MONEY_GREEN.r, MONEY_GREEN.g, MONEY_GREEN.b, 0.22))
 		draw_rect(Rect2(rect.position + Vector2(radius * 0.62, 0.0), Vector2(radius * 0.22, radius * 0.42)), Color(GOLD.r, GOLD.g, GOLD.b, 0.2))
 		draw_rect(Rect2(rect.position, Vector2(rect.size.x, 3.0)), Color(GREEN_GLOW.r, GREEN_GLOW.g, GREEN_GLOW.b, 0.22))
+
+func _draw_money_bags(center: Vector2, radius: float) -> void:
+	for bag_index: int in range(3):
+		var offset: Vector2 = Vector2(float(bag_index) * radius * 0.82, sin(animation_time + float(bag_index)) * radius * 0.08)
+		var bag_center: Vector2 = center + offset
+		draw_circle(bag_center + Vector2(8.0, 10.0), radius * 0.55, Color(0.0, 0.0, 0.0, 0.24))
+		draw_circle(bag_center, radius * 0.5, Color(MONEY_GREEN.r, MONEY_GREEN.g, MONEY_GREEN.b, 0.28))
+		draw_rect(Rect2(bag_center.x - radius * 0.3, bag_center.y - radius * 0.72, radius * 0.6, radius * 0.2), Color(GOLD.r, GOLD.g, GOLD.b, 0.28))
+		draw_line(bag_center + Vector2(0.0, -radius * 0.18), bag_center + Vector2(0.0, radius * 0.2), Color(GOLD.r, GOLD.g, GOLD.b, 0.3), 4.0)
+		draw_line(bag_center + Vector2(-radius * 0.16, radius * 0.02), bag_center + Vector2(radius * 0.16, radius * 0.02), Color(GOLD.r, GOLD.g, GOLD.b, 0.3), 4.0)
 
 func _draw_alarm_panel(center: Vector2, radius: float) -> void:
 	var rect: Rect2 = Rect2(center - Vector2(radius * 1.6, radius * 0.6), Vector2(radius * 3.2, radius * 1.2))

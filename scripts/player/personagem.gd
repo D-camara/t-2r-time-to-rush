@@ -4,6 +4,7 @@ const DEFAULT_STUN: float = 2.0
 
 @export var move_speed: float = 10.0
 @export var camera_path: NodePath = ^"../CAMERA"
+@export var device_id: int = -1
 
 @onready var animator: AnimationPlayer = get_node_or_null("boneco/AnimationPlayer")
 @onready var view: Node3D = get_node_or_null(camera_path)
@@ -60,8 +61,11 @@ func handle_input() -> void:
 		return
 
 	var input: Vector3 = Vector3.ZERO
-	input.x = Input.get_axis("move_left", "move_right")
-	input.z = Input.get_axis("move_foward", "move_backwards")
+	var input_manager: Node = get_node_or_null("/root/InputManager")
+	if input_manager != null and input_manager.has_method("get_movement") and device_id >= 0:
+		var movement_result: Variant = input_manager.call("get_movement", device_id)
+		if movement_result is Vector3:
+			input = movement_result
 	if view:
 		input = input.rotated(Vector3.UP, view.rotation.y)
 	movement_velocity = input.normalized() * move_speed if input.length() > 0.0 else Vector3.ZERO

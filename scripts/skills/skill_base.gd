@@ -40,7 +40,8 @@ func _show_message(message: String) -> void:
 
 func _get_hunters() -> Array[CharacterBody3D]:
 	if round_manager == null or not round_manager.has_method("get_skill_hunters"):
-		return []
+		var empty_hunters: Array[CharacterBody3D] = []
+		return empty_hunters
 
 	var hunter_result: Variant = round_manager.call("get_skill_hunters", owner_player)
 	if hunter_result is Array:
@@ -50,7 +51,13 @@ func _get_hunters() -> Array[CharacterBody3D]:
 				hunters.append(hunter)
 		return hunters
 
-	return []
+	var fallback_hunters: Array[CharacterBody3D] = []
+	return fallback_hunters
 
 func _planar_distance(point_a: Vector3, point_b: Vector3) -> float:
 	return Vector2(point_a.x - point_b.x, point_a.z - point_b.z).length()
+
+func _planar_distance_squared(point_a: Vector3, point_b: Vector3) -> float:
+	var offset_x: float = point_a.x - point_b.x
+	var offset_z: float = point_a.z - point_b.z
+	return offset_x * offset_x + offset_z * offset_z
