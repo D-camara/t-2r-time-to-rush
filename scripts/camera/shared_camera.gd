@@ -83,12 +83,17 @@ func _get_player_separation() -> float:
 
 func _get_tracked_players() -> Array[CharacterBody3D]:
 	var tracked_players: Array[CharacterBody3D] = []
-	if fugitive and fugitive.is_participating:
+	if _should_track_fugitive(fugitive):
 		tracked_players.append(fugitive)
-	if second_fugitive and second_fugitive.is_participating:
+	if _should_track_fugitive(second_fugitive):
 		tracked_players.append(second_fugitive)
-	if third_fugitive and third_fugitive.is_participating:
+	if _should_track_fugitive(third_fugitive):
 		tracked_players.append(third_fugitive)
 	if police:
 		tracked_players.append(police)
 	return tracked_players
+
+func _should_track_fugitive(player: FugitivePlayer) -> bool:
+	if player == null:
+		return false
+	return player.is_participating and not player.is_extracted

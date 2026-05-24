@@ -153,6 +153,14 @@ func pick_random_police() -> int:
 func get_police_device() -> int:
 	return police_device
 
+func set_police_device(device_id: int) -> bool:
+	var resolved_device: int = _resolve_device(device_id)
+	if resolved_device == -1 or resolved_device not in joined_devices:
+		return false
+
+	police_device = resolved_device
+	return true
+
 func get_police_character_id() -> String:
 	if police_device == -1:
 		return ""

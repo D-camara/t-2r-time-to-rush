@@ -40,6 +40,7 @@ var stun_timer: float = 0.0
 var input_enabled: bool = true
 var is_captured: bool = false
 var is_infected: bool = false
+var is_extracted: bool = false
 var respawn_position: Vector3 = Vector3.ZERO
 var is_participating: bool = true
 var is_in_danger_visual: bool = false
@@ -229,6 +230,7 @@ func capture() -> void:
 func infect() -> void:
 	is_captured = true
 	is_infected = true
+	is_extracted = false
 	is_in_danger_visual = false
 	is_stunned = false
 	stun_timer = 0.0
@@ -236,6 +238,20 @@ func infect() -> void:
 	clear_skill()
 	_apply_current_palette()
 	_flash_role_change()
+
+func extract() -> void:
+	is_extracted = true
+	is_captured = true
+	is_infected = false
+	is_in_danger_visual = false
+	is_stunned = false
+	stun_timer = 0.0
+	input_enabled = false
+	clear_skill()
+	velocity = Vector3.ZERO
+	movement_velocity = Vector3.ZERO
+	visible = false
+	process_mode = Node.PROCESS_MODE_DISABLED
 
 func reset_state(spawn_position: Vector3) -> void:
 	is_participating = true
@@ -251,6 +267,7 @@ func reset_state(spawn_position: Vector3) -> void:
 	input_enabled = true
 	is_captured = false
 	is_infected = false
+	is_extracted = false
 	is_in_danger_visual = false
 	disruption_speed_multiplier = 1.0
 	disruption_slow_timer = 0.0
@@ -265,6 +282,7 @@ func deactivate_slot() -> void:
 	input_enabled = false
 	is_captured = true
 	is_infected = false
+	is_extracted = false
 	is_in_danger_visual = false
 	is_stunned = false
 	stun_timer = 0.0

@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://scenes/player/fugitive_player.tscn" id="7_fugitive"]
 [ext_resource type="PackedScene" uid="uid://4g7jxiwxlr88" path="res://scenes/MAPADEFINITIVO.tscn" id="9_hqmky"]
 [ext_resource type="PackedScene" uid="uid://cua7818nxcsdt" path="res://scenes/POLICIAVERMELH.tscn" id="10_b5ksb"]
+[ext_resource type="PackedScene" path="res://scenes/game/extraction_point.tscn" id="11_extract"]
 
 [sub_resource type="Animation" id="Animation_tohxk"]
 resource_name = "FastRun"
@@ -505,6 +506,18 @@ metadata/_edit_group_ = true
 [node name="FUGITIVE_SPAWN" type="Node3D" parent="." unique_id=391150257]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.084122, 66.74017, 190.49883)
 visible = false
+
+[node name="HELIPAD_EXTRACTION" parent="." instance=ExtResource("11_extract")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.0, 65.25, 195.5)
+label_text = "HELIPONTO"
+
+[node name="RIGHT_STAIRS_EXTRACTION" parent="." instance=ExtResource("11_extract")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 65.25, 195.5)
+label_text = "ESCADA"
+
+[node name="LEFT_DOOR_EXTRACTION" parent="." instance=ExtResource("11_extract")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52.8, 63.8, 191.2)
+label_text = "SAIDA"
 
 [node name="police" parent="." unique_id=70608505 instance=ExtResource("10_b5ksb")]
 transform = Transform3D(-4.96833, -0.09410382, 3.3625655, -0.029815657, 5.998649, 0.12382283, -3.3637505, 0.08582256, -4.9676785, -33.998917, 0, 241.9494)
