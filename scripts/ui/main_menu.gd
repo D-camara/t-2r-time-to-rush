@@ -12,6 +12,8 @@ const GAME_SCENE_PATH: String = "res://scenes/player/move.tscn"
 const MAX_PLAYERS: int = 4
 const MIN_PLAYERS_TO_START: int = 1
 const CHARACTER_IDS: Array[String] = ["sagui", "coelha", "tigre", "raposa"]
+const NAV_AXIS_TRIGGER: float = 0.68
+const NAV_AXIS_RELEASE: float = 0.28
 const LIGHTING_STYLE_LABELS: Array[String] = [
 	"DIA SUAVE",
 	"GOLDEN HOUR",
@@ -108,28 +110,28 @@ const CHARACTER_CARD_DATA: Dictionary = {
 		"name": "SAGUI",
 		"role": "ARMADILHA",
 		"skill": "Trap holografica",
-		"stats": "SETOR: CAIXAS\nMALOTE: MEDIO\nCOOLDOWN: 45s",
+		"stats": "SETOR: CAIXAS\nMALOTE: MEDIO\nCOOLDOWN: 20s",
 		"color": Color(0.98, 0.72, 0.12, 1.0),
 	},
 	"coelha": {
 		"name": "COELHA",
 		"role": "ROTA DE FUGA",
 		"skill": "Rabbit Hole",
-		"stats": "SETOR: COFRE\nMALOTE: ALTO\nCOOLDOWN: 60s",
+		"stats": "SETOR: COFRE\nMALOTE: ALTO\nCOOLDOWN: 30s",
 		"color": Color(0.22, 0.741, 0.973, 1.0),
 	},
 	"tigre": {
 		"name": "TIGRE",
 		"role": "QUEBRA CERCO",
 		"skill": "Golpe de sorte",
-		"stats": "SETOR: SAGUAO\nMALOTE: PESADO\nCOOLDOWN: 45s",
+		"stats": "SETOR: SAGUAO\nMALOTE: PESADO\nCOOLDOWN: 20s",
 		"color": Color(0.976, 0.451, 0.086, 1.0),
 	},
 	"raposa": {
 		"name": "RAPOSA",
 		"role": "ESCAPISTA",
 		"skill": "Fuga improvisada",
-		"stats": "SETOR: GARAGEM\nMALOTE: LEVE\nCOOLDOWN: 30s",
+		"stats": "SETOR: GARAGEM\nMALOTE: LEVE\nCOOLDOWN: 20s",
 		"color": Color(0.937, 0.267, 0.267, 1.0),
 	},
 }
@@ -229,6 +231,10 @@ var lighting_preview_sunlight: DirectionalLight3D = null
 var lighting_preview_floor_material: StandardMaterial3D = null
 var lighting_preview_subject_material: StandardMaterial3D = null
 var ui_update_accumulator: float = 0.0
+var settings_focus_index: int = 0
+var settings_controls: Array[Control] = []
+var navigation_axis_armed: Dictionary = {}
+var lobby_menu_index: int = 0
 const MENU_UI_UPDATE_INTERVAL: float = 0.12
 
 func _ready() -> void:
@@ -238,6 +244,7 @@ func _ready() -> void:
 	_setup_lighting_style_options()
 	_setup_rain_options()
 	_setup_lighting_preview()
+	settings_controls = [volume_slider, lighting_style_option, rain_option, close_settings_button]
 	volume_slider.value_changed.connect(_on_volume_changed)
 	lighting_style_option.item_selected.connect(_on_lighting_style_selected)
 	rain_option.item_selected.connect(_on_rain_option_selected)
@@ -270,6 +277,9 @@ func _notification(what: int) -> void:
 		_apply_responsive_layout()
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventJoypadMotion:
+		_handle_joypad_motion(event as InputEventJoypadMotion)
+		return
 	if event is InputEventJoypadButton:
 		var joypad_event: InputEventJoypadButton = event
 		if not joypad_event.pressed:
@@ -281,10 +291,21 @@ func _input(event: InputEvent) -> void:
 			if joypad_event.button_index == JOY_BUTTON_Y:
 				_on_settings_pressed()
 				return
+			if joypad_event.button_index == JOY_BUTTON_DPAD_UP:
+				_set_lobby_menu_focus(lobby_menu_index - 1)
+				return
+			if joypad_event.button_index == JOY_BUTTON_DPAD_DOWN:
+				_set_lobby_menu_focus(lobby_menu_index + 1)
+				return
 			if _is_join_button(joypad_event.button_index) and InputManager.try_join_device(joypad_event.device):
+				if InputManager.has_method("clear_pressed_buttons"):
+					InputManager.clear_pressed_buttons()
 				_update_lobby_ui()
 				return
-			if _is_start_button(joypad_event.button_index) or _is_join_button(joypad_event.button_index):
+			if _is_join_button(joypad_event.button_index) and InputManager.is_joined(joypad_event.device):
+				_activate_lobby_menu_selection()
+				return
+			if _is_start_button(joypad_event.button_index):
 				_start_character_selection_if_ready()
 				return
 		if current_state == MenuState.CHARACTER_SELECT:
@@ -292,6 +313,20 @@ func _input(event: InputEvent) -> void:
 
 func _on_play_pressed() -> void:
 	_start_character_selection_if_ready()
+
+func _set_lobby_menu_focus(index: int) -> void:
+	var lobby_buttons: Array[Button] = [play_button, settings_button, quit_button]
+	lobby_menu_index = wrapi(index, 0, lobby_buttons.size())
+	lobby_buttons[lobby_menu_index].grab_focus()
+
+func _activate_lobby_menu_selection() -> void:
+	match lobby_menu_index:
+		0:
+			_start_character_selection_if_ready()
+		1:
+			_on_settings_pressed()
+		2:
+			_on_quit_pressed()
 
 func _start_character_selection_if_ready() -> void:
 	var joined_players: Array[int] = InputManager.get_joined_devices()
@@ -314,6 +349,7 @@ func _on_settings_pressed() -> void:
 		_sync_lighting_style_option()
 		_sync_rain_option()
 		_apply_lighting_style_preview(lighting_style_option.get_selected())
+		_set_settings_focus(0)
 		status_label.text = "CONFIGURACOES ABERTAS: ajuste luz, volume e chuva."
 	else:
 		status_label.text = "Configuracoes salvas."
@@ -480,20 +516,82 @@ func _adjust_volume_slider(step: float) -> void:
 	volume_slider.value = clampf(volume_slider.value + step, volume_slider.min_value, volume_slider.max_value)
 
 func _handle_settings_joypad_input(joypad_event: InputEventJoypadButton) -> void:
-	if _is_cancel_button(joypad_event.button_index) or _is_start_button(joypad_event.button_index) or _is_join_button(joypad_event.button_index):
+	if _is_cancel_button(joypad_event.button_index) or _is_start_button(joypad_event.button_index):
 		_on_settings_pressed()
 		return
-	if joypad_event.button_index == JOY_BUTTON_DPAD_LEFT:
-		_cycle_lighting_style(-1)
-		return
-	if joypad_event.button_index == JOY_BUTTON_DPAD_RIGHT:
-		_cycle_lighting_style(1)
+	if _is_join_button(joypad_event.button_index):
+		if settings_focus_index == settings_controls.size() - 1:
+			_on_settings_pressed()
+		elif settings_focus_index == 2:
+			_cycle_rain_option()
 		return
 	if joypad_event.button_index == JOY_BUTTON_DPAD_UP:
-		_adjust_volume_slider(0.05)
+		_set_settings_focus(settings_focus_index - 1)
 		return
 	if joypad_event.button_index == JOY_BUTTON_DPAD_DOWN:
-		_adjust_volume_slider(-0.05)
+		_set_settings_focus(settings_focus_index + 1)
+		return
+	if joypad_event.button_index == JOY_BUTTON_DPAD_LEFT:
+		_adjust_focused_setting(-1)
+	elif joypad_event.button_index == JOY_BUTTON_DPAD_RIGHT:
+		_adjust_focused_setting(1)
+
+func _set_settings_focus(index: int) -> void:
+	if settings_controls.is_empty():
+		return
+	settings_focus_index = wrapi(index, 0, settings_controls.size())
+	for control_index: int in range(settings_controls.size()):
+		var control: Control = settings_controls[control_index]
+		control.modulate = Color.WHITE if control_index == settings_focus_index else Color(0.68, 0.72, 0.7, 1.0)
+	settings_controls[settings_focus_index].grab_focus()
+
+func _adjust_focused_setting(step: int) -> void:
+	match settings_focus_index:
+		0:
+			_adjust_volume_slider(float(step) * 0.05)
+		1:
+			_cycle_lighting_style(step)
+		2:
+			_cycle_rain_option()
+
+func _cycle_rain_option() -> void:
+	var selected_index: int = 1 if rain_option.get_selected() == 0 else 0
+	rain_option.select(selected_index)
+	_on_rain_option_selected(selected_index)
+
+func _handle_joypad_motion(event: InputEventJoypadMotion) -> void:
+	if not settings_panel.visible and current_state != MenuState.CHARACTER_SELECT and current_state != MenuState.LOBBY_CONTROLS:
+		return
+	if event.axis != JOY_AXIS_LEFT_X and event.axis != JOY_AXIS_LEFT_Y:
+		return
+
+	var axis_key: String = "%d:%d" % [event.device, event.axis]
+	if absf(event.axis_value) <= NAV_AXIS_RELEASE:
+		navigation_axis_armed[axis_key] = true
+		return
+	if absf(event.axis_value) < NAV_AXIS_TRIGGER or not bool(navigation_axis_armed.get(axis_key, true)):
+		return
+	navigation_axis_armed[axis_key] = false
+
+	if settings_panel.visible:
+		if event.axis == JOY_AXIS_LEFT_Y:
+			_set_settings_focus(settings_focus_index + (1 if event.axis_value > 0.0 else -1))
+		else:
+			_adjust_focused_setting(1 if event.axis_value > 0.0 else -1)
+		return
+
+	if current_state == MenuState.LOBBY_CONTROLS:
+		if event.axis == JOY_AXIS_LEFT_Y:
+			_set_lobby_menu_focus(lobby_menu_index + (1 if event.axis_value > 0.0 else -1))
+		return
+
+	var joined_players: Array[int] = InputManager.get_joined_devices()
+	if selecting_player_index >= joined_players.size() or event.device != joined_players[selecting_player_index]:
+		return
+	if event.axis == JOY_AXIS_LEFT_X:
+		_move_character_cursor(1 if event.axis_value > 0.0 else -1)
+	else:
+		_move_character_cursor(2 if event.axis_value > 0.0 else -2)
 
 func _on_character_button_pressed(character_index: int) -> void:
 	if current_state != MenuState.CHARACTER_SELECT:
@@ -561,6 +659,8 @@ func _set_menu_state(new_state: int) -> void:
 		overlay.visible = false
 	play_button.disabled = is_character_select or is_reveal
 	play_button.text = "Selecionando..." if is_character_select else play_button.text
+	if is_lobby:
+		_set_lobby_menu_focus(lobby_menu_index)
 	call_deferred("_prime_menu_layout")
 
 func _handle_character_select_button(joypad_event: InputEventJoypadButton) -> void:
@@ -590,7 +690,13 @@ func _handle_character_select_button(joypad_event: InputEventJoypadButton) -> vo
 		_try_select_current_character()
 
 func _move_character_cursor(step: int) -> void:
-	character_cursor_index = wrapi(character_cursor_index + step, 0, CHARACTER_IDS.size())
+	var selected_ids: Array[String] = InputManager.get_selected_character_ids()
+	var next_index: int = character_cursor_index
+	for _attempt: int in range(CHARACTER_IDS.size()):
+		next_index = wrapi(next_index + step, 0, CHARACTER_IDS.size())
+		if CHARACTER_IDS[next_index] not in selected_ids:
+			character_cursor_index = next_index
+			break
 	_update_character_select_ui()
 
 func _try_select_current_character() -> void:

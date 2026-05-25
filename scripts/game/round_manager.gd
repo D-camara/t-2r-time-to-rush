@@ -9,12 +9,13 @@ enum RoundState {
 }
 
 const MapDaylightLightingScript: Script = preload("res://scripts/game/map_daylight_lighting.gd")
+const MENU_SCENE_PATH: String = "res://scenes/ui/main_menu.tscn"
 
 @export var match_rounds: int = 4
 @export var round_duration: float = 120.0
 @export var pre_round_countdown: float = 3.0
 @export var extraction_window_seconds: float = 12.0
-@export var capture_distance: float = 1.35
+@export var capture_hitbox_radius: float = 0.48
 @export var danger_distance: float = 6.0
 @export var low_time_threshold: float = 12.0
 @export var fugitive_speed: float = 11.0
@@ -56,15 +57,17 @@ var player_scores: Dictionary = {}
 var current_police_device: int = -1
 var current_round_captures: int = 0
 var current_round_extractions: Array[int] = []
+var current_round_survivors: Array[int] = []
+var current_round_points: Dictionary = {}
 var extraction_points_active: bool = false
 var input_manager_ref: Node = null
 var fugitive_slots: Array[FugitivePlayer] = []
 var extraction_points: Array[ExtractionPoint] = []
 var active_fugitives_cache: Array[FugitivePlayer] = []
 var hunters_cache: Array[CharacterBody3D] = []
-var capture_distance_squared: float = 0.0
 var danger_distance_squared: float = 0.0
 var hud_update_accumulator: float = 0.0
+var hunter_capture_areas: Dictionary = {}
 const HUD_UPDATE_INTERVAL: float = 0.1
 
 func _ready() -> void:
@@ -75,7 +78,7 @@ func _ready() -> void:
 	fugitive_slots.append(third_fugitive)
 	_attach_map_daylight_lighting()
 	_setup_extraction_points()
-	capture_distance_squared = capture_distance * capture_distance
+	_setup_hunter_capture_areas()
 	danger_distance_squared = danger_distance * danger_distance
 	_initialize_match_state()
 	start_round()
@@ -90,17 +93,6 @@ func _attach_map_daylight_lighting() -> void:
 	var lighting: Node = MapDaylightLightingScript.new()
 	lighting.name = "MapDaylightLighting"
 	map_root.add_child(lighting)
-
-func _physics_process(_delta: float) -> void:
-	if current_state != RoundState.PLAYING:
-		return
-
-	_refresh_runtime_lists()
-	for active_fugitive: FugitivePlayer in active_fugitives_cache:
-		for hunter: CharacterBody3D in hunters_cache:
-			if _get_planar_distance_squared(active_fugitive.global_position, hunter.global_position) <= capture_distance_squared:
-				_infect_fugitive(active_fugitive)
-				return
 
 func _process(delta: float) -> void:
 	if current_state != RoundState.PLAYING and current_state != RoundState.COUNTDOWN:
@@ -123,7 +115,7 @@ func _process(delta: float) -> void:
 		_update_hud(_get_playing_status_message())
 
 	if remaining_time <= 0.0:
-		_finish_round(_get_timeout_result())
+		_finish_round(_get_timeout_result(), true)
 
 func _process_round_advance_input() -> void:
 	if input_manager_ref == null or not input_manager_ref.has_method("consume_match_advance_pressed"):
@@ -132,7 +124,7 @@ func _process_round_advance_input() -> void:
 		return
 
 	if current_state == RoundState.MATCH_OVER:
-		get_tree().reload_current_scene()
+		get_tree().change_scene_to_file(MENU_SCENE_PATH)
 		return
 	_advance_to_next_round()
 
@@ -141,6 +133,9 @@ func start_round() -> void:
 		input_manager_ref.call("clear_pressed_buttons")
 	current_round_captures = 0
 	current_round_extractions.clear()
+	current_round_survivors.clear()
+	current_round_points.clear()
+	_set_capture_areas_enabled(false)
 	_set_extraction_points_active(false)
 	hud_update_accumulator = 0.0
 	_configure_players_for_current_round()
@@ -168,7 +163,7 @@ func start_round() -> void:
 	_refresh_runtime_lists()
 	_update_hud(_get_countdown_message())
 
-func _finish_round(result: int) -> void:
+func _finish_round(result: int, ended_by_timeout: bool = false) -> void:
 	if current_state != RoundState.PLAYING:
 		return
 
@@ -180,27 +175,28 @@ func _finish_round(result: int) -> void:
 	if third_fugitive.is_participating:
 		third_fugitive.set_input_enabled(false)
 	police.set_input_enabled(false)
+	_set_capture_areas_enabled(false)
 	_set_extraction_points_active(false)
 	_clear_fugitive_visual_alerts()
-	_award_round_points(result)
+	_award_round_points(ended_by_timeout)
 
 	var round_summary: String = _get_round_summary_text()
 	if _is_last_round():
 		current_state = RoundState.MATCH_OVER
 		if hud:
-			hud.show_round_result("Partida finalizada", "%s\nPlacar: %s\nVencedor: %s\nUse START ou confirmar para reiniciar" % [round_summary, _get_scoreboard_text(), _get_match_winner_text()], result == RoundState.FUGITIVE_WIN)
+			hud.show_match_result("Partida finalizada", "%s\nRANKING FINAL\n%s\nVENCEDOR: %s\nSTART OU A/X: VOLTAR AO MENU" % [round_summary, _get_final_ranking_text(), _get_match_winner_text()], result == RoundState.FUGITIVE_WIN)
 		_update_hud("Fim da partida! Vencedor: %s" % _get_match_winner_text())
 		return
 
 	if result == RoundState.POLICE_WIN:
 		if hud:
-			hud.show_round_result("Policial venceu", "Nenhum fugitivo conseguiu extrair.\n%s\nUse START ou confirmar para a proxima rodada" % round_summary, false)
+			hud.show_round_result("Policial venceu", "Nenhum fugitivo extraiu.\n%s\nSTART OU A/X: PROXIMA RODADA" % round_summary, false)
 		_update_hud("Policial venceu a rodada! Proxima rodada liberada")
 		return
 
 	remaining_time = 0.0
 	if hud:
-		hud.show_round_result("Fugitivos escaparam", "Extraidos: %s\n%s\nUse START ou confirmar para a proxima rodada" % [_get_extracted_names_text(), round_summary], true)
+		hud.show_round_result("Fugitivos escaparam", "%s\nSTART OU A/X: PROXIMA RODADA" % round_summary, true)
 	_update_hud("Extracao concluida! Proxima rodada liberada")
 
 func _update_hud(status_message: String) -> void:
@@ -238,6 +234,7 @@ func _process_countdown(delta: float) -> void:
 	if _get_participating_fugitive_count() <= 0:
 		_finish_round(RoundState.POLICE_WIN)
 		return
+	_sync_capture_areas_for_hunters()
 	_update_hud("Valendo! Fugitivos precisam sobreviver ate o tempo acabar")
 
 func _get_countdown_message() -> String:
@@ -355,6 +352,59 @@ func _setup_extraction_points() -> void:
 			point.fugitive_entered.connect(_on_extraction_point_entered)
 		point.set_extraction_active(false)
 
+func _setup_hunter_capture_areas() -> void:
+	hunter_capture_areas.clear()
+	_add_hunter_capture_area(police)
+	for player: FugitivePlayer in fugitive_slots:
+		_add_hunter_capture_area(player)
+
+func _add_hunter_capture_area(hunter: CharacterBody3D) -> void:
+	if hunter == null:
+		return
+
+	var area: Area3D = Area3D.new()
+	area.name = "CaptureContactArea"
+	area.collision_layer = 0
+	area.collision_mask = 1
+	area.monitorable = false
+	area.monitoring = false
+
+	var shape_node: CollisionShape3D = CollisionShape3D.new()
+	var shape: CylinderShape3D = CylinderShape3D.new()
+	shape.radius = capture_hitbox_radius
+	shape.height = 2.25
+	shape_node.position = Vector3(0.0, 1.15, 0.0)
+	shape_node.shape = shape
+	area.add_child(shape_node)
+	hunter.add_child(area)
+	area.body_entered.connect(_on_hunter_capture_body_entered.bind(hunter))
+	hunter_capture_areas[hunter] = area
+
+func _set_capture_areas_enabled(enabled: bool) -> void:
+	for hunter: Variant in hunter_capture_areas.keys():
+		var area: Area3D = hunter_capture_areas[hunter] as Area3D
+		if area != null:
+			area.set_deferred("monitoring", enabled)
+
+func _sync_capture_areas_for_hunters() -> void:
+	for hunter_variant: Variant in hunter_capture_areas.keys():
+		var hunter: CharacterBody3D = hunter_variant as CharacterBody3D
+		var area: Area3D = hunter_capture_areas[hunter_variant] as Area3D
+		if hunter == null or area == null:
+			continue
+		area.set_deferred("monitoring", current_state == RoundState.PLAYING and hunter in hunters_cache)
+
+func _on_hunter_capture_body_entered(body: Node3D, hunter: CharacterBody3D) -> void:
+	if current_state != RoundState.PLAYING or body == hunter:
+		return
+	if not (body is FugitivePlayer):
+		return
+
+	var target: FugitivePlayer = body as FugitivePlayer
+	if not target.is_participating or target.is_infected or target.is_captured or target.is_extracted:
+		return
+	_infect_fugitive(target)
+
 func _advance_to_next_round() -> void:
 	current_round_index += 1
 	if current_round_index >= match_rounds:
@@ -366,9 +416,25 @@ func _advance_to_next_round() -> void:
 func _is_last_round() -> bool:
 	return current_round_index >= match_rounds - 1
 
-func _award_round_points(_result: int) -> void:
+func _award_round_points(ended_by_timeout: bool) -> void:
 	if current_police_device != -1:
-		_add_score(current_police_device, current_round_captures)
+		_add_round_score(current_police_device, current_round_captures)
+
+	if not ended_by_timeout:
+		return
+
+	_refresh_runtime_lists()
+	for player: FugitivePlayer in active_fugitives_cache:
+		if player.device_id == -1 or player.device_id in current_round_extractions:
+			continue
+		current_round_survivors.append(player.device_id)
+		_add_round_score(player.device_id, 1)
+
+func _add_round_score(device_id: int, points: int) -> void:
+	if points <= 0:
+		return
+	_add_score(device_id, points)
+	current_round_points[device_id] = int(current_round_points.get(device_id, 0)) + points
 
 func _add_score(device_id: int, points: int) -> void:
 	if points <= 0:
@@ -386,6 +452,28 @@ func _get_scoreboard_text() -> String:
 		return "Sem placar"
 
 	return " | ".join(score_parts)
+
+func _get_round_points_text() -> String:
+	var score_parts: Array[String] = []
+	for device_id: int in match_player_devices:
+		score_parts.append("%s +%d" % [_get_short_player_name(device_id), int(current_round_points.get(device_id, 0))])
+	return " | ".join(score_parts) if not score_parts.is_empty() else "Sem pontos"
+
+func _get_final_ranking_text() -> String:
+	var lines: Array[String] = []
+	var ranked_devices: Array[int] = match_player_devices.duplicate()
+	ranked_devices.sort_custom(_compare_score_devices)
+	for index: int in range(ranked_devices.size()):
+		var device_id: int = ranked_devices[index]
+		lines.append("%d. %s - %d PTS" % [index + 1, _get_player_display_name(device_id).to_upper(), int(player_scores.get(device_id, 0))])
+	return "\n".join(lines) if not lines.is_empty() else "SEM JOGADORES"
+
+func _compare_score_devices(first_device: int, second_device: int) -> bool:
+	var first_score: int = int(player_scores.get(first_device, 0))
+	var second_score: int = int(player_scores.get(second_device, 0))
+	if first_score == second_score:
+		return match_player_devices.find(first_device) < match_player_devices.find(second_device)
+	return first_score > second_score
 
 func _get_short_player_name(device_id: int) -> String:
 	var display_name: String = _get_player_display_name(device_id).to_upper()
@@ -439,7 +527,7 @@ func _on_extraction_point_entered(player: FugitivePlayer, _point: ExtractionPoin
 
 	player.extract()
 	current_round_extractions.append(player.device_id)
-	_add_score(player.device_id, 1)
+	_add_round_score(player.device_id, 2)
 	_refresh_runtime_lists()
 	if hud:
 		hud.show_capture_flash("%s escapou" % _get_player_display_name(player.device_id).to_upper())
@@ -472,14 +560,23 @@ func _get_timeout_result() -> int:
 	return RoundState.FUGITIVE_WIN
 
 func _get_round_summary_text() -> String:
-	return "Capturas: %d | Extraidos: %s" % [current_round_captures, _get_extracted_names_text()]
+	var summary_lines: Array[String] = [
+		"Capturas: %d | Extraidos: %s" % [current_round_captures, _get_extracted_names_text()],
+	]
+	if not current_round_survivors.is_empty():
+		summary_lines.append("Sobreviveram: %s" % _get_device_names_text(current_round_survivors))
+	summary_lines.append("Pontos da rodada: %s" % _get_round_points_text())
+	return "\n".join(summary_lines)
 
 func _get_extracted_names_text() -> String:
-	if current_round_extractions.is_empty():
+	return _get_device_names_text(current_round_extractions)
+
+func _get_device_names_text(device_ids: Array[int]) -> String:
+	if device_ids.is_empty():
 		return "nenhum"
 
 	var names: Array[String] = []
-	for device_id: int in current_round_extractions:
+	for device_id: int in device_ids:
 		names.append(_get_player_display_name(device_id))
 	return ", ".join(names)
 
@@ -543,6 +640,7 @@ func _infect_fugitive(target: FugitivePlayer) -> void:
 	current_round_captures += 1
 	_apply_infected_hunter_balance()
 	_refresh_runtime_lists()
+	_sync_capture_areas_for_hunters()
 	if hud:
 		hud.show_capture_flash("Fugitivo interceptado")
 

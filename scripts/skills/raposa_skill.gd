@@ -7,7 +7,7 @@ var boost_remaining: float = 0.0
 
 func _init() -> void:
 	display_name = "Fuga improvisada"
-	cooldown_duration = 30.0
+	cooldown_duration = 20.0
 
 func _process(delta: float) -> void:
 	super._process(delta)

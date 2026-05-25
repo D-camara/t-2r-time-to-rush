@@ -51,6 +51,7 @@ var last_skill_text: String = ""
 var last_status_text: String = ""
 var last_status_color: Color = Color(0.0, 0.0, 0.0, 0.0)
 var last_controls_text: String = ""
+var is_match_result_visible: bool = false
 
 func _ready() -> void:
 	if not get_viewport().size_changed.is_connected(_apply_responsive_layout):
@@ -199,6 +200,7 @@ func show_round_result(title: String, subtitle: String, is_success: bool) -> voi
 	if result_overlay == null:
 		_create_result_overlay()
 
+	is_match_result_visible = false
 	_set_gameplay_hud_visible(false)
 	if result_backdrop:
 		result_backdrop.visible = true
@@ -211,8 +213,15 @@ func show_round_result(title: String, subtitle: String, is_success: bool) -> voi
 	banner_time = 0.0
 	if banner_label:
 		banner_label.visible = false
+	_apply_responsive_layout()
+
+func show_match_result(title: String, subtitle: String, is_success: bool) -> void:
+	show_round_result(title, subtitle, is_success)
+	is_match_result_visible = true
+	_apply_responsive_layout()
 
 func hide_round_result() -> void:
+	is_match_result_visible = false
 	if result_overlay:
 		result_overlay.visible = false
 	if result_backdrop:
@@ -423,13 +432,20 @@ func _apply_responsive_layout() -> void:
 
 	if result_overlay:
 		result_overlay.offset_left = -260.0 if is_compact else -420.0
-		result_overlay.offset_top = -92.0 if is_compact else -142.0
 		result_overlay.offset_right = 260.0 if is_compact else 420.0
-		result_overlay.offset_bottom = 92.0 if is_compact else 142.0
+		if is_match_result_visible:
+			result_overlay.offset_top = -154.0 if is_compact else (-220.0 if is_large else -190.0)
+			result_overlay.offset_bottom = 154.0 if is_compact else (220.0 if is_large else 190.0)
+		else:
+			result_overlay.offset_top = -92.0 if is_compact else -142.0
+			result_overlay.offset_bottom = 92.0 if is_compact else 142.0
 	if result_title_label:
 		result_title_label.add_theme_font_size_override("font_size", 23 if is_compact else (42 if is_large else 32))
 	if result_subtitle_label:
-		result_subtitle_label.add_theme_font_size_override("font_size", 11 if is_compact else (19 if is_large else 15))
+		if is_match_result_visible:
+			result_subtitle_label.add_theme_font_size_override("font_size", 10 if is_compact else (15 if is_large else 13))
+		else:
+			result_subtitle_label.add_theme_font_size_override("font_size", 11 if is_compact else (19 if is_large else 15))
 
 	timer_base_position = time_label.position
 	status_base_position = status_label.position

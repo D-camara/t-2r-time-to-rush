@@ -234,7 +234,7 @@ autowrap_mode = 3
 [node name="LightingHint" type="Label" parent="SettingsOverlay/SettingsColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
-text = "ESQ/DIR troca estilo  //  CIMA/BAIXO ajusta volume"
+text = "CIMA/BAIXO navega  //  ESQ/DIR ajusta valor"
 autowrap_mode = 3
 
 [node name="CloseSettingsButton" type="Button" parent="SettingsOverlay/SettingsColumn"]
@@ -245,7 +245,7 @@ text = "Fechar configuracoes"
 [node name="CloseHint" type="Label" parent="SettingsOverlay/SettingsColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "D-PAD ajusta  //  B fecha"
+text = "A confirma  //  B fecha"
 
 [node name="RevealOverlay" type="PanelContainer" parent="."]
 visible = false

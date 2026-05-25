@@ -7,7 +7,7 @@ const SLOW_SECONDS: float = 3.0
 
 func _init() -> void:
 	display_name = "Golpe de sorte"
-	cooldown_duration = 45.0
+	cooldown_duration = 20.0
 
 func try_activate() -> void:
 	if not can_activate():

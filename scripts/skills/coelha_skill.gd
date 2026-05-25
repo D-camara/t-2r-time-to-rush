@@ -9,7 +9,7 @@ var marked_position: Vector3 = Vector3.ZERO
 
 func _init() -> void:
 	display_name = "Rabbit Hole"
-	cooldown_duration = 60.0
+	cooldown_duration = 30.0
 
 func _process(delta: float) -> void:
 	super._process(delta)
