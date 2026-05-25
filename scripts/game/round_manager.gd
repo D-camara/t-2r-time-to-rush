@@ -8,6 +8,8 @@ enum RoundState {
 	MATCH_OVER,
 }
 
+const MapDaylightLightingScript: Script = preload("res://scripts/game/map_daylight_lighting.gd")
+
 @export var match_rounds: int = 4
 @export var round_duration: float = 45.0
 @export var pre_round_countdown: float = 3.0
@@ -71,11 +73,23 @@ func _ready() -> void:
 	fugitive_slots.append(fugitive)
 	fugitive_slots.append(second_fugitive)
 	fugitive_slots.append(third_fugitive)
+	_attach_map_daylight_lighting()
 	_setup_extraction_points()
 	capture_distance_squared = capture_distance * capture_distance
 	danger_distance_squared = danger_distance * danger_distance
 	_initialize_match_state()
 	start_round()
+
+func _attach_map_daylight_lighting() -> void:
+	var map_root: Node = get_node_or_null("MAPADEFINITIVO")
+	if map_root == null:
+		return
+	if map_root.get_node_or_null("MapDaylightLighting") != null:
+		return
+
+	var lighting: Node = MapDaylightLightingScript.new()
+	lighting.name = "MapDaylightLighting"
+	map_root.add_child(lighting)
 
 func _physics_process(_delta: float) -> void:
 	if current_state != RoundState.PLAYING:

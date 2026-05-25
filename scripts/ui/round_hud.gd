@@ -298,7 +298,7 @@ func _make_control_prompt_items(message: String) -> Array[Dictionary]:
 func _make_control_detail_text(message: String) -> String:
 	var normalized: String = message.to_lower()
 	if normalized.contains("habilidade"):
-		return "Fugitivos usam a skill ativa no R1"
+		return "Skill: E (teclado 1), ESPACO (teclado 2) ou R1"
 	if normalized.contains("reiniciar"):
 		return "Fim da partida"
 	if normalized.contains("proxima") or normalized.contains("avancar"):

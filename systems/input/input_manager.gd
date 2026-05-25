@@ -3,6 +3,13 @@ extends Node
 const DEADZONE: float = 0.2
 const MAX_JOINED_PLAYERS: int = 4
 const CHARACTER_IDS: Array[String] = ["sagui", "coelha", "tigre", "raposa"]
+const KEYBOARD_P1_DEVICE: int = -100
+const KEYBOARD_P2_DEVICE: int = -101
+const LIGHTING_STYLE_COUNT: int = 5
+const DEFAULT_LIGHTING_STYLE_INDEX: int = 0
+const SETTINGS_FILE_PATH: String = "user://settings.cfg"
+const SETTINGS_SECTION_VIDEO: String = "video"
+const SETTINGS_KEY_LIGHTING_STYLE: String = "lighting_style"
 
 var joined_devices: Array[int] = []
 var selected_characters: Dictionary = {}
@@ -12,8 +19,10 @@ var confirm_pressed_devices: Array[int] = []
 var cancel_pressed_devices: Array[int] = []
 var start_pressed_devices: Array[int] = []
 var connected_devices_cache: PackedInt32Array = PackedInt32Array()
+var lighting_style_index: int = DEFAULT_LIGHTING_STYLE_INDEX
 
 func _ready() -> void:
+	_load_persistent_settings()
 	_refresh_connected_devices()
 	if not Input.joy_connection_changed.is_connected(_on_joy_connection_changed):
 		Input.joy_connection_changed.connect(_on_joy_connection_changed)
@@ -36,6 +45,24 @@ func _input(event: InputEvent) -> void:
 			_add_pressed_device(cancel_pressed_devices, resolved_device)
 		elif _is_start_button(joypad_event.button_index):
 			_add_pressed_device(start_pressed_devices, resolved_device)
+		return
+
+	if event is InputEventKey:
+		var key_event: InputEventKey = event
+		if not key_event.pressed or key_event.echo:
+			return
+
+		var key_device: int = _resolve_keyboard_device_for_key_event(key_event)
+		if key_device == -1:
+			return
+
+		if _is_keyboard_ability_key(key_event):
+			_add_pressed_device(ability_pressed_devices, key_device)
+			_add_pressed_device(confirm_pressed_devices, key_device)
+		elif _is_keyboard_start_key(key_event):
+			_add_pressed_device(start_pressed_devices, key_device)
+		elif _is_keyboard_cancel_key(key_event):
+			_add_pressed_device(cancel_pressed_devices, key_device)
 
 func has_device(device_id: int) -> bool:
 	return _resolve_device(device_id) != -1
@@ -44,6 +71,11 @@ func get_movement(device_id: int) -> Vector3:
 	var resolved_device: int = _resolve_device(device_id)
 	if resolved_device == -1:
 		return Vector3.ZERO
+
+	if resolved_device == KEYBOARD_P1_DEVICE:
+		return _get_keyboard_movement_p1()
+	if resolved_device == KEYBOARD_P2_DEVICE:
+		return _get_keyboard_movement_p2()
 
 	var x: float = Input.get_joy_axis(resolved_device, JOY_AXIS_LEFT_X)
 	var y: float = Input.get_joy_axis(resolved_device, JOY_AXIS_LEFT_Y)
@@ -176,6 +208,13 @@ func get_fugitive_devices() -> Array[int]:
 			fugitive_devices.append(joined_device)
 	return fugitive_devices
 
+func get_lighting_style_index() -> int:
+	return lighting_style_index
+
+func set_lighting_style_index(style_index: int) -> void:
+	lighting_style_index = clampi(style_index, 0, LIGHTING_STYLE_COUNT - 1)
+	_save_persistent_settings()
+
 func consume_ability_pressed(device_id: int) -> bool:
 	return _consume_pressed_device(ability_pressed_devices, device_id)
 
@@ -231,6 +270,9 @@ func _is_start_button(button_index: int) -> bool:
 	return button_index == JOY_BUTTON_START
 
 func _resolve_device(device_id: int) -> int:
+	if device_id == KEYBOARD_P1_DEVICE or device_id == KEYBOARD_P2_DEVICE:
+		return device_id
+
 	if device_id in connected_devices_cache:
 		return device_id
 
@@ -241,6 +283,93 @@ func _resolve_device(device_id: int) -> int:
 
 func _refresh_connected_devices() -> void:
 	connected_devices_cache = Input.get_connected_joypads()
+	if KEYBOARD_P1_DEVICE not in connected_devices_cache:
+		connected_devices_cache.append(KEYBOARD_P1_DEVICE)
+	if KEYBOARD_P2_DEVICE not in connected_devices_cache:
+		connected_devices_cache.append(KEYBOARD_P2_DEVICE)
 
 func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
 	_refresh_connected_devices()
+
+func _get_keyboard_movement_p1() -> Vector3:
+	var x: float = 0.0
+	var z: float = 0.0
+	if Input.is_key_pressed(KEY_A):
+		x -= 1.0
+	if Input.is_key_pressed(KEY_D):
+		x += 1.0
+	if Input.is_key_pressed(KEY_W):
+		z -= 1.0
+	if Input.is_key_pressed(KEY_S):
+		z += 1.0
+	var direction: Vector3 = Vector3(x, 0.0, z)
+	return direction.normalized() if direction.length_squared() > 0.0 else Vector3.ZERO
+
+func _get_keyboard_movement_p2() -> Vector3:
+	var x: float = 0.0
+	var z: float = 0.0
+	if Input.is_key_pressed(KEY_LEFT):
+		x -= 1.0
+	if Input.is_key_pressed(KEY_RIGHT):
+		x += 1.0
+	if Input.is_key_pressed(KEY_UP):
+		z -= 1.0
+	if Input.is_key_pressed(KEY_DOWN):
+		z += 1.0
+	var direction: Vector3 = Vector3(x, 0.0, z)
+	return direction.normalized() if direction.length_squared() > 0.0 else Vector3.ZERO
+
+func _resolve_keyboard_device_for_key_event(key_event: InputEventKey) -> int:
+	if _is_keyboard_p1_key(key_event):
+		return KEYBOARD_P1_DEVICE
+	if _is_keyboard_p2_key(key_event):
+		return KEYBOARD_P2_DEVICE
+	return -1
+
+func _is_keyboard_p1_key(key_event: InputEventKey) -> bool:
+	return key_event.keycode == KEY_W \
+		or key_event.keycode == KEY_A \
+		or key_event.keycode == KEY_S \
+		or key_event.keycode == KEY_D \
+		or key_event.keycode == KEY_E \
+		or key_event.keycode == KEY_ENTER
+
+func _is_keyboard_p2_key(key_event: InputEventKey) -> bool:
+	return key_event.keycode == KEY_UP \
+		or key_event.keycode == KEY_DOWN \
+		or key_event.keycode == KEY_LEFT \
+		or key_event.keycode == KEY_RIGHT \
+		or key_event.keycode == KEY_SPACE \
+		or key_event.keycode == KEY_KP_ENTER
+
+func _is_keyboard_ability_key(key_event: InputEventKey) -> bool:
+	return key_event.keycode == KEY_E or key_event.keycode == KEY_SPACE
+
+func _is_keyboard_start_key(key_event: InputEventKey) -> bool:
+	return key_event.keycode == KEY_ENTER or key_event.keycode == KEY_KP_ENTER
+
+func _is_keyboard_cancel_key(key_event: InputEventKey) -> bool:
+	return key_event.keycode == KEY_ESCAPE or key_event.keycode == KEY_BACKSPACE
+
+func _load_persistent_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	var load_result: Error = config.load(SETTINGS_FILE_PATH)
+	if load_result != OK:
+		lighting_style_index = DEFAULT_LIGHTING_STYLE_INDEX
+		return
+
+	var loaded_style: int = int(config.get_value(
+		SETTINGS_SECTION_VIDEO,
+		SETTINGS_KEY_LIGHTING_STYLE,
+		DEFAULT_LIGHTING_STYLE_INDEX
+	))
+	lighting_style_index = clampi(loaded_style, 0, LIGHTING_STYLE_COUNT - 1)
+
+func _save_persistent_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	var load_result: Error = config.load(SETTINGS_FILE_PATH)
+	if load_result != OK and load_result != ERR_FILE_NOT_FOUND:
+		return
+
+	config.set_value(SETTINGS_SECTION_VIDEO, SETTINGS_KEY_LIGHTING_STYLE, lighting_style_index)
+	config.save(SETTINGS_FILE_PATH)
