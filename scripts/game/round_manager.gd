@@ -8,10 +8,17 @@ enum RoundState {
 	MATCH_OVER,
 }
 
+enum PostRoundAdvanceStep {
+	NONE,
+	RESULT_SCREEN,
+	POINTS_SCREEN,
+}
+
 const MapDaylightLightingScript: Script = preload("res://scripts/game/map_daylight_lighting.gd")
 
 @export var match_rounds: int = 4
 @export var round_duration: float = 45.0
+@export var round_intro_duration: float = 3.0
 @export var pre_round_countdown: float = 3.0
 @export var extraction_window_seconds: float = 12.0
 @export var capture_distance: float = 1.35
@@ -47,15 +54,18 @@ const MapDaylightLightingScript: Script = preload("res://scripts/game/map_daylig
 
 var current_state: int = RoundState.COUNTDOWN
 var remaining_time: float = 0.0
+var round_intro_remaining: float = 0.0
 var countdown_remaining: float = 0.0
 var police_character_name: String = "Policial"
 var current_round_index: int = 0
 var match_player_devices: Array[int] = []
 var police_rotation_order: Array[int] = []
 var player_scores: Dictionary = {}
+var current_round_points_gained: Dictionary = {}
 var current_police_device: int = -1
 var current_round_captures: int = 0
 var current_round_extractions: Array[int] = []
+var post_round_advance_step: int = PostRoundAdvanceStep.NONE
 var extraction_points_active: bool = false
 var input_manager_ref: Node = null
 var fugitive_slots: Array[FugitivePlayer] = []
@@ -65,7 +75,9 @@ var hunters_cache: Array[CharacterBody3D] = []
 var capture_distance_squared: float = 0.0
 var danger_distance_squared: float = 0.0
 var hud_update_accumulator: float = 0.0
+var post_round_text_remaining: float = 0.0
 const HUD_UPDATE_INTERVAL: float = 0.1
+const POST_ROUND_TEXT_DURATION: float = 2.0
 
 func _ready() -> void:
 	input_manager_ref = get_node_or_null("/root/InputManager")
@@ -105,6 +117,7 @@ func _physics_process(_delta: float) -> void:
 func _process(delta: float) -> void:
 	if current_state != RoundState.PLAYING and current_state != RoundState.COUNTDOWN:
 		_process_round_advance_input()
+		_process_post_round_text(delta)
 
 	if current_state == RoundState.COUNTDOWN:
 		_process_countdown(delta)
@@ -131,22 +144,37 @@ func _process_round_advance_input() -> void:
 	if not bool(input_manager_ref.call("consume_match_advance_pressed")):
 		return
 
-	if current_state == RoundState.MATCH_OVER:
-		get_tree().reload_current_scene()
+	if current_state == RoundState.POLICE_WIN or current_state == RoundState.FUGITIVE_WIN or current_state == RoundState.MATCH_OVER:
+		_handle_post_round_advance_input()
 		return
-	_advance_to_next_round()
+	_advance_to_next_round(false)
 
-func start_round() -> void:
+func _process_post_round_text(delta: float) -> void:
+	if post_round_advance_step != PostRoundAdvanceStep.RESULT_SCREEN:
+		return
+	if post_round_text_remaining <= 0.0:
+		return
+	post_round_text_remaining = max(post_round_text_remaining - delta, 0.0)
+	if post_round_text_remaining <= 0.0:
+		_show_post_round_points_screen()
+
+func start_round(skip_countdown: bool = false) -> void:
 	if input_manager_ref != null and input_manager_ref.has_method("clear_pressed_buttons"):
 		input_manager_ref.call("clear_pressed_buttons")
 	current_round_captures = 0
 	current_round_extractions.clear()
+	current_round_points_gained.clear()
+	post_round_text_remaining = 0.0
+	for device_id: int in match_player_devices:
+		current_round_points_gained[device_id] = 0
+	post_round_advance_step = PostRoundAdvanceStep.NONE
 	_set_extraction_points_active(false)
 	hud_update_accumulator = 0.0
 	_configure_players_for_current_round()
 	current_state = RoundState.COUNTDOWN
 	remaining_time = round_duration
-	countdown_remaining = pre_round_countdown
+	round_intro_remaining = 0.0 if skip_countdown else round_intro_duration
+	countdown_remaining = 0.0 if skip_countdown else pre_round_countdown
 	if fugitive.is_participating:
 		fugitive.reset_state(_get_fugitive_spawn_position())
 	if second_fugitive.is_participating:
@@ -157,7 +185,11 @@ func start_round() -> void:
 	_apply_speed_balance()
 	if hud:
 		hud.hide_round_result()
-		hud.show_round_banner("Rodada %d/%d" % [current_round_index + 1, match_rounds])
+		hud.hide_round_points_breakdown()
+		if skip_countdown:
+			hud.hide_round_start_countdown()
+		else:
+			hud.show_round_start_countdown(current_round_index + 1, int(ceil(countdown_remaining)), true)
 	if fugitive.is_participating:
 		fugitive.set_input_enabled(false)
 	if second_fugitive.is_participating:
@@ -166,6 +198,21 @@ func start_round() -> void:
 		third_fugitive.set_input_enabled(false)
 	police.set_input_enabled(false)
 	_refresh_runtime_lists()
+	if skip_countdown:
+		current_state = RoundState.PLAYING
+		if fugitive.is_participating:
+			fugitive.set_input_enabled(true)
+		if second_fugitive.is_participating:
+			second_fugitive.set_input_enabled(true)
+		if third_fugitive.is_participating:
+			third_fugitive.set_input_enabled(true)
+		police.set_input_enabled(true)
+		if _get_participating_fugitive_count() <= 0:
+			_finish_round(RoundState.POLICE_WIN)
+			return
+		_update_hud("Valendo! Fugitivos precisam sobreviver ate o tempo acabar")
+		return
+
 	_update_hud(_get_countdown_message())
 
 func _finish_round(result: int) -> void:
@@ -173,6 +220,8 @@ func _finish_round(result: int) -> void:
 		return
 
 	current_state = result
+	if hud:
+		hud.hide_round_start_countdown()
 	if fugitive.is_participating:
 		fugitive.set_input_enabled(false)
 	if second_fugitive.is_participating:
@@ -183,25 +232,32 @@ func _finish_round(result: int) -> void:
 	_set_extraction_points_active(false)
 	_clear_fugitive_visual_alerts()
 	_award_round_points(result)
+	post_round_advance_step = PostRoundAdvanceStep.RESULT_SCREEN
+	post_round_text_remaining = POST_ROUND_TEXT_DURATION
 
-	var round_summary: String = "%s | Placar: %s" % [_get_round_summary_text(), _get_scoreboard_text()]
 	if _is_last_round():
 		current_state = RoundState.MATCH_OVER
 		if hud:
-			hud.show_round_result("Partida finalizada", "%s\nVencedor: %s\nUse START ou confirmar para reiniciar" % [round_summary, _get_match_winner_text()], result == RoundState.FUGITIVE_WIN)
-		_update_hud("Fim da partida! Vencedor: %s" % _get_match_winner_text())
+			hud.hide_round_result()
+			hud.hide_round_points_breakdown()
+			hud.show_round_banner("PARTIDA FINALIZADA", POST_ROUND_TEXT_DURATION, true)
+		_update_hud("")
 		return
 
 	if result == RoundState.POLICE_WIN:
 		if hud:
-			hud.show_round_result("Policial venceu", "Nenhum fugitivo conseguiu extrair.\n%s\nUse START ou confirmar para a proxima rodada" % round_summary, false)
-		_update_hud("Policial venceu a rodada! Proxima rodada liberada")
+			hud.hide_round_result()
+			hud.hide_round_points_breakdown()
+			hud.show_round_banner("POLICIAL VENCEU", POST_ROUND_TEXT_DURATION, true)
+		_update_hud("")
 		return
 
 	remaining_time = 0.0
 	if hud:
-		hud.show_round_result("Fugitivos escaparam", "Extraidos: %s\n%s\nUse START ou confirmar para a proxima rodada" % [_get_extracted_names_text(), round_summary], true)
-	_update_hud("Extracao concluida! Proxima rodada liberada")
+		hud.hide_round_result()
+		hud.hide_round_points_breakdown()
+		hud.show_round_banner("FUGITIVOS ESCAPARAM", POST_ROUND_TEXT_DURATION, true)
+	_update_hud("")
 
 func _update_hud(status_message: String) -> void:
 	if not hud:
@@ -216,17 +272,32 @@ func _update_hud(status_message: String) -> void:
 	hud.update_round_counts(active_fugitives, participating_fugitives, hunter_count)
 	hud.update_match_info(current_round_index + 1, match_rounds, police_character_name)
 	hud.update_scoreboard("PLACAR  %s" % _get_scoreboard_text())
-	hud.update_skill_status(_get_skill_status_text())
-	hud.set_status(status_message, _get_status_color())
+	hud.update_player_skill_blocks(_build_skill_hud_blocks())
+	hud.update_skill_status("")
+	if current_state == RoundState.COUNTDOWN:
+		hud.set_status("", RoundHud.COLOR_DEFAULT)
+	else:
+		hud.set_status(status_message, _get_status_color())
 	hud.set_controls_hint(_get_controls_hint())
 
 func _process_countdown(delta: float) -> void:
+	if round_intro_remaining > 0.0:
+		round_intro_remaining = max(round_intro_remaining - delta, 0.0)
+		_update_hud("Rodada %d/%d" % [current_round_index + 1, match_rounds])
+		if hud:
+			hud.show_round_start_countdown(current_round_index + 1, 0, true)
+		return
+
 	countdown_remaining = max(countdown_remaining - delta, 0.0)
 	_update_hud(_get_countdown_message())
+	if hud:
+		hud.show_round_start_countdown(current_round_index + 1, int(ceil(countdown_remaining)), false)
 
 	if countdown_remaining > 0.0:
 		return
 
+	if hud:
+		hud.hide_round_start_countdown()
 	current_state = RoundState.PLAYING
 	if fugitive.is_participating:
 		fugitive.set_input_enabled(true)
@@ -279,10 +350,8 @@ func _get_status_color() -> Color:
 	return RoundHud.COLOR_DEFAULT
 
 func _get_controls_hint() -> String:
-	if current_state == RoundState.MATCH_OVER:
-		return "Reiniciar partida"
-	if current_state == RoundState.POLICE_WIN or current_state == RoundState.FUGITIVE_WIN:
-		return "Proxima rodada"
+	if current_state == RoundState.MATCH_OVER or current_state == RoundState.POLICE_WIN or current_state == RoundState.FUGITIVE_WIN:
+		return ""
 	if current_state == RoundState.COUNTDOWN:
 		return "Mover e habilidade dos fugitivos"
 	return ""
@@ -292,6 +361,7 @@ func _initialize_match_state() -> void:
 	match_player_devices.clear()
 	police_rotation_order.clear()
 	player_scores.clear()
+	current_round_points_gained.clear()
 
 	if input_manager_ref == null or not input_manager_ref.has_method("get_joined_devices"):
 		return
@@ -355,13 +425,37 @@ func _setup_extraction_points() -> void:
 			point.fugitive_entered.connect(_on_extraction_point_entered)
 		point.set_extraction_active(false)
 
-func _advance_to_next_round() -> void:
+func _advance_to_next_round(skip_countdown: bool = false) -> void:
 	current_round_index += 1
 	if current_round_index >= match_rounds:
 		get_tree().reload_current_scene()
 		return
 
-	start_round()
+	start_round(skip_countdown)
+
+func _handle_post_round_advance_input() -> void:
+	if post_round_advance_step == PostRoundAdvanceStep.RESULT_SCREEN:
+		_show_post_round_points_screen()
+		return
+
+	if post_round_advance_step == PostRoundAdvanceStep.POINTS_SCREEN:
+		if hud:
+			hud.hide_round_points_breakdown()
+		post_round_advance_step = PostRoundAdvanceStep.NONE
+		if current_state == RoundState.MATCH_OVER:
+			get_tree().reload_current_scene()
+			return
+		_advance_to_next_round(false)
+
+func _show_post_round_points_screen() -> void:
+	if post_round_advance_step != PostRoundAdvanceStep.RESULT_SCREEN:
+		return
+	post_round_text_remaining = 0.0
+	post_round_advance_step = PostRoundAdvanceStep.POINTS_SCREEN
+	if hud:
+		hud.hide_round_result()
+		hud.show_round_points_breakdown(_build_round_points_breakdown())
+	_update_hud("")
 
 func _is_last_round() -> bool:
 	return current_round_index >= match_rounds - 1
@@ -376,6 +470,9 @@ func _add_score(device_id: int, points: int) -> void:
 	if not player_scores.has(device_id):
 		player_scores[device_id] = 0
 	player_scores[device_id] = int(player_scores[device_id]) + points
+	if not current_round_points_gained.has(device_id):
+		current_round_points_gained[device_id] = 0
+	current_round_points_gained[device_id] = int(current_round_points_gained[device_id]) + points
 
 func _get_scoreboard_text() -> String:
 	var score_parts: Array[String] = []
@@ -386,6 +483,19 @@ func _get_scoreboard_text() -> String:
 		return "Sem placar"
 
 	return " | ".join(score_parts)
+
+func _build_round_points_breakdown() -> Array[Dictionary]:
+	var points_rows: Array[Dictionary] = []
+	var max_rows: int = mini(match_player_devices.size(), 4)
+	for row_index: int in range(max_rows):
+		var device_id: int = match_player_devices[row_index]
+		points_rows.append({
+			"player_name": _get_player_display_name(device_id),
+			"gained_points": int(current_round_points_gained.get(device_id, 0)),
+			"total_points": int(player_scores.get(device_id, 0)),
+			"is_police": device_id == current_police_device,
+		})
+	return points_rows
 
 func _get_short_player_name(device_id: int) -> String:
 	var display_name: String = _get_player_display_name(device_id).to_upper()
@@ -626,6 +736,55 @@ func _get_skill_status_text() -> String:
 		return ""
 
 	return "SKILL  %s" % "  |  ".join(status_parts)
+
+func _build_skill_hud_blocks() -> Array[Dictionary]:
+	var blocks: Array[Dictionary] = []
+	var max_blocks: int = mini(match_player_devices.size(), 4)
+	for slot_index: int in range(max_blocks):
+		var device_id: int = match_player_devices[slot_index]
+		blocks.append(_build_skill_hud_block_for_device(device_id, slot_index))
+	return blocks
+
+func _build_skill_hud_block_for_device(device_id: int, slot_index: int) -> Dictionary:
+	if device_id == current_police_device:
+		return {
+			"slot_label": "P%d" % [slot_index + 1],
+			"player_name": _get_player_display_name(device_id).to_upper(),
+			"ability_name": "SEM HABILIDADE",
+			"cooldown_fill_ratio": 1.0,
+			"is_ready": false,
+			"is_police": true,
+			"is_active": true,
+		}
+
+	var player: FugitivePlayer = _find_fugitive_by_device(device_id)
+	if player == null or not player.is_participating:
+		return {
+			"slot_label": "P%d" % [slot_index + 1],
+			"player_name": _get_player_display_name(device_id).to_upper(),
+			"ability_name": "SEM HABILIDADE",
+			"cooldown_fill_ratio": 0.0,
+			"is_ready": false,
+			"is_police": false,
+			"is_active": false,
+		}
+
+	var skill_data: Dictionary = player.get_skill_hud_data()
+	return {
+		"slot_label": "P%d" % [slot_index + 1],
+		"player_name": _get_player_display_name(device_id).to_upper(),
+		"ability_name": str(skill_data.get("ability_name", "SEM HABILIDADE")).to_upper(),
+		"cooldown_fill_ratio": float(skill_data.get("cooldown_fill_ratio", 0.0)),
+		"is_ready": bool(skill_data.get("is_ready", false)),
+		"is_police": false,
+		"is_active": player.is_participating and not player.is_infected and not player.is_extracted,
+	}
+
+func _find_fugitive_by_device(device_id: int) -> FugitivePlayer:
+	for player: FugitivePlayer in fugitive_slots:
+		if player != null and player.device_id == device_id:
+			return player
+	return null
 
 func _configure_players_from_lobby() -> void:
 	var input_manager: Node = get_node_or_null("/root/InputManager")

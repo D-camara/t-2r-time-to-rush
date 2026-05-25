@@ -1,0 +1,39 @@
+[gd_scene load_steps=4 format=3]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_boost"]
+albedo_color = Color(0.960784, 0.619608, 0.0431373, 0.82)
+transparency = 1
+shading_mode = 0
+billboard_mode = 3
+emission_enabled = true
+emission = Color(0.960784, 0.619608, 0.0431373, 1)
+emission_energy_multiplier = 1.05
+no_depth_test = true
+cull_mode = 2
+
+[sub_resource type="QuadMesh" id="QuadMesh_boost"]
+material = SubResource("StandardMaterial3D_boost")
+size = Vector2(0.42, 0.14)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_boost"]
+emission_shape = 3
+emission_box_extents = Vector3(1.02, 0.12, 0.08)
+direction = Vector3(0, 0, 1)
+spread = 10.0
+flatness = 1.0
+initial_velocity_min = 2.6
+initial_velocity_max = 4.8
+gravity = Vector3(0, 0, 0)
+scale_min = 0.55
+scale_max = 1.12
+
+[node name="RaposaBoostVFX" type="GPUParticles3D"]
+position = Vector3(0, 1, 0)
+amount = 52
+lifetime = 0.46
+one_shot = false
+explosiveness = 0.0
+local_coords = true
+draw_pass_1 = SubResource("QuadMesh_boost")
+process_material = SubResource("ParticleProcessMaterial_boost")
+emitting = false

@@ -1,7 +1,6 @@
 extends SkillBase
 
 const BANANA_TRAP_SCENE: PackedScene = preload("res://scenes/skills/banana_trap.tscn")
-const THROW_DISTANCE: float = 5.0
 const TRAP_DURATION: float = 8.0
 const TRAP_RADIUS: float = 1.6
 const STUN_SECONDS: float = 0.8
@@ -20,7 +19,7 @@ func try_activate() -> void:
 	if trap == null:
 		return
 
-	var spawn_position: Vector3 = owner_player.global_position + owner_player.get_forward_direction() * THROW_DISTANCE
+	var spawn_position: Vector3 = owner_player.global_position
 	spawn_position.y = owner_player.global_position.y + 0.08
 	owner_player.get_parent().add_child(trap)
 	trap.global_position = spawn_position

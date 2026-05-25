@@ -43,6 +43,21 @@ func get_status_text() -> String:
 		return ""
 	return skill.get_status_text()
 
+func get_skill_display_name() -> String:
+	if skill == null:
+		return ""
+	return skill.get_display_name()
+
+func get_skill_cooldown_fill_ratio() -> float:
+	if skill == null:
+		return 1.0
+	return skill.get_cooldown_fill_ratio()
+
+func is_skill_ready() -> bool:
+	if skill == null:
+		return false
+	return skill.is_ready()
+
 func cancel() -> void:
 	if skill:
 		skill.cancel()

@@ -31,6 +31,17 @@ func get_status_text() -> String:
 		return "%s %ds" % [display_name, int(ceil(cooldown_remaining))]
 	return "%s READY" % display_name
 
+func get_display_name() -> String:
+	return display_name
+
+func get_cooldown_fill_ratio() -> float:
+	if cooldown_duration <= 0.0:
+		return 1.0
+	return clampf((cooldown_duration - cooldown_remaining) / cooldown_duration, 0.0, 1.0)
+
+func is_ready() -> bool:
+	return cooldown_remaining <= 0.0
+
 func _start_cooldown() -> void:
 	cooldown_remaining = cooldown_duration
 
