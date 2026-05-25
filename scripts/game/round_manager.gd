@@ -9,7 +9,7 @@ enum RoundState {
 }
 
 @export var match_rounds: int = 4
-@export var round_duration: float = 45.0
+@export var round_duration: float = 120.0
 @export var pre_round_countdown: float = 3.0
 @export var extraction_window_seconds: float = 12.0
 @export var capture_distance: float = 1.35
