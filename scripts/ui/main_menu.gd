@@ -5,6 +5,9 @@ const FONT_UI: FontFile = preload("res://assets/ui/fonts/KenneyFuture.ttf")
 const ICON_PLAY: Texture2D = preload("res://assets/ui/kenney/icon_play.png")
 const ICON_REPEAT: Texture2D = preload("res://assets/ui/kenney/icon_repeat.png")
 const CARD_DIVIDER: Texture2D = preload("res://assets/ui/kenney/divider.png")
+const MENU_BACKGROUND_TEMPLATE: Texture2D = preload("res://assets/ui/backgrounds/menu-fundo.png")
+const CHARACTER_BACKGROUND_TEMPLATE: Texture2D = preload("res://assets/ui/backgrounds/fundo-personagens.png")
+const POLICE_REVEAL_TEMPLATE: Texture2D = preload("res://assets/ui/backgrounds/policial-reveal.png")
 const GAME_SCENE_PATH: String = "res://scenes/player/move.tscn"
 const MAX_PLAYERS: int = 4
 const MIN_PLAYERS_TO_START: int = 1
@@ -37,28 +40,28 @@ const CHARACTER_CARD_DATA: Dictionary = {
 		"name": "SAGUI",
 		"role": "ARMADILHA",
 		"skill": "Trap holografica",
-		"stats": "SETOR CAIXAS\nMALOTE: MEDIO\nCOOLDOWN 45s",
-		"color": Color(0.29, 0.871, 0.502, 1.0),
+		"stats": "SETOR: CAIXAS\nMALOTE: MEDIO\nCOOLDOWN: 45s",
+		"color": Color(0.98, 0.72, 0.12, 1.0),
 	},
 	"coelha": {
 		"name": "COELHA",
 		"role": "ROTA DE FUGA",
 		"skill": "Rabbit Hole",
-		"stats": "SETOR COFRE\nMALOTE: ALTO\nCOOLDOWN 60s",
+		"stats": "SETOR: COFRE\nMALOTE: ALTO\nCOOLDOWN: 60s",
 		"color": Color(0.22, 0.741, 0.973, 1.0),
 	},
 	"tigre": {
 		"name": "TIGRE",
 		"role": "QUEBRA CERCO",
 		"skill": "Golpe de sorte",
-		"stats": "SETOR SAGUAO\nMALOTE: PESADO\nCOOLDOWN 45s",
+		"stats": "SETOR: SAGUAO\nMALOTE: PESADO\nCOOLDOWN: 45s",
 		"color": Color(0.976, 0.451, 0.086, 1.0),
 	},
 	"raposa": {
 		"name": "RAPOSA",
 		"role": "ESCAPISTA",
 		"skill": "Fuga improvisada",
-		"stats": "SETOR GARAGEM\nMALOTE: LEVE\nCOOLDOWN 30s",
+		"stats": "SETOR: GARAGEM\nMALOTE: LEVE\nCOOLDOWN: 30s",
 		"color": Color(0.937, 0.267, 0.267, 1.0),
 	},
 }
@@ -133,7 +136,7 @@ var character_prompt_strip: ControllerPromptStrip = null
 var reveal_prompt_strip: ControllerPromptStrip = null
 var character_progress_label: Label = null
 var character_operation_label: Label = null
-var reveal_dossier_panel: PanelContainer = null
+var reveal_dossier_panel: Control = null
 var reveal_dossier_title_label: Label = null
 var reveal_dossier_name_label: Label = null
 var reveal_dossier_role_label: Label = null
@@ -141,6 +144,12 @@ var reveal_character_preview: TextureRect = null
 var reveal_support_label: Label = null
 var reveal_status_label: Label = null
 var reveal_bottom_label: Label = null
+var lobby_template_layer: Control = null
+var lobby_footer_enter_label: Label = null
+var lobby_footer_mouse_label: Label = null
+var character_template_layer: Control = null
+var character_footer_text_labels: Array[Label] = []
+var reveal_template_layer: Control = null
 var ui_update_accumulator: float = 0.0
 const MENU_UI_UPDATE_INTERVAL: float = 0.12
 
@@ -234,11 +243,11 @@ func _update_lobby_ui() -> void:
 
 	for slot_index: int in range(slot_labels.size()):
 		if slot_index < ready_players:
-			slot_labels[slot_index].text = "OPERADOR %d\nCONTROLE %d\nPRONTO" % [slot_index + 1, joined_players[slot_index]]
+			slot_labels[slot_index].text = "%02d  OPERADOR %d\n      CONTROLE %d\n      PRONTO" % [slot_index + 1, slot_index + 1, joined_players[slot_index]]
 			_apply_lobby_slot_state(slot_index, true)
 			continue
 
-		slot_labels[slot_index].text = "OPERADOR %d\nAGUARDANDO CONTROLE\nSTANDBY" % [slot_index + 1]
+		slot_labels[slot_index].text = "%02d  OPERADOR %d\n      AGUARDANDO CONTROLE\n      STANDBY" % [slot_index + 1, slot_index + 1]
 		_apply_lobby_slot_state(slot_index, false)
 
 	if connected_devices.is_empty():
@@ -264,17 +273,22 @@ func _is_start_button(button_index: int) -> bool:
 
 func _set_menu_state(new_state: int) -> void:
 	current_state = new_state
+	var is_lobby: bool = current_state == MenuState.LOBBY_CONTROLS
 	var is_character_select: bool = current_state == MenuState.CHARACTER_SELECT
 	var is_reveal: bool = current_state == MenuState.POLICE_REVEAL
-	menu_panel.visible = not is_character_select and not is_reveal
-	lobby_panel.visible = not is_character_select and not is_reveal
-	character_panel.visible = is_character_select and not is_reveal
+	menu_panel.visible = false
+	lobby_panel.visible = false
+	character_panel.visible = false
 	reveal_panel.visible = is_reveal
+	if lobby_template_layer:
+		lobby_template_layer.visible = is_lobby
+	if character_template_layer:
+		character_template_layer.visible = is_character_select and not is_reveal
 	settings_panel.visible = false
 	for decal: Control in menu_decals:
-		decal.visible = not is_reveal
+		decal.visible = false
 	for overlay: Control in terminal_overlays:
-		overlay.visible = not is_reveal
+		overlay.visible = false
 	play_button.disabled = is_character_select or is_reveal
 	play_button.text = "Selecionando..." if is_character_select else play_button.text
 	call_deferred("_prime_menu_layout")
@@ -349,7 +363,7 @@ func _update_character_select_ui() -> void:
 	character_title_label.text = "DOSSIER DO ASSALTO"
 	character_turn_label.text = "%s" % current_player_label.to_upper()
 	if character_progress_label:
-		character_progress_label.text = "SELECAO DE OPERADORES // %d/%d" % [min(selecting_player_index + 1, joined_players.size()), joined_players.size()]
+		character_progress_label.text = "SELECAO DE OPERADORES // %d/%d" % [min(selecting_player_index + 1, MAX_PLAYERS), MAX_PLAYERS]
 	character_status_label.text = "ESCOLHA UM OPERADOR UNICO PARA A FUGA."
 
 	for character_index: int in range(character_buttons.size()):
@@ -380,9 +394,9 @@ func _apply_visual_style() -> void:
 	_add_background()
 	_add_heist_decals()
 	_add_terminal_overlays()
-	_build_lobby_slot_cards()
+	_build_lobby_template_layer()
 	_build_character_selection_header()
-	_build_character_cards()
+	_build_character_template_layer()
 	_build_police_reveal_layout()
 	_create_controller_prompt_strips()
 	button_targets = [play_button, settings_button, quit_button]
@@ -394,6 +408,7 @@ func _apply_visual_style() -> void:
 	_style_panel(character_panel, COLOR_GOLD)
 	_style_panel(settings_panel, COLOR_GOLD)
 	_style_panel(reveal_panel, COLOR_RED)
+	settings_panel.z_index = 120
 	reveal_panel.z_index = 100
 	reveal_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_style_button(play_button, COLOR_GOLD, Color(1.0, 0.78, 0.26, 1.0), true)
@@ -404,8 +419,9 @@ func _apply_visual_style() -> void:
 	quit_button.text = "SAIR"
 	play_button.icon = ICON_PLAY
 	settings_button.icon = ICON_REPEAT
-	for character_button: Button in character_buttons:
-		_style_character_button(character_button, COLOR_BORDER, false, false)
+	if character_template_layer == null:
+		for character_button: Button in character_buttons:
+			_style_character_button(character_button, COLOR_BORDER, false, false)
 	_style_slider(volume_slider)
 	_connect_button_feedback()
 
@@ -476,6 +492,7 @@ func _apply_visual_style() -> void:
 		label.add_theme_font_size_override("font_size", 20)
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 
+	_apply_lobby_template_styles()
 	_style_settings_labels()
 	call_deferred("_prime_menu_layout")
 
@@ -490,7 +507,7 @@ func _create_controller_prompt_strips() -> void:
 		lobby_column.add_child(lobby_prompt_strip)
 		lobby_column.move_child(lobby_prompt_strip, join_hint_label.get_index() + 1)
 
-	if character_prompt_strip == null:
+	if character_prompt_strip == null and character_template_layer == null:
 		character_prompt_strip = ControllerPromptStrip.new()
 		character_prompt_strip.name = "CharacterControllerPrompts"
 		character_prompt_strip.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -503,7 +520,7 @@ func _create_controller_prompt_strips() -> void:
 		character_column.add_child(character_prompt_strip)
 		character_column.move_child(character_prompt_strip, character_status_label.get_index())
 
-	if reveal_prompt_strip == null:
+	if reveal_prompt_strip == null and reveal_template_layer == null:
 		reveal_prompt_strip = ControllerPromptStrip.new()
 		reveal_prompt_strip.name = "RevealControllerPrompts"
 		reveal_prompt_strip.set_prompts([
@@ -512,115 +529,89 @@ func _create_controller_prompt_strips() -> void:
 		reveal_column.add_child(reveal_prompt_strip)
 
 func _build_police_reveal_layout() -> void:
-	if reveal_dossier_panel != null:
+	if reveal_template_layer != null:
 		return
 
-	reveal_column.alignment = BoxContainer.ALIGNMENT_CENTER
-	reveal_column.add_theme_constant_override("separation", 16)
+	reveal_template_layer = Control.new()
+	reveal_template_layer.name = "RevealTemplateLayer"
+	reveal_template_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reveal_template_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	reveal_panel.add_child(reveal_template_layer)
 
-	var top_status: Label = _make_card_label("T2R // TIME TO RUSH      COFRE CENTRAL      SISTEMA: ONLINE  |  COFRE: TRANCADO  |  ALARMES: ATIVO", 13, COLOR_GREEN_HIGHLIGHT, HORIZONTAL_ALIGNMENT_CENTER)
-	top_status.name = "RevealTopStatus"
-	reveal_column.add_child(top_status)
-	reveal_column.move_child(top_status, 0)
+	var background: TextureRect = TextureRect.new()
+	background.name = "RevealBackgroundTexture"
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	background.texture = POLICE_REVEAL_TEMPLATE
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	reveal_template_layer.add_child(background)
 
-	var alarm_panel: PanelContainer = PanelContainer.new()
-	alarm_panel.name = "AlarmPanel"
-	alarm_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	alarm_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	alarm_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	alarm_panel.add_theme_stylebox_override("panel", _make_alarm_panel_style(COLOR_RED))
-	reveal_column.add_child(alarm_panel)
-	reveal_column.move_child(alarm_panel, 1)
+	reveal_column.visible = false
 
-	var alarm_margin: MarginContainer = MarginContainer.new()
-	alarm_margin.name = "AlarmMargin"
-	alarm_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	alarm_margin.add_theme_constant_override("margin_left", 24)
-	alarm_margin.add_theme_constant_override("margin_top", 20)
-	alarm_margin.add_theme_constant_override("margin_right", 24)
-	alarm_margin.add_theme_constant_override("margin_bottom", 20)
-	alarm_panel.add_child(alarm_margin)
-
-	var alarm_row: HBoxContainer = HBoxContainer.new()
-	alarm_row.name = "AlarmRow"
-	alarm_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	alarm_row.add_theme_constant_override("separation", 28)
-	alarm_margin.add_child(alarm_row)
-
-	reveal_dossier_panel = PanelContainer.new()
+	reveal_dossier_panel = Control.new()
 	reveal_dossier_panel.name = "CharacterDossier"
 	reveal_dossier_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	reveal_dossier_panel.custom_minimum_size = Vector2(250.0, 0.0)
-	reveal_dossier_panel.add_theme_stylebox_override("panel", _make_alarm_dossier_style(COLOR_RED))
-	alarm_row.add_child(reveal_dossier_panel)
-
-	var dossier_margin: MarginContainer = MarginContainer.new()
-	dossier_margin.name = "DossierMargin"
-	dossier_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	dossier_margin.add_theme_constant_override("margin_left", 14)
-	dossier_margin.add_theme_constant_override("margin_top", 12)
-	dossier_margin.add_theme_constant_override("margin_right", 14)
-	dossier_margin.add_theme_constant_override("margin_bottom", 12)
-	reveal_dossier_panel.add_child(dossier_margin)
-
-	var dossier_column: VBoxContainer = VBoxContainer.new()
-	dossier_column.name = "DossierColumn"
-	dossier_column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	dossier_column.add_theme_constant_override("separation", 6)
-	dossier_margin.add_child(dossier_column)
+	_add_reveal_template_control(reveal_dossier_panel, Vector2(0.17, 0.235), Vector2(0.17, 0.51))
 
 	reveal_dossier_title_label = _make_card_label("DOSSIER // 00", 12, COLOR_RED, HORIZONTAL_ALIGNMENT_LEFT)
-	dossier_column.add_child(reveal_dossier_title_label)
-
-	var preview_panel: Panel = Panel.new()
-	preview_panel.name = "RevealPreviewPanel"
-	preview_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	preview_panel.custom_minimum_size = Vector2(0.0, 190.0)
-	preview_panel.add_theme_stylebox_override("panel", _make_portrait_style(COLOR_RED, true))
-	dossier_column.add_child(preview_panel)
-	_add_portrait_backplate(preview_panel, COLOR_RED)
+	_add_reveal_dossier_control(reveal_dossier_title_label, Vector2(0.08, 0.03), Vector2(0.78, 0.05))
 
 	reveal_character_preview = TextureRect.new()
 	reveal_character_preview.name = "PoliceCharacterPreview"
 	reveal_character_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	reveal_character_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	reveal_character_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	reveal_character_preview.set_anchors_preset(Control.PRESET_FULL_RECT)
-	reveal_character_preview.offset_left = 4.0
-	reveal_character_preview.offset_top = -4.0
-	reveal_character_preview.offset_right = -4.0
-	reveal_character_preview.offset_bottom = -4.0
-	preview_panel.add_child(reveal_character_preview)
+	_add_reveal_dossier_control(reveal_character_preview, Vector2(0.06, 0.105), Vector2(0.68, 0.48))
 
 	reveal_dossier_name_label = _make_card_label("POLICIAL", 24, COLOR_RED, HORIZONTAL_ALIGNMENT_CENTER)
-	dossier_column.add_child(reveal_dossier_name_label)
+	_add_reveal_dossier_control(reveal_dossier_name_label, Vector2(0.06, 0.61), Vector2(0.86, 0.075))
 
-	reveal_dossier_role_label = _make_card_label("OPERADOR POLICIAL\nFUNCAO: CACADOR\nCOMBATE E PERSEGUICAO", 11, COLOR_TEXT, HORIZONTAL_ALIGNMENT_LEFT)
-	dossier_column.add_child(reveal_dossier_role_label)
-
-	var message_column: VBoxContainer = VBoxContainer.new()
-	message_column.name = "RevealMessageColumn"
-	message_column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	message_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	message_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	message_column.alignment = BoxContainer.ALIGNMENT_CENTER
-	message_column.add_theme_constant_override("separation", 18)
-	alarm_row.add_child(message_column)
+	reveal_dossier_role_label = _make_card_label("OPERADOR POLICIAL\nCLASSE: CACADOR", 11, COLOR_TEXT, HORIZONTAL_ALIGNMENT_LEFT)
+	_add_reveal_dossier_control(reveal_dossier_role_label, Vector2(0.09, 0.72), Vector2(0.82, 0.12))
 
 	reveal_title_label.get_parent().remove_child(reveal_title_label)
-	message_column.add_child(reveal_title_label)
+	_add_reveal_template_control(reveal_title_label, Vector2(0.423, 0.245), Vector2(0.288, 0.055))
+	reveal_title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	reveal_label.get_parent().remove_child(reveal_label)
-	message_column.add_child(reveal_label)
+	_add_reveal_template_control(reveal_label, Vector2(0.36, 0.338), Vector2(0.47, 0.215))
+	reveal_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 
 	reveal_support_label = _make_card_label("PREPAREM A FUGA", 30, COLOR_GREEN_HIGHLIGHT, HORIZONTAL_ALIGNMENT_CENTER)
-	message_column.add_child(reveal_support_label)
+	_add_reveal_template_control(reveal_support_label, Vector2(0.437, 0.649), Vector2(0.294, 0.055))
+	reveal_support_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 
 	reveal_status_label = _make_card_label("RODADA INICIANDO...", 16, COLOR_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
-	message_column.add_child(reveal_status_label)
+	_add_reveal_template_control(reveal_status_label, Vector2(0.467, 0.714), Vector2(0.23, 0.037))
+	reveal_status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 
-	reveal_bottom_label = _make_card_label("! O SISTEMA DE SEGURANCA ACIONOU UM NOVO POLICIAL !", 15, COLOR_RED, HORIZONTAL_ALIGNMENT_CENTER)
+	reveal_bottom_label = _make_card_label("O SISTEMA DE SEGURANCA ACIONOU UM NOVO POLICIAL", 15, COLOR_RED, HORIZONTAL_ALIGNMENT_CENTER)
 	reveal_bottom_label.name = "RevealBottomStatus"
-	reveal_column.add_child(reveal_bottom_label)
+	_add_reveal_template_control(reveal_bottom_label, Vector2(0.222, 0.822), Vector2(0.58, 0.045))
+	reveal_bottom_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+
+func _add_reveal_template_control(control: Control, anchor_position: Vector2, anchor_size: Vector2) -> void:
+	reveal_template_layer.add_child(control)
+	control.anchor_left = anchor_position.x
+	control.anchor_top = anchor_position.y
+	control.anchor_right = anchor_position.x + anchor_size.x
+	control.anchor_bottom = anchor_position.y + anchor_size.y
+	control.offset_left = 0.0
+	control.offset_top = 0.0
+	control.offset_right = 0.0
+	control.offset_bottom = 0.0
+
+func _add_reveal_dossier_control(control: Control, anchor_position: Vector2, anchor_size: Vector2) -> void:
+	reveal_dossier_panel.add_child(control)
+	control.anchor_left = anchor_position.x
+	control.anchor_top = anchor_position.y
+	control.anchor_right = anchor_position.x + anchor_size.x
+	control.anchor_bottom = anchor_position.y + anchor_size.y
+	control.offset_left = 0.0
+	control.offset_top = 0.0
+	control.offset_right = 0.0
+	control.offset_bottom = 0.0
 
 func _build_character_selection_header() -> void:
 	if character_progress_label == null:
@@ -635,6 +626,303 @@ func _build_character_selection_header() -> void:
 		character_operation_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		character_column.add_child(character_operation_label)
 		character_column.move_child(character_operation_label, character_progress_label.get_index() + 1)
+
+func _build_lobby_template_layer() -> void:
+	if lobby_template_layer != null:
+		return
+
+	lobby_template_layer = Control.new()
+	lobby_template_layer.name = "LobbyTemplateLayer"
+	lobby_template_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lobby_template_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	lobby_template_layer.z_index = 10
+	add_child(lobby_template_layer)
+
+	var background: TextureRect = TextureRect.new()
+	background.name = "MenuBackgroundTemplate"
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	background.texture = MENU_BACKGROUND_TEMPLATE
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	lobby_template_layer.add_child(background)
+
+	_move_control_to_template(play_button, Vector2(0.148, 0.486), Vector2(0.307, 0.113))
+	_move_control_to_template(settings_button, Vector2(0.148, 0.621), Vector2(0.307, 0.091))
+	_move_control_to_template(quit_button, Vector2(0.148, 0.735), Vector2(0.307, 0.09))
+	_move_control_to_template(lobby_title_label, Vector2(0.548, 0.073), Vector2(0.332, 0.05))
+	_move_control_to_template(connected_label, Vector2(0.56, 0.139), Vector2(0.285, 0.04))
+
+	for slot_index: int in range(slot_labels.size()):
+		_move_control_to_template(slot_labels[slot_index], Vector2(0.675, 0.196 + float(slot_index) * 0.164), Vector2(0.166, 0.107))
+
+	title_label.visible = false
+	subtitle_label.visible = false
+	status_label.visible = false
+	join_hint_label.visible = false
+	_make_template_icon(ICON_PLAY, Vector2(0.16, 0.513), Vector2(0.045, 0.06), COLOR_GOLD)
+	_make_template_icon(ICON_REPEAT, Vector2(0.16, 0.643), Vector2(0.04, 0.05), COLOR_GREEN_HIGHLIGHT)
+	lobby_footer_enter_label = _make_template_label("ENTRAR", Vector2(0.633, 0.864), Vector2(0.075, 0.042), COLOR_GOLD, 17)
+	lobby_footer_mouse_label = _make_template_label("SELECIONAR", Vector2(0.785, 0.864), Vector2(0.105, 0.042), COLOR_GOLD, 17)
+	_apply_lobby_template_styles()
+
+func _move_control_to_template(control: Control, anchor_position: Vector2, anchor_size: Vector2) -> void:
+	var old_parent: Node = control.get_parent()
+	if old_parent:
+		old_parent.remove_child(control)
+	lobby_template_layer.add_child(control)
+	control.anchor_left = anchor_position.x
+	control.anchor_top = anchor_position.y
+	control.anchor_right = anchor_position.x + anchor_size.x
+	control.anchor_bottom = anchor_position.y + anchor_size.y
+	control.offset_left = 0.0
+	control.offset_top = 0.0
+	control.offset_right = 0.0
+	control.offset_bottom = 0.0
+
+func _make_template_label(text: String, anchor_position: Vector2, anchor_size: Vector2, color: Color, font_size: int) -> Label:
+	var label: Label = _make_card_label(text, font_size, color, HORIZONTAL_ALIGNMENT_LEFT)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lobby_template_layer.add_child(label)
+	label.anchor_left = anchor_position.x
+	label.anchor_top = anchor_position.y
+	label.anchor_right = anchor_position.x + anchor_size.x
+	label.anchor_bottom = anchor_position.y + anchor_size.y
+	label.offset_left = 0.0
+	label.offset_top = 0.0
+	label.offset_right = 0.0
+	label.offset_bottom = 0.0
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	return label
+
+func _make_template_icon(texture: Texture2D, anchor_position: Vector2, anchor_size: Vector2, color: Color) -> TextureRect:
+	var icon: TextureRect = TextureRect.new()
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.texture = texture
+	icon.modulate = color
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	lobby_template_layer.add_child(icon)
+	icon.anchor_left = anchor_position.x
+	icon.anchor_top = anchor_position.y
+	icon.anchor_right = anchor_position.x + anchor_size.x
+	icon.anchor_bottom = anchor_position.y + anchor_size.y
+	icon.offset_left = 0.0
+	icon.offset_top = 0.0
+	icon.offset_right = 0.0
+	icon.offset_bottom = 0.0
+	return icon
+
+func _apply_lobby_template_styles() -> void:
+	play_button.icon = null
+	settings_button.icon = null
+	play_button.add_theme_stylebox_override("normal", _make_template_button_style(COLOR_GOLD, false))
+	play_button.add_theme_stylebox_override("disabled", _make_template_button_style(COLOR_GOLD, false))
+	play_button.add_theme_stylebox_override("hover", _make_template_button_style(COLOR_GOLD, true))
+	play_button.add_theme_stylebox_override("focus", _make_template_button_style(COLOR_GOLD, true))
+	play_button.add_theme_stylebox_override("pressed", _make_template_button_style(COLOR_GOLD, true))
+
+	settings_button.add_theme_stylebox_override("normal", _make_template_button_style(COLOR_GREEN_HIGHLIGHT, false))
+	settings_button.add_theme_stylebox_override("hover", _make_template_button_style(COLOR_GREEN_HIGHLIGHT, true))
+	settings_button.add_theme_stylebox_override("focus", _make_template_button_style(COLOR_GREEN_HIGHLIGHT, true))
+	settings_button.add_theme_stylebox_override("pressed", _make_template_button_style(COLOR_GREEN_HIGHLIGHT, true))
+
+	quit_button.add_theme_stylebox_override("normal", _make_template_button_style(COLOR_RED, false))
+	quit_button.add_theme_stylebox_override("hover", _make_template_button_style(COLOR_RED, true))
+	quit_button.add_theme_stylebox_override("focus", _make_template_button_style(COLOR_RED, true))
+	quit_button.add_theme_stylebox_override("pressed", _make_template_button_style(COLOR_RED, true))
+
+	play_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	settings_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	quit_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lobby_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	connected_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	for label: Label in slot_labels:
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		label.add_theme_color_override("font_outline_color", COLOR_BLACK)
+		label.add_theme_constant_override("outline_size", 4)
+
+func _make_template_button_style(accent: Color, highlighted: bool) -> StyleBoxFlat:
+	var style_box: StyleBoxFlat = StyleBoxFlat.new()
+	style_box.bg_color = Color(accent.r, accent.g, accent.b, 0.1 if highlighted else 0.0)
+	style_box.border_color = Color(accent.r, accent.g, accent.b, 0.82 if highlighted else 0.0)
+	style_box.set_border_width_all(3 if highlighted else 0)
+	style_box.corner_radius_top_left = 4
+	style_box.corner_radius_top_right = 4
+	style_box.corner_radius_bottom_right = 4
+	style_box.corner_radius_bottom_left = 4
+	style_box.shadow_color = Color(accent.r, accent.g, accent.b, 0.34 if highlighted else 0.0)
+	style_box.shadow_size = 18 if highlighted else 0
+	return style_box
+
+func _build_character_template_layer() -> void:
+	if character_template_layer != null:
+		return
+
+	character_template_layer = Control.new()
+	character_template_layer.name = "CharacterTemplateLayer"
+	character_template_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	character_template_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	character_template_layer.z_index = 10
+	add_child(character_template_layer)
+
+	var background: TextureRect = TextureRect.new()
+	background.name = "CharacterBackgroundTemplate"
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	background.texture = CHARACTER_BACKGROUND_TEMPLATE
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	character_template_layer.add_child(background)
+
+	_move_control_to_character_template(character_title_label, Vector2(0.055, 0.055), Vector2(0.355, 0.062))
+	_move_control_to_character_template(character_turn_label, Vector2(0.055, 0.122), Vector2(0.28, 0.036))
+	if character_progress_label:
+		_move_control_to_character_template(character_progress_label, Vector2(0.055, 0.164), Vector2(0.32, 0.034))
+	if character_operation_label:
+		character_operation_label.visible = false
+	_move_control_to_character_template(character_status_label, Vector2(0.285, 0.793), Vector2(0.43, 0.038))
+
+	character_name_labels.clear()
+	character_role_labels.clear()
+	character_skill_labels.clear()
+	character_stat_labels.clear()
+	character_portrait_panels.clear()
+	character_lock_labels.clear()
+	character_focus_labels.clear()
+	character_code_labels.clear()
+
+	var card_positions: Array[Vector2] = [
+		Vector2(0.058, 0.219),
+		Vector2(0.289, 0.219),
+		Vector2(0.506, 0.219),
+		Vector2(0.716, 0.219),
+	]
+	var card_sizes: Array[Vector2] = [
+		Vector2(0.21, 0.545),
+		Vector2(0.2, 0.545),
+		Vector2(0.192, 0.545),
+		Vector2(0.194, 0.545),
+	]
+	for character_index: int in range(character_buttons.size()):
+		var button: Button = character_buttons[character_index]
+		var character_id: String = CHARACTER_IDS[character_index]
+		var data: Dictionary = CHARACTER_CARD_DATA[character_id] as Dictionary
+		var accent: Color = data["color"] as Color
+		for child: Node in button.get_children():
+			child.queue_free()
+		_move_control_to_character_template(button, card_positions[character_index], card_sizes[character_index])
+		button.text = ""
+		button.clip_contents = false
+		button.focus_mode = Control.FOCUS_ALL
+		button.add_theme_stylebox_override("normal", _make_template_character_style(accent, false, false))
+		button.add_theme_stylebox_override("hover", _make_template_character_style(accent, true, false))
+		button.add_theme_stylebox_override("focus", _make_template_character_style(accent, true, false))
+		button.add_theme_stylebox_override("pressed", _make_template_character_style(accent, true, false))
+		button.add_theme_stylebox_override("hover_pressed", _make_template_character_style(accent, true, false))
+		button.add_theme_stylebox_override("disabled", _make_template_character_style(accent, false, true))
+		_add_template_character_content(button, character_index, character_id, data, accent)
+
+	_make_character_footer_label("NAVEGAR", Vector2(0.307, 0.892), Vector2(0.12, 0.04))
+	_make_character_footer_label("ASSINAR", Vector2(0.55, 0.892), Vector2(0.105, 0.04))
+	_make_character_footer_label("VOLTAR", Vector2(0.704, 0.892), Vector2(0.1, 0.04))
+
+func _move_control_to_character_template(control: Control, anchor_position: Vector2, anchor_size: Vector2) -> void:
+	var old_parent: Node = control.get_parent()
+	if old_parent:
+		old_parent.remove_child(control)
+	character_template_layer.add_child(control)
+	control.anchor_left = anchor_position.x
+	control.anchor_top = anchor_position.y
+	control.anchor_right = anchor_position.x + anchor_size.x
+	control.anchor_bottom = anchor_position.y + anchor_size.y
+	control.offset_left = 0.0
+	control.offset_top = 0.0
+	control.offset_right = 0.0
+	control.offset_bottom = 0.0
+
+func _add_template_character_content(button: Button, character_index: int, character_id: String, data: Dictionary, accent: Color) -> void:
+	var focus_label: Label = _make_card_label("> EM FOCO <", 10, COLOR_BLACK, HORIZONTAL_ALIGNMENT_CENTER)
+	focus_label.visible = false
+	focus_label.add_theme_stylebox_override("normal", _make_label_chip_style(accent, accent))
+	_add_card_overlay_control(button, focus_label, Vector2(0.25, -0.034), Vector2(0.5, 0.052))
+	character_focus_labels.append(focus_label)
+
+	var name_label: Label = _make_card_label(str(data["name"]), 25, accent.lightened(0.16), HORIZONTAL_ALIGNMENT_CENTER)
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_add_card_overlay_control(button, name_label, Vector2(0.11, 0.046), Vector2(0.78, 0.056))
+	character_name_labels.append(name_label)
+
+	var dossier_label: Label = _make_card_label("DOSSIER // %02d" % [character_index + 1], 11, accent.lightened(0.18), HORIZONTAL_ALIGNMENT_LEFT)
+	_add_card_overlay_control(button, dossier_label, Vector2(0.095, 0.112), Vector2(0.56, 0.036))
+
+	var preview: Panel = Panel.new()
+	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	preview.clip_contents = true
+	preview.add_theme_stylebox_override("panel", _make_transparent_style())
+	_add_card_overlay_control(button, preview, Vector2(0.075, 0.15), Vector2(0.85, 0.36))
+	character_portrait_panels.append(preview)
+	_add_template_portrait_glow(preview, accent)
+	_add_character_portrait_image(preview, character_id, true)
+
+	var role_label: Label = _make_card_label("FUNCAO\n%s" % str(data["role"]), 13, accent.lightened(0.14), HORIZONTAL_ALIGNMENT_LEFT)
+	_add_card_overlay_control(button, role_label, Vector2(0.245, 0.56), Vector2(0.67, 0.09))
+	character_role_labels.append(role_label)
+
+	var skill_font_size: int = 11 if character_id == "sagui" or character_id == "raposa" else 12
+	var skill_label: Label = _make_card_label("HABILIDADE\n%s" % str(data["skill"]).to_upper(), skill_font_size, accent.lightened(0.2), HORIZONTAL_ALIGNMENT_LEFT)
+	_add_card_overlay_control(button, skill_label, Vector2(0.245, 0.685), Vector2(0.71, 0.1))
+	character_skill_labels.append(skill_label)
+
+	var lock_label: Label = _make_card_label("", 19, COLOR_RED, HORIZONTAL_ALIGNMENT_CENTER)
+	lock_label.rotation = -0.1
+	_add_card_overlay_control(button, lock_label, Vector2(0.05, 0.32), Vector2(0.9, 0.2))
+	character_lock_labels.append(lock_label)
+
+func _add_card_overlay_control(parent: Control, control: Control, anchor_position: Vector2, anchor_size: Vector2) -> void:
+	control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(control)
+	control.anchor_left = anchor_position.x
+	control.anchor_top = anchor_position.y
+	control.anchor_right = anchor_position.x + anchor_size.x
+	control.anchor_bottom = anchor_position.y + anchor_size.y
+	control.offset_left = 0.0
+	control.offset_top = 0.0
+	control.offset_right = 0.0
+	control.offset_bottom = 0.0
+
+func _make_character_footer_label(text: String, anchor_position: Vector2, anchor_size: Vector2) -> void:
+	var label: Label = _make_card_label(text, 14, COLOR_TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	character_template_layer.add_child(label)
+	label.anchor_left = anchor_position.x
+	label.anchor_top = anchor_position.y
+	label.anchor_right = anchor_position.x + anchor_size.x
+	label.anchor_bottom = anchor_position.y + anchor_size.y
+	label.offset_left = 0.0
+	label.offset_top = 0.0
+	label.offset_right = 0.0
+	label.offset_bottom = 0.0
+	character_footer_text_labels.append(label)
+
+func _make_template_character_style(accent: Color, focused: bool, blocked: bool) -> StyleBoxFlat:
+	var style_box: StyleBoxFlat = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.0, 0.0, 0.0, 0.13 if blocked else 0.0)
+	style_box.border_color = Color(accent.r, accent.g, accent.b, 0.95 if focused else 0.0)
+	style_box.set_border_width_all(2 if focused else 0)
+	style_box.shadow_color = Color(0.0, 0.0, 0.0, 0.0)
+	style_box.shadow_size = 0
+	return style_box
+
+func _make_transparent_style() -> StyleBoxFlat:
+	var style_box: StyleBoxFlat = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+	return style_box
 
 func _build_lobby_slot_cards() -> void:
 	if not lobby_slot_cards.is_empty():
@@ -708,11 +996,9 @@ func _make_lobby_dossier_panel() -> Panel:
 	return panel
 
 func _apply_lobby_slot_state(slot_index: int, is_ready: bool) -> void:
-	if slot_index >= lobby_slot_cards.size():
-		return
-
 	var accent: Color = COLOR_GREEN_HIGHLIGHT if is_ready else COLOR_GOLD
-	lobby_slot_cards[slot_index].add_theme_stylebox_override("panel", _make_lobby_slot_style(accent, is_ready))
+	if slot_index < lobby_slot_cards.size():
+		lobby_slot_cards[slot_index].add_theme_stylebox_override("panel", _make_lobby_slot_style(accent, is_ready))
 
 	if slot_index < lobby_slot_numbers.size():
 		lobby_slot_numbers[slot_index].add_theme_color_override("font_color", accent)
@@ -767,7 +1053,7 @@ func _update_police_reveal_ui(character_id: String, character_name: String) -> v
 	if reveal_status_label:
 		reveal_status_label.text = "RODADA INICIANDO..."
 	if reveal_bottom_label:
-		reveal_bottom_label.text = "! O SISTEMA DE SEGURANCA ACIONOU %s COMO POLICIAL !" % display_name
+		reveal_bottom_label.text = "O SISTEMA DE SEGURANCA ACIONOU UM NOVO POLICIAL"
 
 	if reveal_dossier_title_label:
 		reveal_dossier_title_label.text = "DOSSIER // %02d" % dossier_number
@@ -777,7 +1063,7 @@ func _update_police_reveal_ui(character_id: String, character_name: String) -> v
 		reveal_dossier_name_label.add_theme_color_override("font_color", accent.lightened(0.18))
 	if reveal_dossier_role_label:
 		reveal_dossier_role_label.add_theme_color_override("font_color", COLOR_TEXT)
-	if reveal_dossier_panel:
+	if reveal_dossier_panel and reveal_template_layer == null:
 		reveal_dossier_panel.add_theme_stylebox_override("panel", _make_alarm_dossier_style(accent))
 	if reveal_character_preview:
 		reveal_character_preview.texture = CHARACTER_PORTRAITS.get(character_id, null) as Texture2D
@@ -880,6 +1166,19 @@ func _apply_responsive_layout() -> void:
 	for label: Label in slot_labels:
 		label.add_theme_font_size_override("font_size", 14 if is_compact else (20 if is_large else 17))
 
+	if lobby_template_layer:
+		lobby_title_label.add_theme_font_size_override("font_size", 21 if is_compact else (27 if is_large else 24))
+		connected_label.add_theme_font_size_override("font_size", 13 if is_compact else (17 if is_large else 15))
+		play_button.add_theme_font_size_override("font_size", 21 if is_compact else (30 if is_large else 26))
+		settings_button.add_theme_font_size_override("font_size", 18 if is_compact else (25 if is_large else 22))
+		quit_button.add_theme_font_size_override("font_size", 18 if is_compact else (25 if is_large else 22))
+		for label: Label in slot_labels:
+			label.add_theme_font_size_override("font_size", 12 if is_compact else (17 if is_large else 15))
+		if lobby_footer_enter_label:
+			lobby_footer_enter_label.add_theme_font_size_override("font_size", 12 if is_compact else (16 if is_large else 14))
+		if lobby_footer_mouse_label:
+			lobby_footer_mouse_label.add_theme_font_size_override("font_size", 12 if is_compact else (16 if is_large else 14))
+
 	for card: PanelContainer in lobby_slot_cards:
 		card.custom_minimum_size = Vector2(0.0, 78.0 if is_compact else (108.0 if is_large else 92.0))
 	for label: Label in lobby_slot_numbers:
@@ -888,23 +1187,32 @@ func _apply_responsive_layout() -> void:
 		label.add_theme_font_size_override("font_size", 16 if is_compact else (24 if is_large else 20))
 
 	for character_index: int in range(character_buttons.size()):
-		character_buttons[character_index].custom_minimum_size = Vector2(card_width, card_height)
+		character_buttons[character_index].custom_minimum_size = Vector2.ZERO if character_template_layer else Vector2(card_width, card_height)
 		if character_name_labels.size() > character_index:
-			character_name_labels[character_index].add_theme_font_size_override("font_size", card_title_size)
+			character_name_labels[character_index].add_theme_font_size_override("font_size", (18 if is_compact else (27 if is_large else 23)) if character_template_layer else card_title_size)
 		if character_role_labels.size() > character_index:
-			character_role_labels[character_index].add_theme_font_size_override("font_size", card_role_size)
+			character_role_labels[character_index].add_theme_font_size_override("font_size", (10 if is_compact else (14 if is_large else 12)) if character_template_layer else card_role_size)
 		if character_skill_labels.size() > character_index:
-			character_skill_labels[character_index].add_theme_font_size_override("font_size", card_text_size)
+			character_skill_labels[character_index].add_theme_font_size_override("font_size", (9 if is_compact else (13 if is_large else 11)) if character_template_layer else card_text_size)
 		if character_stat_labels.size() > character_index:
 			character_stat_labels[character_index].add_theme_font_size_override("font_size", card_text_size)
 		if character_lock_labels.size() > character_index:
-			character_lock_labels[character_index].add_theme_font_size_override("font_size", card_role_size)
+			character_lock_labels[character_index].add_theme_font_size_override("font_size", (11 if is_compact else (16 if is_large else 13)) if character_template_layer else card_role_size)
 		if character_focus_labels.size() > character_index:
 			character_focus_labels[character_index].add_theme_font_size_override("font_size", 9 if is_compact else (12 if is_large else 10))
 		if character_code_labels.size() > character_index:
 			character_code_labels[character_index].add_theme_font_size_override("font_size", 8 if is_compact else (11 if is_large else 9))
 		if character_portrait_panels.size() > character_index:
-			character_portrait_panels[character_index].custom_minimum_size = Vector2(0.0, portrait_height)
+			character_portrait_panels[character_index].custom_minimum_size = Vector2.ZERO if character_template_layer else Vector2(0.0, portrait_height)
+
+	if character_template_layer:
+		character_title_label.add_theme_font_size_override("font_size", 25 if is_compact else (38 if is_large else 32))
+		character_turn_label.add_theme_font_size_override("font_size", 13 if is_compact else (19 if is_large else 16))
+		character_status_label.add_theme_font_size_override("font_size", 12 if is_compact else (16 if is_large else 14))
+		if character_progress_label:
+			character_progress_label.add_theme_font_size_override("font_size", 11 if is_compact else (16 if is_large else 13))
+		for label: Label in character_footer_text_labels:
+			label.add_theme_font_size_override("font_size", 11 if is_compact else (15 if is_large else 13))
 
 	reveal_panel.anchor_left = 0.0
 	reveal_panel.anchor_top = 0.0
@@ -928,10 +1236,10 @@ func _apply_responsive_layout() -> void:
 		reveal_dossier_role_label.add_theme_font_size_override("font_size", 9 if is_compact else (13 if is_large else 11))
 	if reveal_bottom_label:
 		reveal_bottom_label.add_theme_font_size_override("font_size", 11 if is_compact else (16 if is_large else 14))
-	if reveal_dossier_panel:
+	if reveal_dossier_panel and reveal_template_layer == null:
 		reveal_dossier_panel.custom_minimum_size = Vector2(205.0 if is_compact else (280.0 if is_large else 250.0), 0.0)
 	var reveal_style: StyleBoxFlat = reveal_panel.get_theme_stylebox("panel") as StyleBoxFlat
-	if reveal_style:
+	if reveal_style and reveal_template_layer == null:
 		reveal_style.content_margin_left = 52 if is_compact else (126 if is_large else 92)
 		reveal_style.content_margin_right = 52 if is_compact else (126 if is_large else 92)
 		reveal_style.content_margin_top = 38 if is_compact else (84 if is_large else 64)
@@ -1187,10 +1495,10 @@ func _style_panel(panel: PanelContainer, accent: Color) -> void:
 		style_box.border_color = Color(COLOR_RED.r, COLOR_RED.g, COLOR_RED.b, 0.22)
 		style_box.set_border_width_all(0)
 		style_box.shadow_size = 0
-		style_box.content_margin_left = 110
-		style_box.content_margin_right = 110
-		style_box.content_margin_top = 74
-		style_box.content_margin_bottom = 60
+		style_box.content_margin_left = 0
+		style_box.content_margin_right = 0
+		style_box.content_margin_top = 0
+		style_box.content_margin_bottom = 0
 		panel.add_theme_stylebox_override("panel", style_box)
 		return
 	style_box.border_color = Color(accent.r, accent.g, accent.b, 0.9)
@@ -1372,7 +1680,31 @@ func _add_portrait_backplate(parent: Panel, accent: Color) -> void:
 		var scanline: ColorRect = _make_portrait_rect(Color(accent.r, accent.g, accent.b, 0.065), Vector2(0.04, 0.16 + float(scan_index) * 0.1), Vector2(0.92, 0.012))
 		parent.add_child(scanline)
 
-func _add_character_portrait_image(parent: Panel, character_id: String) -> void:
+func _add_template_portrait_glow(parent: Panel, accent: Color) -> void:
+	var pedestal: Panel = Panel.new()
+	pedestal.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pedestal.anchor_left = 0.22
+	pedestal.anchor_top = 0.86
+	pedestal.anchor_right = 0.78
+	pedestal.anchor_bottom = 0.96
+	pedestal.offset_left = 0.0
+	pedestal.offset_top = 0.0
+	pedestal.offset_right = 0.0
+	pedestal.offset_bottom = 0.0
+	var pedestal_style: StyleBoxFlat = StyleBoxFlat.new()
+	pedestal_style.bg_color = Color(accent.r, accent.g, accent.b, 0.16)
+	pedestal_style.border_color = Color(accent.r, accent.g, accent.b, 0.4)
+	pedestal_style.set_border_width_all(1)
+	pedestal_style.corner_radius_top_left = 100
+	pedestal_style.corner_radius_top_right = 100
+	pedestal_style.corner_radius_bottom_left = 100
+	pedestal_style.corner_radius_bottom_right = 100
+	pedestal_style.shadow_color = Color(accent.r, accent.g, accent.b, 0.22)
+	pedestal_style.shadow_size = 14
+	pedestal.add_theme_stylebox_override("panel", pedestal_style)
+	parent.add_child(pedestal)
+
+func _add_character_portrait_image(parent: Panel, character_id: String, use_template_crop: bool = false) -> void:
 	var texture: Texture2D = CHARACTER_PORTRAITS.get(character_id, null) as Texture2D
 	if texture == null:
 		return
@@ -1387,10 +1719,17 @@ func _add_character_portrait_image(parent: Panel, character_id: String) -> void:
 	portrait_image.anchor_top = 0.0
 	portrait_image.anchor_right = 1.0
 	portrait_image.anchor_bottom = 1.0
-	portrait_image.offset_left = 4.0
-	portrait_image.offset_top = -2.0
-	portrait_image.offset_right = -4.0
-	portrait_image.offset_bottom = -2.0
+	if use_template_crop:
+		var horizontal_shift: float = 8.0 if character_id == "sagui" else (4.0 if character_id == "coelha" else 0.0)
+		portrait_image.offset_left = horizontal_shift
+		portrait_image.offset_top = 0.0
+		portrait_image.offset_right = horizontal_shift
+		portrait_image.offset_bottom = 0.0
+	else:
+		portrait_image.offset_left = 4.0
+		portrait_image.offset_top = -2.0
+		portrait_image.offset_right = -4.0
+		portrait_image.offset_bottom = -2.0
 	parent.add_child(portrait_image)
 
 func _add_card_heist_icon(parent: Panel, character_id: String) -> void:
@@ -1440,10 +1779,18 @@ func _apply_character_card_state(character_index: int, is_cursor: bool, is_selec
 	var character_id: String = CHARACTER_IDS[character_index]
 	var data: Dictionary = CHARACTER_CARD_DATA[character_id] as Dictionary
 	var accent: Color = data["color"] as Color
-	_style_character_button(button, accent, is_cursor, is_selected)
+	if character_template_layer:
+		button.add_theme_stylebox_override("normal", _make_template_character_style(accent, is_cursor and not is_selected, is_selected))
+		button.add_theme_stylebox_override("hover", _make_template_character_style(accent, not is_selected, is_selected))
+		button.add_theme_stylebox_override("focus", _make_template_character_style(accent, not is_selected, is_selected))
+		button.add_theme_stylebox_override("pressed", _make_template_character_style(accent, not is_selected, is_selected))
+		button.add_theme_stylebox_override("hover_pressed", _make_template_character_style(accent, not is_selected, is_selected))
+		button.add_theme_stylebox_override("disabled", _make_template_character_style(accent, false, true))
+	else:
+		_style_character_button(button, accent, is_cursor, is_selected)
 
 	if character_portrait_panels.size() > character_index:
-		character_portrait_panels[character_index].add_theme_stylebox_override("panel", _make_portrait_style(accent, is_cursor))
+		character_portrait_panels[character_index].add_theme_stylebox_override("panel", _make_transparent_style() if character_template_layer else _make_portrait_style(accent, is_cursor))
 	if character_name_labels.size() > character_index:
 		character_name_labels[character_index].add_theme_color_override("font_color", accent.lightened(0.18) if not is_selected else COLOR_MUTED)
 	if character_focus_labels.size() > character_index:
@@ -1583,6 +1930,10 @@ func _update_menu_motion(delta: float) -> void:
 	for panel: Control in panel_targets:
 		if not panel.visible:
 			continue
+		if panel == reveal_panel and reveal_template_layer:
+			panel.scale = Vector2.ONE
+			panel.rotation = 0.0
+			continue
 		panel.pivot_offset = panel.size * 0.5
 		var panel_pulse: float = sin(menu_time * 1.6 + float(panel_index) * 0.8) * 0.012
 		panel.scale = panel.scale.lerp(Vector2.ONE * (1.0 + panel_pulse), delta * 4.0)
@@ -1596,15 +1947,15 @@ func _update_menu_motion(delta: float) -> void:
 		if current_state == MenuState.CHARACTER_SELECT and button in character_buttons:
 			var character_button_index: int = character_buttons.find(button)
 			if character_button_index == character_cursor_index and not button.disabled:
-				target_scale = 1.045
+				target_scale = 1.0
 		button.scale = button.scale.lerp(Vector2.ONE * target_scale, delta * 10.0)
-		button.rotation = lerp(button.rotation, 0.025 if is_hot and not button.disabled else 0.0, delta * 8.0)
+		var allow_button_tilt: bool = not (current_state == MenuState.CHARACTER_SELECT and button in character_buttons)
+		button.rotation = lerp(button.rotation, 0.025 if allow_button_tilt and is_hot and not button.disabled else 0.0, delta * 8.0)
 
 	var title_pulse: float = (sin(menu_time * 2.0) + 1.0) * 0.5
 	title_label.scale = title_label.scale.lerp(Vector2.ONE * (1.0 + title_pulse * 0.018), delta * 3.0)
 	lobby_title_label.scale = lobby_title_label.scale.lerp(Vector2.ONE * (1.0 + title_pulse * 0.01), delta * 3.0)
 	if reveal_panel.visible:
-		reveal_panel.scale = reveal_panel.scale.lerp(Vector2.ONE * (1.0 + title_pulse * 0.01), delta * 5.0)
 		reveal_title_label.modulate.a = 0.82 + title_pulse * 0.18
 		reveal_label.modulate.a = 0.9 + title_pulse * 0.1
 		if reveal_support_label:

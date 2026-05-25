@@ -1,4 +1,4 @@
-@tool
+7@tool
 extends GridMap
 
 @export var floor_height: float = 0.5
