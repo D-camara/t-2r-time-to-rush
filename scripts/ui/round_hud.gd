@@ -20,10 +20,11 @@ const COLOR_DANGER: Color = Color(0.976, 0.451, 0.086, 1.0)
 const COLOR_SUCCESS: Color = Color(0.133, 0.773, 0.369, 1.0)
 const COLOR_INFO: Color = Color(0.29, 0.871, 0.502, 1.0)
 const COLOR_CYAN: Color = Color(0.22, 0.741, 0.973, 1.0)
-const COLOR_BORDER: Color = Color(0.165, 0.224, 0.325, 0.95)
+const COLOR_BORDER: Color = Color(0.125, 0.408, 0.616, 0.82)
 const COLOR_MUTED: Color = Color(0.58, 0.639, 0.722, 1.0)
 
 var result_overlay: PanelContainer = null
+var result_backdrop: ColorRect = null
 var result_title_label: Label = null
 var result_subtitle_label: Label = null
 var danger_flash: ColorRect = null
@@ -61,7 +62,7 @@ func _ready() -> void:
 	set_controls_hint("")
 	skill_label.text = ""
 	status_label.modulate = COLOR_DEFAULT
-	time_label.modulate = COLOR_DEFAULT
+	time_label.modulate = COLOR_WARNING
 
 func _process(delta: float) -> void:
 	hud_time += delta
@@ -129,7 +130,7 @@ func update_round_counts(active_fugitives: int, total_fugitives: int, hunter_cou
 func update_match_info(round_index: int, total_rounds: int, police_name: String) -> void:
 	if match_label == null:
 		return
-	var next_text: String = "R%d/%d  POL %s" % [round_index, total_rounds, _short_label(police_name)]
+	var next_text: String = "B%d/%d  POL  %s" % [round_index, total_rounds, police_name.to_upper()]
 	if next_text != last_match_text:
 		last_match_text = next_text
 		match_label.text = next_text
@@ -141,28 +142,43 @@ func update_scoreboard(score_text: String) -> void:
 	if next_text != last_score_text:
 		last_score_text = next_text
 		score_label.text = next_text
-	var should_show: bool = not score_text.is_empty()
-	if score_label.visible != should_show:
-		score_label.visible = should_show
+	score_label.visible = false
 
 func update_skill_status(message: String) -> void:
-	if message != last_skill_text:
-		last_skill_text = message
-		skill_label.text = message
-	var should_show: bool = not message.is_empty()
-	if skill_label.visible != should_show:
-		skill_label.visible = should_show
+	var lower_message: String = message.to_lower()
+	var display_text: String = "SKILL: INDISPONIVEL"
+	if lower_message.contains("ready"):
+		display_text = "SKILL: READY"
+	elif lower_message.contains("voltar"):
+		display_text = "SKILL: RETORNO"
+	elif not message.is_empty():
+		var status_parts: PackedStringArray = message.split(" ", false)
+		var remaining_text: String = status_parts[-1].to_upper() if not status_parts.is_empty() else ""
+		display_text = "SKILL: CD %s" % remaining_text
+	if display_text != last_skill_text:
+		last_skill_text = display_text
+		skill_label.text = display_text
+	var skill_color: Color = COLOR_MUTED
+	if lower_message.contains("ready"):
+		skill_color = COLOR_SUCCESS
+	elif lower_message.contains("voltar"):
+		skill_color = COLOR_CYAN
+	elif not message.is_empty() and not lower_message.contains("voltar"):
+		skill_color = COLOR_WARNING
+	skill_label.add_theme_color_override("font_color", skill_color)
+	skill_label.visible = true
 
 func set_status(message: String, color: Color = COLOR_DEFAULT) -> void:
-	if message != last_status_text:
-		last_status_text = message
-		status_label.text = message
+	var compact_message: String = _compact_status_message(message)
+	if compact_message != last_status_text:
+		last_status_text = compact_message
+		status_label.text = compact_message
 	if color != last_status_color:
 		last_status_color = color
 		status_label.modulate = color
 	status_label.position = status_base_position
 	var has_result_overlay: bool = result_overlay != null and result_overlay.visible
-	var should_show: bool = not has_result_overlay and not message.is_empty() and color != COLOR_DEFAULT
+	var should_show: bool = not has_result_overlay and not compact_message.is_empty() and color != COLOR_DEFAULT
 	if top_center.visible != should_show:
 		top_center.visible = should_show
 		_sync_panel_for(top_center)
@@ -173,7 +189,8 @@ func set_controls_hint(message: String) -> void:
 		if controls_prompt_strip:
 			controls_prompt_strip.set_prompts(_make_control_prompt_items(message))
 		controls_label.text = _make_control_detail_text(message)
-	var should_show: bool = not message.is_empty()
+	var has_result_overlay: bool = result_overlay != null and result_overlay.visible
+	var should_show: bool = not has_result_overlay and not message.is_empty()
 	if bottom_left.visible != should_show:
 		bottom_left.visible = should_show
 		_sync_panel_for(bottom_left)
@@ -182,17 +199,25 @@ func show_round_result(title: String, subtitle: String, is_success: bool) -> voi
 	if result_overlay == null:
 		_create_result_overlay()
 
+	_set_gameplay_hud_visible(false)
+	if result_backdrop:
+		result_backdrop.visible = true
 	result_overlay.visible = true
 	result_title_label.text = title.to_upper()
 	result_subtitle_label.text = subtitle
 	var accent: Color = COLOR_SUCCESS if is_success else COLOR_DANGER
 	result_title_label.add_theme_color_override("font_color", accent)
 	result_overlay.add_theme_stylebox_override("panel", _make_result_style(accent))
-	_show_banner("OPERACAO DO COFRE FINALIZADA", accent)
+	banner_time = 0.0
+	if banner_label:
+		banner_label.visible = false
 
 func hide_round_result() -> void:
 	if result_overlay:
 		result_overlay.visible = false
+	if result_backdrop:
+		result_backdrop.visible = false
+	_set_gameplay_hud_visible(true)
 	_sync_panel_for(top_center)
 
 func show_capture_flash(message: String = "CONTAGIO!") -> void:
@@ -202,14 +227,34 @@ func show_capture_flash(message: String = "CONTAGIO!") -> void:
 func show_round_banner(message: String) -> void:
 	_show_banner(message, COLOR_WARNING)
 
+func _compact_status_message(message: String) -> String:
+	var compact_message: String = message.to_upper()
+	compact_message = compact_message.replace(" E O POLICIAL", " POLICIAL")
+	compact_message = compact_message.replace("ULTIMO FUGITIVO LIVRE NO BANCO", "ULTIMO FUGITIVO NO BANCO")
+	compact_message = compact_message.replace("EXTRACOES LIBERADAS! ALCANCE UMA SAIDA", "EXTRACAO LIBERADA")
+	compact_message = compact_message.replace("ALERTA! POLICIAL PERTO DOS FUGITIVOS", "POLICIAL PROXIMO")
+	compact_message = compact_message.replace("ULTIMOS SEGUNDOS PARA FUGIR DO BANCO", "ULTIMOS SEGUNDOS")
+	compact_message = compact_message.replace("FUGITIVOS PRECISAM SEGURAR ATE O TIMER ZERAR", "")
+	return compact_message
+
+func _set_gameplay_hud_visible(is_visible: bool) -> void:
+	top_left.visible = is_visible
+	top_timer.visible = is_visible
+	top_center.visible = false
+	bottom_left.visible = false
+	_sync_panel_for(top_left)
+	_sync_panel_for(top_timer)
+	_sync_panel_for(top_center)
+	_sync_panel_for(bottom_left)
+
 func _apply_hud_style() -> void:
 	_create_timer_container()
 	_create_match_labels()
 	_create_controls_prompt_strip()
-	_create_panel_for(top_timer, Color(0.043, 0.063, 0.125, 0.82))
-	_create_panel_for(top_left, Color(0.094, 0.133, 0.208, 0.9))
-	_create_panel_for(top_center, Color(0.094, 0.133, 0.208, 0.78))
-	_create_panel_for(bottom_left, Color(0.043, 0.063, 0.125, 0.72))
+	_create_panel_for(top_timer, Color(0.016, 0.035, 0.086, 0.74))
+	_create_panel_for(top_left, Color(0.016, 0.035, 0.086, 0.78))
+	_create_panel_for(top_center, Color(0.016, 0.035, 0.086, 0.76))
+	_create_panel_for(bottom_left, Color(0.016, 0.035, 0.086, 0.62))
 	_create_screen_flash()
 	_create_hud_heist_icons()
 	_create_banner()
@@ -233,6 +278,9 @@ func _apply_hud_style() -> void:
 	skill_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
 	skill_label.add_theme_constant_override("outline_size", 3)
 	skill_label.add_theme_font_size_override("font_size", 12)
+	skill_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	skill_label.clip_text = true
+	info_column.add_theme_constant_override("separation", 4)
 	status_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.75))
 	status_label.add_theme_font_override("font", FONT_UI)
 	status_label.add_theme_constant_override("outline_size", 4)
@@ -261,7 +309,7 @@ func _create_controls_prompt_strip() -> void:
 	var column: VBoxContainer = VBoxContainer.new()
 	column.name = "ControlsColumn"
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_theme_constant_override("separation", 3)
+	column.add_theme_constant_override("separation", 2)
 	bottom_left.add_child(column)
 
 	if controls_label.get_parent() == bottom_left:
@@ -297,8 +345,6 @@ func _make_control_prompt_items(message: String) -> Array[Dictionary]:
 
 func _make_control_detail_text(message: String) -> String:
 	var normalized: String = message.to_lower()
-	if normalized.contains("habilidade"):
-		return "Fugitivos usam a skill ativa no R1"
 	if normalized.contains("reiniciar"):
 		return "Fim da partida"
 	if normalized.contains("proxima") or normalized.contains("avancar"):
@@ -309,16 +355,18 @@ func _apply_responsive_layout() -> void:
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
 	var is_compact: bool = viewport_size.x < 1500.0 or viewport_size.y < 820.0
 	var is_large: bool = viewport_size.x >= 1800.0 and viewport_size.y >= 950.0
-	var safe_left: float = 18.0 if is_compact else (30.0 if is_large else 24.0)
-	var safe_top: float = 14.0 if is_compact else (24.0 if is_large else 18.0)
-	var panel_width: float = 224.0 if is_compact else (286.0 if is_large else 250.0)
-	var panel_height: float = 76.0 if is_compact else (96.0 if is_large else 84.0)
-	var timer_width: float = 190.0 if is_compact else (250.0 if is_large else 220.0)
-	var timer_height: float = 38.0 if is_compact else (50.0 if is_large else 44.0)
-	var bottom_height: float = 44.0 if is_compact else (56.0 if is_large else 48.0)
-	var bottom_margin: float = 18.0 if is_compact else (32.0 if is_large else 24.0)
-	var center_width: float = minf(viewport_size.x * 0.36, 460.0 if is_compact else 560.0)
-	var center_height: float = 34.0 if is_compact else (46.0 if is_large else 38.0)
+	var safe_left: float = 18.0 if is_compact else (22.0 if is_large else 20.0)
+	var safe_top: float = 14.0 if is_compact else (20.0 if is_large else 16.0)
+	var panel_width: float = 180.0 if is_compact else (306.0 if is_large else 240.0)
+	var panel_height: float = 45.0 if is_compact else (84.0 if is_large else 64.0)
+	var timer_width: float = 158.0 if is_compact else (264.0 if is_large else 210.0)
+	var timer_height: float = 28.0 if is_compact else (52.0 if is_large else 40.0)
+	var bottom_width: float = 190.0 if is_compact else (326.0 if is_large else 255.0)
+	var bottom_height: float = 28.0 if is_compact else (48.0 if is_large else 38.0)
+	var bottom_margin: float = 14.0 if is_compact else (20.0 if is_large else 16.0)
+	var center_width: float = minf(viewport_size.x * 0.38, 390.0 if is_compact else 650.0)
+	var center_height: float = 20.0 if is_compact else (42.0 if is_large else 32.0)
+	info_column.add_theme_constant_override("separation", 1 if is_compact else (3 if is_large else 2))
 
 	top_timer.anchor_left = 0.0
 	top_timer.anchor_top = 0.0
@@ -353,35 +401,35 @@ func _apply_responsive_layout() -> void:
 	bottom_left.anchor_bottom = 0.0
 	bottom_left.offset_left = safe_left
 	bottom_left.offset_top = viewport_size.y - bottom_margin - bottom_height
-	bottom_left.offset_right = minf(safe_left + 640.0, viewport_size.x - safe_left)
+	bottom_left.offset_right = minf(safe_left + bottom_width, viewport_size.x - safe_left)
 	bottom_left.offset_bottom = viewport_size.y - bottom_margin
 
-	match_label.add_theme_font_size_override("font_size", 10 if is_compact else (13 if is_large else 11))
-	score_label.add_theme_font_size_override("font_size", 10 if is_compact else (12 if is_large else 11))
-	time_label.add_theme_font_size_override("font_size", 18 if is_compact else (26 if is_large else 22))
-	fugitives_label.add_theme_font_size_override("font_size", 12 if is_compact else (15 if is_large else 13))
-	skill_label.add_theme_font_size_override("font_size", 11 if is_compact else (14 if is_large else 12))
-	status_label.add_theme_font_size_override("font_size", 13 if is_compact else (17 if is_large else 15))
-	controls_label.add_theme_font_size_override("font_size", 14 if is_compact else (18 if is_large else 16))
+	match_label.add_theme_font_size_override("font_size", 8 if is_compact else (13 if is_large else 10))
+	score_label.add_theme_font_size_override("font_size", 8 if is_compact else (10 if is_large else 9))
+	time_label.add_theme_font_size_override("font_size", 13 if is_compact else (22 if is_large else 18))
+	fugitives_label.add_theme_font_size_override("font_size", 8 if is_compact else (13 if is_large else 10))
+	skill_label.add_theme_font_size_override("font_size", 8 if is_compact else (12 if is_large else 10))
+	status_label.add_theme_font_size_override("font_size", 9 if is_compact else (14 if is_large else 11))
+	controls_label.add_theme_font_size_override("font_size", 8 if is_compact else (11 if is_large else 9))
 	if controls_prompt_strip:
-		controls_prompt_strip.set_prompt_size(24 if is_compact else (34 if is_large else 28), 12 if is_compact else (17 if is_large else 14))
+		controls_prompt_strip.set_prompt_size(16 if is_compact else (25 if is_large else 20), 8 if is_compact else (12 if is_large else 10))
 
 	if banner_label:
-		banner_label.offset_left = -300.0 if is_compact else -380.0
-		banner_label.offset_top = 74.0 if is_compact else 96.0
-		banner_label.offset_right = 300.0 if is_compact else 380.0
-		banner_label.offset_bottom = 126.0 if is_compact else 154.0
-		banner_label.add_theme_font_size_override("font_size", 20 if is_compact else (30 if is_large else 24))
+		banner_label.offset_left = -210.0 if is_compact else -330.0
+		banner_label.offset_top = 52.0 if is_compact else 78.0
+		banner_label.offset_right = 210.0 if is_compact else 330.0
+		banner_label.offset_bottom = 82.0 if is_compact else 118.0
+		banner_label.add_theme_font_size_override("font_size", 11 if is_compact else (18 if is_large else 14))
 
 	if result_overlay:
-		result_overlay.offset_left = -360.0 if is_compact else -460.0
-		result_overlay.offset_top = -128.0 if is_compact else -164.0
-		result_overlay.offset_right = 360.0 if is_compact else 460.0
-		result_overlay.offset_bottom = 128.0 if is_compact else 164.0
+		result_overlay.offset_left = -260.0 if is_compact else -420.0
+		result_overlay.offset_top = -92.0 if is_compact else -142.0
+		result_overlay.offset_right = 260.0 if is_compact else 420.0
+		result_overlay.offset_bottom = 92.0 if is_compact else 142.0
 	if result_title_label:
-		result_title_label.add_theme_font_size_override("font_size", 38 if is_compact else (56 if is_large else 50))
+		result_title_label.add_theme_font_size_override("font_size", 23 if is_compact else (42 if is_large else 32))
 	if result_subtitle_label:
-		result_subtitle_label.add_theme_font_size_override("font_size", 20 if is_compact else (27 if is_large else 24))
+		result_subtitle_label.add_theme_font_size_override("font_size", 11 if is_compact else (19 if is_large else 15))
 
 	timer_base_position = time_label.position
 	status_base_position = status_label.position
@@ -405,10 +453,10 @@ func _sync_panel_for(target: Control) -> void:
 		shadow_panel.anchor_top = target.anchor_top
 		shadow_panel.anchor_right = target.anchor_right
 		shadow_panel.anchor_bottom = target.anchor_bottom
-		shadow_panel.offset_left = target.offset_left + 12.0
-		shadow_panel.offset_top = target.offset_top + 12.0
-		shadow_panel.offset_right = target.offset_right + 22.0
-		shadow_panel.offset_bottom = target.offset_bottom + 22.0
+		shadow_panel.offset_left = target.offset_left + 5.0
+		shadow_panel.offset_top = target.offset_top + 5.0
+		shadow_panel.offset_right = target.offset_right + 10.0
+		shadow_panel.offset_bottom = target.offset_bottom + 10.0
 
 	var panel: Panel = parent.get_node_or_null("%sCard" % target.name) as Panel
 	if panel:
@@ -417,10 +465,10 @@ func _sync_panel_for(target: Control) -> void:
 		panel.anchor_top = target.anchor_top
 		panel.anchor_right = target.anchor_right
 		panel.anchor_bottom = target.anchor_bottom
-		panel.offset_left = target.offset_left - 16.0
-		panel.offset_top = target.offset_top - 12.0
-		panel.offset_right = target.offset_right + 16.0
-		panel.offset_bottom = target.offset_bottom + 12.0
+		panel.offset_left = target.offset_left - 10.0
+		panel.offset_top = target.offset_top - 8.0
+		panel.offset_right = target.offset_right + 10.0
+		panel.offset_bottom = target.offset_bottom + 8.0
 
 func _create_match_labels() -> void:
 	if match_label == null:
@@ -439,6 +487,8 @@ func _create_match_labels() -> void:
 
 	match_label.add_theme_color_override("font_color", COLOR_WARNING)
 	match_label.add_theme_font_size_override("font_size", 19)
+	match_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	match_label.clip_text = true
 	score_label.add_theme_color_override("font_color", COLOR_CYAN)
 	score_label.add_theme_font_size_override("font_size", 18)
 	score_label.autowrap_mode = TextServer.AUTOWRAP_OFF
@@ -462,10 +512,10 @@ func _create_panel_for(target: Control, fill: Color) -> void:
 	shadow_panel.anchor_top = target.anchor_top
 	shadow_panel.anchor_right = target.anchor_right
 	shadow_panel.anchor_bottom = target.anchor_bottom
-	shadow_panel.offset_left = target.offset_left + 12.0
-	shadow_panel.offset_top = target.offset_top + 12.0
-	shadow_panel.offset_right = target.offset_right + 22.0
-	shadow_panel.offset_bottom = target.offset_bottom + 22.0
+	shadow_panel.offset_left = target.offset_left + 5.0
+	shadow_panel.offset_top = target.offset_top + 5.0
+	shadow_panel.offset_right = target.offset_right + 10.0
+	shadow_panel.offset_bottom = target.offset_bottom + 10.0
 	shadow_panel.add_theme_stylebox_override("panel", _make_depth_shadow_style())
 	parent.add_child(shadow_panel)
 	parent.move_child(shadow_panel, target.get_index())
@@ -478,10 +528,10 @@ func _create_panel_for(target: Control, fill: Color) -> void:
 	panel.anchor_top = target.anchor_top
 	panel.anchor_right = target.anchor_right
 	panel.anchor_bottom = target.anchor_bottom
-	panel.offset_left = target.offset_left - 16.0
-	panel.offset_top = target.offset_top - 12.0
-	panel.offset_right = target.offset_right + 16.0
-	panel.offset_bottom = target.offset_bottom + 12.0
+	panel.offset_left = target.offset_left - 10.0
+	panel.offset_top = target.offset_top - 8.0
+	panel.offset_right = target.offset_right + 10.0
+	panel.offset_bottom = target.offset_bottom + 8.0
 	panel.add_theme_stylebox_override("panel", _make_card_style(fill))
 	parent.add_child(panel)
 	parent.move_child(panel, target.get_index())
@@ -490,26 +540,26 @@ func _make_card_style(fill: Color) -> StyleBoxFlat:
 	var style_box: StyleBoxFlat = StyleBoxFlat.new()
 	style_box.bg_color = fill
 	style_box.border_color = COLOR_BORDER
-	style_box.set_border_width_all(2)
-	style_box.corner_radius_top_left = 8
-	style_box.corner_radius_top_right = 8
-	style_box.corner_radius_bottom_right = 8
-	style_box.corner_radius_bottom_left = 8
-	style_box.shadow_color = Color(0.0, 0.0, 0.0, 0.62)
-	style_box.shadow_size = 8
-	style_box.content_margin_left = 10
-	style_box.content_margin_right = 10
-	style_box.content_margin_top = 8
-	style_box.content_margin_bottom = 8
+	style_box.set_border_width_all(1)
+	style_box.corner_radius_top_left = 6
+	style_box.corner_radius_top_right = 6
+	style_box.corner_radius_bottom_right = 6
+	style_box.corner_radius_bottom_left = 6
+	style_box.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
+	style_box.shadow_size = 5
+	style_box.content_margin_left = 8
+	style_box.content_margin_right = 8
+	style_box.content_margin_top = 6
+	style_box.content_margin_bottom = 6
 	return style_box
 
 func _make_depth_shadow_style() -> StyleBoxFlat:
 	var style_box: StyleBoxFlat = StyleBoxFlat.new()
-	style_box.bg_color = Color(0.0, 0.0, 0.0, 0.48)
-	style_box.corner_radius_top_left = 8
-	style_box.corner_radius_top_right = 8
-	style_box.corner_radius_bottom_right = 8
-	style_box.corner_radius_bottom_left = 8
+	style_box.bg_color = Color(0.0, 0.0, 0.0, 0.34)
+	style_box.corner_radius_top_left = 6
+	style_box.corner_radius_top_right = 6
+	style_box.corner_radius_bottom_right = 6
+	style_box.corner_radius_bottom_left = 6
 	return style_box
 
 func _short_label(text: String) -> String:
@@ -529,11 +579,10 @@ func _create_screen_flash() -> void:
 	$Control.move_child(danger_flash, 0)
 
 func _create_hud_heist_icons() -> void:
-	vault_icon = _make_hud_icon("VaultTimerIcon", HeistIcon.IconType.VAULT, COLOR_WARNING, 0.82)
-	cash_icon = _make_hud_icon("CashCrewIcon", HeistIcon.IconType.MONEY_STACK, COLOR_SUCCESS, 0.78)
-	alarm_icon = _make_hud_icon("AlarmDangerIcon", HeistIcon.IconType.ALARM, COLOR_DANGER, 0.88)
+	vault_icon = null
+	cash_icon = null
+	alarm_icon = null
 	keycard_icon = null
-	alarm_icon.visible = false
 
 func _make_hud_icon(icon_name: String, icon_type: int, accent: Color, opacity: float) -> HeistIcon:
 	var icon: HeistIcon = HeistIcon.new()
@@ -580,15 +629,15 @@ func _create_banner() -> void:
 	banner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	banner_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	banner_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	banner_label.offset_left = -330.0
-	banner_label.offset_top = 114.0
-	banner_label.offset_right = 330.0
-	banner_label.offset_bottom = 176.0
-	banner_label.add_theme_font_size_override("font_size", 42)
+	banner_label.offset_left = -310.0
+	banner_label.offset_top = 90.0
+	banner_label.offset_right = 310.0
+	banner_label.offset_bottom = 132.0
+	banner_label.add_theme_font_size_override("font_size", 20)
 	banner_label.add_theme_font_override("font", FONT_ARCADE)
 	banner_label.add_theme_color_override("font_color", COLOR_WARNING)
 	banner_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.92))
-	banner_label.add_theme_constant_override("outline_size", 9)
+	banner_label.add_theme_constant_override("outline_size", 5)
 	$Control.add_child(banner_label)
 
 func _show_banner(message: String, color: Color) -> void:
@@ -602,37 +651,45 @@ func _create_result_overlay() -> void:
 	if result_overlay != null:
 		return
 
+	result_backdrop = ColorRect.new()
+	result_backdrop.name = "ResultBackdrop"
+	result_backdrop.visible = false
+	result_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	result_backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+	result_backdrop.color = Color(0.0, 0.0, 0.0, 0.34)
+	$Control.add_child(result_backdrop)
+
 	result_overlay = PanelContainer.new()
 	result_overlay.name = "ResultOverlay"
 	result_overlay.visible = false
 	result_overlay.set_anchors_preset(Control.PRESET_CENTER)
-	result_overlay.offset_left = -420.0
-	result_overlay.offset_top = -145.0
-	result_overlay.offset_right = 420.0
-	result_overlay.offset_bottom = 145.0
+	result_overlay.offset_left = -390.0
+	result_overlay.offset_top = -132.0
+	result_overlay.offset_right = 390.0
+	result_overlay.offset_bottom = 132.0
 	result_overlay.add_theme_stylebox_override("panel", _make_result_style(COLOR_SUCCESS))
 	$Control.add_child(result_overlay)
 
 	var column: VBoxContainer = VBoxContainer.new()
 	column.name = "ResultColumn"
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
-	column.add_theme_constant_override("separation", 12)
+	column.add_theme_constant_override("separation", 9)
 	result_overlay.add_child(column)
 
 	result_title_label = Label.new()
 	result_title_label.name = "ResultTitle"
 	result_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	result_title_label.add_theme_font_size_override("font_size", 50)
+	result_title_label.add_theme_font_size_override("font_size", 42)
 	result_title_label.add_theme_font_override("font", FONT_ARCADE)
 	result_title_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.82))
-	result_title_label.add_theme_constant_override("outline_size", 9)
+	result_title_label.add_theme_constant_override("outline_size", 6)
 	column.add_child(result_title_label)
 
 	result_subtitle_label = Label.new()
 	result_subtitle_label.name = "ResultSubtitle"
 	result_subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	result_subtitle_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	result_subtitle_label.add_theme_font_size_override("font_size", 24)
+	result_subtitle_label.add_theme_font_size_override("font_size", 19)
 	result_subtitle_label.add_theme_font_override("font", FONT_UI)
 	result_subtitle_label.add_theme_color_override("font_color", COLOR_DEFAULT)
 	result_subtitle_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
@@ -641,17 +698,17 @@ func _create_result_overlay() -> void:
 
 func _make_result_style(accent: Color) -> StyleBoxFlat:
 	var style_box: StyleBoxFlat = StyleBoxFlat.new()
-	style_box.bg_color = Color(0.012, 0.018, 0.055, 0.96)
+	style_box.bg_color = Color(0.012, 0.018, 0.055, 0.91)
 	style_box.border_color = accent
-	style_box.set_border_width_all(6)
-	style_box.corner_radius_top_left = 18
-	style_box.corner_radius_top_right = 18
-	style_box.corner_radius_bottom_right = 18
-	style_box.corner_radius_bottom_left = 18
+	style_box.set_border_width_all(3)
+	style_box.corner_radius_top_left = 8
+	style_box.corner_radius_top_right = 8
+	style_box.corner_radius_bottom_right = 8
+	style_box.corner_radius_bottom_left = 8
 	style_box.shadow_color = accent.darkened(0.55)
-	style_box.shadow_size = 32
-	style_box.content_margin_left = 44
-	style_box.content_margin_right = 44
-	style_box.content_margin_top = 36
-	style_box.content_margin_bottom = 36
+	style_box.shadow_size = 16
+	style_box.content_margin_left = 30
+	style_box.content_margin_right = 30
+	style_box.content_margin_top = 22
+	style_box.content_margin_bottom = 22
 	return style_box

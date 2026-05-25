@@ -170,11 +170,11 @@ func _finish_round(result: int) -> void:
 	_clear_fugitive_visual_alerts()
 	_award_round_points(result)
 
-	var round_summary: String = "%s | Placar: %s" % [_get_round_summary_text(), _get_scoreboard_text()]
+	var round_summary: String = _get_round_summary_text()
 	if _is_last_round():
 		current_state = RoundState.MATCH_OVER
 		if hud:
-			hud.show_round_result("Partida finalizada", "%s\nVencedor: %s\nUse START ou confirmar para reiniciar" % [round_summary, _get_match_winner_text()], result == RoundState.FUGITIVE_WIN)
+			hud.show_round_result("Partida finalizada", "%s\nPlacar: %s\nVencedor: %s\nUse START ou confirmar para reiniciar" % [round_summary, _get_scoreboard_text(), _get_match_winner_text()], result == RoundState.FUGITIVE_WIN)
 		_update_hud("Fim da partida! Vencedor: %s" % _get_match_winner_text())
 		return
 
