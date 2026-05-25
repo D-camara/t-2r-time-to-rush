@@ -213,6 +213,7 @@ func _update_hud(status_message: String) -> void:
 	hud.update_match_info(current_round_index + 1, match_rounds, police_character_name)
 	hud.update_scoreboard("PLACAR  %s" % _get_scoreboard_text())
 	hud.update_skill_status(_get_skill_status_text())
+	hud.update_player_skill_blocks(_build_skill_hud_blocks())
 	hud.set_status(status_message, _get_status_color())
 	hud.set_controls_hint(_get_controls_hint())
 
@@ -724,6 +725,55 @@ func _get_skill_status_text() -> String:
 		return ""
 
 	return "SKILL  %s" % "  |  ".join(status_parts)
+
+func _build_skill_hud_blocks() -> Array[Dictionary]:
+	var blocks: Array[Dictionary] = []
+	var max_blocks: int = mini(match_player_devices.size(), 4)
+	for slot_index: int in range(max_blocks):
+		var device_id: int = match_player_devices[slot_index]
+		blocks.append(_build_skill_hud_block_for_device(device_id, slot_index))
+	return blocks
+
+func _build_skill_hud_block_for_device(device_id: int, slot_index: int) -> Dictionary:
+	if device_id == current_police_device:
+		return {
+			"slot_label": "P%d" % [slot_index + 1],
+			"player_name": _get_player_display_name(device_id).to_upper(),
+			"ability_name": "SEM HABILIDADE",
+			"cooldown_fill_ratio": 1.0,
+			"is_ready": false,
+			"is_police": true,
+			"is_active": true,
+		}
+
+	var player: FugitivePlayer = _find_fugitive_by_device(device_id)
+	if player == null or not player.is_participating:
+		return {
+			"slot_label": "P%d" % [slot_index + 1],
+			"player_name": _get_player_display_name(device_id).to_upper(),
+			"ability_name": "SEM HABILIDADE",
+			"cooldown_fill_ratio": 0.0,
+			"is_ready": false,
+			"is_police": false,
+			"is_active": false,
+		}
+
+	var skill_data: Dictionary = player.get_skill_hud_data()
+	return {
+		"slot_label": "P%d" % [slot_index + 1],
+		"player_name": _get_player_display_name(device_id).to_upper(),
+		"ability_name": str(skill_data.get("ability_name", "SEM HABILIDADE")).to_upper(),
+		"cooldown_fill_ratio": float(skill_data.get("cooldown_fill_ratio", 0.0)),
+		"is_ready": bool(skill_data.get("is_ready", false)),
+		"is_police": false,
+		"is_active": player.is_participating and not player.is_infected and not player.is_extracted,
+	}
+
+func _find_fugitive_by_device(device_id: int) -> FugitivePlayer:
+	for player: FugitivePlayer in fugitive_slots:
+		if player != null and player.device_id == device_id:
+			return player
+	return null
 
 func _configure_players_from_lobby() -> void:
 	var input_manager: Node = get_node_or_null("/root/InputManager")

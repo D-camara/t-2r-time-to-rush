@@ -414,6 +414,7 @@ func _on_rain_option_selected(index: int) -> void:
 	var rain_enabled: bool = index == 0
 	if InputManager != null and InputManager.has_method("set_rain_enabled"):
 		InputManager.call("set_rain_enabled", rain_enabled)
+	_apply_lighting_style_preview(lighting_style_option.get_selected())
 	status_label.text = "Chuva: %s" % ("ativada" if rain_enabled else "desativada")
 
 func _setup_lighting_preview() -> void:
@@ -501,7 +502,16 @@ func _apply_lighting_style_preview(index: int) -> void:
 	if lighting_preview_subject_material != null:
 		lighting_preview_subject_material.albedo_color = preset.get("subject_color", Color(0.87, 0.9, 0.95, 1.0))
 	if lighting_preview_desc_label != null:
-		lighting_preview_desc_label.text = str(preset.get("description", "Previa em tempo real."))
+		var preview_description: String = str(preset.get("description", "Previa em tempo real."))
+		lighting_preview_desc_label.text = "%s\nChuva: %s" % [
+			preview_description,
+			_get_rain_status_label()
+		]
+
+func _get_rain_status_label() -> String:
+	if InputManager != null and InputManager.has_method("is_rain_enabled"):
+		return "ATIVADA" if bool(InputManager.call("is_rain_enabled")) else "DESATIVADA"
+	return "ATIVADA"
 
 func _cycle_lighting_style(step: int) -> void:
 	var item_count: int = lighting_style_option.get_item_count()

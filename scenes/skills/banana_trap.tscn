@@ -1,6 +1,7 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/skills/banana_trap.gd" id="1_trap"]
+[ext_resource type="PackedScene" path="res://assets/models/habilidades/banana.glb" id="2_banana"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_trap"]
 top_radius = 1.6
@@ -9,15 +10,21 @@ height = 0.06
 radial_segments = 48
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_trap"]
-albedo_color = Color(0.918, 0.702, 0.031, 0.58)
+albedo_color = Color(0.918, 0.702, 0.031, 0.22)
 transparency = 1
 emission_enabled = true
 emission = Color(0.918, 0.702, 0.031, 1)
-emission_energy_multiplier = 1.4
+emission_energy_multiplier = 0.8
 
 [node name="BananaTrap" type="Node3D"]
 script = ExtResource("1_trap")
 
-[node name="Visual" type="MeshInstance3D" parent="."]
+[node name="Visual" type="Node3D" parent="."]
+position = Vector3(0, 0.06, 0)
+scale = Vector3(1, 1, 1)
+
+[node name="BananaModel" parent="Visual" instance=ExtResource("2_banana")]
+
+[node name="AreaIndicator" type="MeshInstance3D" parent="."]
 mesh = SubResource("CylinderMesh_trap")
 material_override = SubResource("StandardMaterial3D_trap")

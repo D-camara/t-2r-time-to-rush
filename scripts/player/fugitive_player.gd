@@ -8,6 +8,8 @@ const CHARACTER_VISUAL_SCENES: Dictionary = {
 	"tigre": preload("res://assets/models/PERSONAGENS/tigre1.tscn"),
 	"raposa": preload("res://assets/models/PERSONAGENS/raposa1.tscn"),
 }
+const POLICE_VISUAL_SCENE: PackedScene = preload("res://assets/models/PERSONAGENS/policef1.tscn")
+const RAPOSA_BOOST_VFX_SCENE: PackedScene = preload("res://assets/vfx/raposa/raposa_boost_vfx.tscn")
 
 @export var device_id: int = -1
 @export var move_speed: float = 10.0
@@ -23,7 +25,9 @@ const CHARACTER_VISUAL_SCENES: Dictionary = {
 @export var visual_scale: float = 1.2
 @export var fall_limit_y: float = -5.0
 @export var fall_reset_margin: float = 18.0
-@export var speed_boost_vfx_color: Color = Color(0.961, 0.62, 0.043, 1.0)
+@export var speed_lines_primary_color: Color = Color(0.18, 0.74, 1.0, 1.0)
+@export var speed_lines_secondary_color: Color = Color(0.66, 0.68, 0.72, 1.0)
+@export var speed_lines_min_speed_ratio: float = 0.3
 
 @onready var animator: AnimationPlayer = find_child("AnimationPlayer", true, false) as AnimationPlayer
 @onready var character_visual: Node3D = find_child("boneco", true, false) as Node3D
@@ -60,6 +64,17 @@ var run_animation_name: String = ""
 var input_manager_ref: Node = null
 var uses_imported_character_visual: bool = false
 var speed_boost_vfx: GPUParticles3D = null
+var speed_lines_root: Node3D = null
+var speed_lines: Array[MeshInstance3D] = []
+var speed_line_materials: Array[StandardMaterial3D] = []
+var speed_line_depth_offsets: Array[float] = []
+var speed_line_side_offsets: Array[float] = []
+var speed_line_vertical_offsets: Array[float] = []
+var speed_line_length_scales: Array[float] = []
+var speed_lines_alpha: float = 0.0
+var speed_lines_skill_active: bool = false
+var speed_lines_last_move_dir: Vector3 = Vector3.FORWARD
+var configured_character_id: String = ""
 const RING_FLOOR_Y: float = 0.09
 const RING_THICKNESS_SCALE: float = 0.11
 
@@ -73,7 +88,6 @@ func _ready() -> void:
 	_ensure_player_shadow()
 	_ensure_player_ring()
 	_ensure_role_beacon()
-	_ensure_speed_boost_vfx()
 	if character_visual == null:
 		_ensure_presentation_avatar()
 	_apply_current_palette()
@@ -84,7 +98,6 @@ func _physics_process(delta: float) -> void:
 
 	visual_pulse_time += delta
 	_update_player_ring()
-	_update_token_presence(delta)
 	_update_disruption(delta)
 
 	if global_position.y < _get_current_fall_limit():
@@ -96,6 +109,7 @@ func _physics_process(delta: float) -> void:
 		if stun_timer <= 0.0:
 			is_stunned = false
 		velocity = Vector3.ZERO
+		_update_token_presence(delta)
 		handle_animation()
 		return
 
@@ -107,6 +121,7 @@ func _physics_process(delta: float) -> void:
 	velocity = applied_velocity
 
 	move_and_slide()
+	_update_token_presence(delta)
 
 	if Vector2(velocity.z, velocity.x).length() > 0.0:
 		rotation_direction = Vector2(velocity.z, velocity.x).angle()
@@ -175,10 +190,12 @@ func set_skill_speed_multiplier(multiplier: float) -> void:
 	move_speed = _get_effective_move_speed()
 
 func set_speed_boost_vfx_enabled(enabled: bool) -> void:
-	_ensure_speed_boost_vfx()
-	if speed_boost_vfx == null:
-		return
-	speed_boost_vfx.emitting = enabled
+	speed_lines_skill_active = false
+	if speed_boost_vfx != null:
+		speed_boost_vfx.emitting = false
+	if speed_lines_root != null:
+		speed_lines_root.visible = false
+	speed_lines_alpha = 0.0
 
 func get_forward_direction() -> Vector3:
 	var forward: Vector3 = -global_transform.basis.z
@@ -202,7 +219,14 @@ func configure_character_visual(character_id: String) -> void:
 	if not CHARACTER_VISUAL_SCENES.has(character_id):
 		return
 
+	configured_character_id = character_id
 	var visual_scene: PackedScene = CHARACTER_VISUAL_SCENES[character_id] as PackedScene
+	_swap_character_visual(visual_scene)
+
+func _swap_character_visual(visual_scene: PackedScene) -> void:
+	if visual_scene == null:
+		return
+
 	var new_visual: Node3D = visual_scene.instantiate() as Node3D
 	if new_visual == null:
 		return
@@ -235,6 +259,20 @@ func get_skill_status_text() -> String:
 		return ""
 	return skill_controller.get_status_text()
 
+func get_skill_hud_data() -> Dictionary:
+	if skill_controller == null:
+		return {
+			"ability_name": "SEM HABILIDADE",
+			"cooldown_fill_ratio": 1.0,
+			"is_ready": false,
+		}
+
+	return {
+		"ability_name": skill_controller.get_skill_display_name(),
+		"cooldown_fill_ratio": skill_controller.get_skill_cooldown_fill_ratio(),
+		"is_ready": skill_controller.is_skill_ready(),
+	}
+
 func capture() -> void:
 	infect()
 
@@ -247,6 +285,7 @@ func infect() -> void:
 	stun_timer = 0.0
 	input_enabled = true
 	clear_skill()
+	_swap_character_visual(POLICE_VISUAL_SCENE)
 	_apply_current_palette()
 	_flash_role_change()
 
@@ -280,6 +319,8 @@ func reset_state(spawn_position: Vector3) -> void:
 	is_infected = false
 	is_extracted = false
 	is_in_danger_visual = false
+	if not configured_character_id.is_empty() and CHARACTER_VISUAL_SCENES.has(configured_character_id):
+		_swap_character_visual(CHARACTER_VISUAL_SCENES[configured_character_id] as PackedScene)
 	disruption_speed_multiplier = 1.0
 	disruption_slow_timer = 0.0
 	if character_visual:
@@ -379,7 +420,13 @@ func _apply_palette_to_meshes(node: Node, palette_material: Material) -> void:
 		_apply_palette_to_meshes(child, palette_material)
 
 func _is_visual_helper(node: Node) -> bool:
-	return node == player_ring or node == player_shadow or node == role_beacon or node.name.begins_with("Token") or node.name.begins_with("HeistAvatar")
+	return node == player_ring \
+		or node == player_shadow \
+		or node == role_beacon \
+		or node == speed_lines_root \
+		or node.name.begins_with("Token") \
+		or node.name.begins_with("HeistAvatar") \
+		or node.name.begins_with("SpeedLine")
 
 func _restore_to_spawn() -> void:
 	global_position = respawn_position
@@ -571,46 +618,115 @@ func _ensure_speed_boost_vfx() -> void:
 		speed_boost_vfx = existing_vfx
 		return
 
-	var vfx: GPUParticles3D = GPUParticles3D.new()
-	vfx.name = "SpeedBoostVFX"
-	vfx.amount = 32
-	vfx.lifetime = 0.38
-	vfx.one_shot = false
-	vfx.explosiveness = 0.0
-	vfx.local_coords = true
-	vfx.draw_pass_1 = _create_speed_boost_vfx_mesh()
-	vfx.process_material = _create_speed_boost_vfx_process_material()
-	vfx.position = Vector3(0.0, 1.0, 0.0)
-	vfx.emitting = false
-	add_child(vfx)
-	speed_boost_vfx = vfx
+	if RAPOSA_BOOST_VFX_SCENE == null:
+		return
 
-func _create_speed_boost_vfx_mesh() -> QuadMesh:
-	var mesh: QuadMesh = QuadMesh.new()
-	mesh.size = Vector2(0.09, 0.26)
+	var boost_vfx_node: Node = RAPOSA_BOOST_VFX_SCENE.instantiate()
+	var boost_vfx: GPUParticles3D = boost_vfx_node as GPUParticles3D
+	if boost_vfx == null:
+		if boost_vfx_node != null:
+			boost_vfx_node.queue_free()
+		return
 
+	boost_vfx.name = "SpeedBoostVFX"
+	boost_vfx.emitting = false
+	add_child(boost_vfx)
+	speed_boost_vfx = boost_vfx
+
+func _ensure_speed_lines_vfx() -> void:
+	if speed_lines_root != null:
+		return
+
+	var existing_root: Node3D = get_node_or_null("SpeedLinesVFX") as Node3D
+	if existing_root != null:
+		speed_lines_root = existing_root
+		speed_lines_root.top_level = true
+		speed_lines.clear()
+		speed_line_materials.clear()
+		speed_line_depth_offsets.clear()
+		speed_line_side_offsets.clear()
+		speed_line_vertical_offsets.clear()
+		speed_line_length_scales.clear()
+		for child: Node in speed_lines_root.get_children():
+			var line: MeshInstance3D = child as MeshInstance3D
+			if line == null:
+				continue
+			line.rotation_degrees.x = -90.0
+			speed_lines.append(line)
+			var mesh: QuadMesh = line.mesh as QuadMesh
+			if mesh != null and mesh.material is StandardMaterial3D:
+				speed_line_materials.append(mesh.material as StandardMaterial3D)
+			speed_line_depth_offsets.append(line.position.z)
+			speed_line_side_offsets.append(line.position.x)
+			speed_line_vertical_offsets.append(line.position.y)
+			speed_line_length_scales.append(1.0)
+		return
+
+	speed_lines_root = Node3D.new()
+	speed_lines_root.name = "SpeedLinesVFX"
+	speed_lines_root.visible = false
+	speed_lines_root.top_level = true
+	speed_lines_root.global_position = global_position + Vector3(0.0, 1.05, 0.0)
+	add_child(speed_lines_root)
+
+	speed_lines.clear()
+	speed_line_materials.clear()
+	speed_line_depth_offsets.clear()
+	speed_line_side_offsets.clear()
+	speed_line_vertical_offsets.clear()
+	speed_line_length_scales.clear()
+	for line_index: int in range(6):
+		var line: MeshInstance3D = MeshInstance3D.new()
+		line.name = "SpeedLine%d" % line_index
+		line.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		line.rotation_degrees.x = -90.0
+
+		var mesh: QuadMesh = QuadMesh.new()
+		mesh.size = Vector2(1.4 - float(line_index) * 0.11, 0.22 + float(line_index % 2) * 0.05)
+		var line_material: StandardMaterial3D = _create_speed_line_material(line_index)
+		mesh.material = line_material
+		line.mesh = mesh
+
+		speed_lines_root.add_child(line)
+		speed_lines.append(line)
+		speed_line_materials.append(line_material)
+		speed_line_depth_offsets.append(0.0)
+		speed_line_side_offsets.append(0.0)
+		speed_line_vertical_offsets.append(0.0)
+		speed_line_length_scales.append(1.0)
+		_respawn_speed_line(line_index, true)
+
+func _create_speed_line_material(line_index: int) -> StandardMaterial3D:
 	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = Color(speed_boost_vfx_color.r, speed_boost_vfx_color.g, speed_boost_vfx_color.b, 0.88)
+	var base_color: Color = speed_lines_primary_color if line_index % 3 != 1 else speed_lines_secondary_color
+	material.albedo_color = Color(base_color.r, base_color.g, base_color.b, 0.0)
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.billboard_mode = BaseMaterial3D.BILLBOARD_DISABLED
 	material.emission_enabled = true
-	material.emission = speed_boost_vfx_color
-	material.emission_energy_multiplier = 0.75
-	mesh.material = material
-	return mesh
-
-func _create_speed_boost_vfx_process_material() -> ParticleProcessMaterial:
-	var material: ParticleProcessMaterial = ParticleProcessMaterial.new()
-	material.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
-	material.emission_box_extents = Vector3(0.35, 0.6, 0.35)
-	material.direction = Vector3(0.0, 0.0, 1.0)
-	material.spread = 180.0
-	material.initial_velocity_min = 1.8
-	material.initial_velocity_max = 3.4
-	material.gravity = Vector3(0.0, 0.0, 0.0)
-	material.scale_min = 0.5
-	material.scale_max = 1.0
+	material.emission = base_color
+	material.emission_energy_multiplier = 0.0
+	material.no_depth_test = true
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	return material
+
+func _respawn_speed_line(line_index: int, spawn_in_front: bool) -> void:
+	if line_index < 0:
+		return
+
+	while speed_line_depth_offsets.size() <= line_index:
+		speed_line_depth_offsets.append(0.0)
+	while speed_line_side_offsets.size() <= line_index:
+		speed_line_side_offsets.append(0.0)
+	while speed_line_vertical_offsets.size() <= line_index:
+		speed_line_vertical_offsets.append(0.0)
+	while speed_line_length_scales.size() <= line_index:
+		speed_line_length_scales.append(1.0)
+
+	speed_line_depth_offsets[line_index] = randf_range(0.45, 1.35) if spawn_in_front else randf_range(0.75, 2.0)
+	speed_line_side_offsets[line_index] = randf_range(-1.12, 1.12)
+	speed_line_vertical_offsets[line_index] = randf_range(0.1, 0.14)
+	speed_line_length_scales[line_index] = randf_range(0.88, 1.52)
 
 func _update_player_ring() -> void:
 	if player_ring == null:
@@ -642,6 +758,8 @@ func _update_token_presence(delta: float) -> void:
 	var move_pulse: float = clamp(planar_speed / max(move_speed, 0.001), 0.0, 1.0)
 	var danger_pulse: float = (sin(visual_pulse_time * 8.0) + 1.0) * 0.5
 	var role_color: Color = hunter_emission_color if is_infected else fugitive_emission_color
+	_update_speed_boost_vfx_orientation()
+	_update_speed_lines(delta)
 
 	if pop_timer > 0.0:
 		pop_timer = max(pop_timer - delta, 0.0)
@@ -676,6 +794,81 @@ func _update_token_presence(delta: float) -> void:
 			squash_xz * pop_scale * visual_scale
 		)
 		character_visual.position = visual_base_position + Vector3(0.0, bob, 0.0)
+
+func _update_speed_lines(delta: float) -> void:
+	if speed_lines_root == null or speed_lines.is_empty() or speed_line_materials.is_empty():
+		return
+
+	var move_vec2: Vector2 = Vector2(movement_velocity.x, movement_velocity.z)
+	if move_vec2.length() < 0.08:
+		move_vec2 = Vector2(velocity.x, velocity.z)
+
+	var effective_speed_ref: float = max(base_move_speed, 0.001)
+	var speed_ratio: float = clamp(move_vec2.length() / effective_speed_ref, 0.0, 1.6)
+	var normalized_min_ratio: float = clampf(speed_lines_min_speed_ratio, 0.0, 0.9)
+	var target_alpha: float = clampf((speed_ratio - normalized_min_ratio) / (1.0 - normalized_min_ratio), 0.0, 1.0)
+	if skill_speed_multiplier > 1.0:
+		target_alpha = minf(target_alpha + (skill_speed_multiplier - 1.0) * 0.8, 1.0)
+	if not speed_lines_skill_active:
+		target_alpha = 0.0
+
+	if not input_enabled or is_captured or is_extracted:
+		target_alpha = 0.0
+
+	speed_lines_alpha = lerpf(speed_lines_alpha, target_alpha, delta * 10.0)
+	var should_show: bool = speed_lines_alpha > 0.03
+	speed_lines_root.visible = should_show
+	if not should_show:
+		return
+
+	var move_direction: Vector3 = speed_lines_last_move_dir
+	if move_vec2.length() >= 0.08:
+		move_direction = Vector3(move_vec2.x, 0.0, move_vec2.y).normalized()
+		speed_lines_last_move_dir = move_direction
+	var origin: Vector3 = global_position + Vector3(0.0, 1.05, 0.0)
+	var back_dir: Vector3 = -move_direction
+	var right_dir: Vector3 = Vector3(-back_dir.z, 0.0, back_dir.x).normalized()
+	speed_lines_root.global_position = origin
+	speed_lines_root.global_rotation = Vector3.ZERO
+
+	var line_count: int = mini(speed_lines.size(), speed_line_materials.size())
+	line_count = mini(line_count, speed_line_depth_offsets.size())
+	line_count = mini(line_count, speed_line_side_offsets.size())
+	line_count = mini(line_count, speed_line_vertical_offsets.size())
+	line_count = mini(line_count, speed_line_length_scales.size())
+	if line_count <= 0:
+		return
+
+	var line_travel_speed: float = lerpf(4.4, 10.6, speed_lines_alpha)
+	for line_index: int in range(line_count):
+		var line: MeshInstance3D = speed_lines[line_index]
+		var line_material: StandardMaterial3D = speed_line_materials[line_index]
+		speed_line_depth_offsets[line_index] += line_travel_speed * delta
+		if speed_line_depth_offsets[line_index] > 3.2:
+			_respawn_speed_line(line_index, true)
+
+		var depth_offset: float = speed_line_depth_offsets[line_index]
+		var side_offset: float = speed_line_side_offsets[line_index]
+		var vertical_offset: float = speed_line_vertical_offsets[line_index]
+		var line_length_scale: float = speed_line_length_scales[line_index]
+		var world_position: Vector3 = origin \
+			+ right_dir * side_offset \
+			+ back_dir * depth_offset \
+			+ Vector3(0.0, vertical_offset, 0.0)
+		line.global_position = world_position
+		line.global_rotation = Vector3(-PI * 0.5, atan2(back_dir.x, back_dir.z), 0.0)
+		line.scale = Vector3((1.2 + speed_lines_alpha * 1.65) * line_length_scale, 1.0, 1.0)
+
+		var depth_fade: float = clampf(1.0 - ((depth_offset - 0.35) / 3.0), 0.0, 1.0)
+		var pulse_variation: float = 0.78 + (sin(visual_pulse_time * 18.0 + float(line_index) * 1.7) + 1.0) * 0.11
+		var base_alpha: float = (0.24 + depth_fade * 0.62) * speed_lines_alpha * pulse_variation
+		var line_color: Color = line_material.albedo_color
+		line_color.a = base_alpha
+		line_material.albedo_color = line_color
+		line_material.emission_energy_multiplier = 0.12 + depth_fade * 0.46 + speed_lines_alpha * 0.4
+
+func _update_speed_boost_vfx_orientation() -> void:
+	return
 
 func _flash_role_change() -> void:
 	if player_ring == null:
