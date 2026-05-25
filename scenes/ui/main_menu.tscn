@@ -171,9 +171,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -220.0
-offset_top = -110.0
+offset_top = -240.0
 offset_right = 220.0
-offset_bottom = 110.0
+offset_bottom = 240.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -198,10 +198,54 @@ max_value = 1.0
 step = 0.01
 value = 1.0
 
+[node name="LightingLabel" type="Label" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Estilo de iluminacao"
+
+[node name="LightingStyleOption" type="OptionButton" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+
+[node name="RainLabel" type="Label" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Chuva no mapa"
+
+[node name="RainOption" type="OptionButton" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+
+[node name="LightingPreviewLabel" type="Label" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Previa de iluminacao"
+
+[node name="LightingPreviewViewport" type="SubViewportContainer" parent="SettingsOverlay/SettingsColumn"]
+custom_minimum_size = Vector2(0, 128)
+layout_mode = 2
+mouse_filter = 2
+stretch = true
+
+[node name="LightingPreviewDesc" type="Label" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Previa em tempo real."
+autowrap_mode = 3
+
+[node name="LightingHint" type="Label" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "ESQ/DIR troca estilo  //  CIMA/BAIXO ajusta volume"
+autowrap_mode = 3
+
+[node name="CloseSettingsButton" type="Button" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Fechar configuracoes"
+
 [node name="CloseHint" type="Label" parent="SettingsOverlay/SettingsColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Volte pelo controle depois de ajustar"
+text = "D-PAD ajusta  //  B fecha"
 
 [node name="RevealOverlay" type="PanelContainer" parent="."]
 visible = false

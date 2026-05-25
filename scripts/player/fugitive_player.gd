@@ -23,6 +23,7 @@ const CHARACTER_VISUAL_SCENES: Dictionary = {
 @export var visual_scale: float = 1.2
 @export var fall_limit_y: float = -5.0
 @export var fall_reset_margin: float = 18.0
+@export var speed_boost_vfx_color: Color = Color(0.961, 0.62, 0.043, 1.0)
 
 @onready var animator: AnimationPlayer = find_child("AnimationPlayer", true, false) as AnimationPlayer
 @onready var character_visual: Node3D = find_child("boneco", true, false) as Node3D
@@ -58,6 +59,9 @@ var idle_animation_name: String = ""
 var run_animation_name: String = ""
 var input_manager_ref: Node = null
 var uses_imported_character_visual: bool = false
+var speed_boost_vfx: GPUParticles3D = null
+const RING_FLOOR_Y: float = 0.09
+const RING_THICKNESS_SCALE: float = 0.11
 
 func _ready() -> void:
 	base_move_speed = move_speed
@@ -69,6 +73,7 @@ func _ready() -> void:
 	_ensure_player_shadow()
 	_ensure_player_ring()
 	_ensure_role_beacon()
+	_ensure_speed_boost_vfx()
 	if character_visual == null:
 		_ensure_presentation_avatar()
 	_apply_current_palette()
@@ -168,6 +173,12 @@ func configure_movement(speed: float, new_acceleration: float) -> void:
 func set_skill_speed_multiplier(multiplier: float) -> void:
 	skill_speed_multiplier = maxf(multiplier, 0.0)
 	move_speed = _get_effective_move_speed()
+
+func set_speed_boost_vfx_enabled(enabled: bool) -> void:
+	_ensure_speed_boost_vfx()
+	if speed_boost_vfx == null:
+		return
+	speed_boost_vfx.emitting = enabled
 
 func get_forward_direction() -> Vector3:
 	var forward: Vector3 = -global_transform.basis.z
@@ -386,22 +397,29 @@ func _ensure_player_ring() -> void:
 	var existing_ring: MeshInstance3D = get_node_or_null("PlayerReadabilityRing") as MeshInstance3D
 	if existing_ring:
 		player_ring = existing_ring
+		player_ring.mesh = _create_ring_mesh()
 		if player_ring.material_override == null:
 			player_ring.material_override = _create_ring_material()
+		player_ring.position = Vector3(0.0, RING_FLOOR_Y, 0.0)
+		player_ring.scale = Vector3(1.0, RING_THICKNESS_SCALE, 1.0)
 		return
 
 	var ring: MeshInstance3D = MeshInstance3D.new()
 	ring.name = "PlayerReadabilityRing"
-	var mesh: CylinderMesh = CylinderMesh.new()
-	mesh.top_radius = 0.48
-	mesh.bottom_radius = 0.48
-	mesh.height = 0.045
-	mesh.radial_segments = 24
-	ring.mesh = mesh
-	ring.position = Vector3(0.0, 0.075, 0.0)
+	ring.mesh = _create_ring_mesh()
+	ring.position = Vector3(0.0, RING_FLOOR_Y, 0.0)
+	ring.scale = Vector3(1.0, RING_THICKNESS_SCALE, 1.0)
 	ring.material_override = _create_ring_material()
 	add_child(ring)
 	player_ring = ring
+
+func _create_ring_mesh() -> TorusMesh:
+	var mesh: TorusMesh = TorusMesh.new()
+	mesh.inner_radius = 0.62
+	mesh.outer_radius = 0.78
+	mesh.rings = 32
+	mesh.ring_segments = 18
+	return mesh
 
 func _ensure_player_shadow() -> void:
 	var existing_shadow: MeshInstance3D = get_node_or_null("TokenGroundShadow") as MeshInstance3D
@@ -418,7 +436,7 @@ func _ensure_player_shadow() -> void:
 	mesh.radial_segments = 24
 	shadow.mesh = mesh
 	shadow.scale = Vector3(1.18, 1.0, 0.68)
-	shadow.position = Vector3(0.1, 0.035, 0.14)
+	shadow.position = Vector3(0.1, 0.015, 0.14)
 	shadow.material_override = _create_shadow_material()
 	add_child(shadow)
 	player_shadow = shadow
@@ -518,13 +536,13 @@ func _create_avatar_material(albedo: Color, emission_color: Color, emission_ener
 
 func _create_ring_material() -> StandardMaterial3D:
 	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = Color(0.898, 0.933, 0.973, 0.78)
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.albedo_color = Color(0.71, 0.86, 1.0, 1.0)
 	material.emission_enabled = true
-	material.emission = Color(0.898, 0.933, 0.973, 1.0)
-	material.emission_energy_multiplier = 0.45
+	material.emission = Color(0.44, 0.72, 1.0, 1.0)
+	material.emission_energy_multiplier = 0.42
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.no_depth_test = true
+	material.no_depth_test = false
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	return material
 
 func _create_shadow_material() -> StandardMaterial3D:
@@ -544,6 +562,56 @@ func _create_beacon_material(color: Color) -> StandardMaterial3D:
 	material.no_depth_test = true
 	return material
 
+func _ensure_speed_boost_vfx() -> void:
+	if speed_boost_vfx != null:
+		return
+
+	var existing_vfx: GPUParticles3D = get_node_or_null("SpeedBoostVFX") as GPUParticles3D
+	if existing_vfx != null:
+		speed_boost_vfx = existing_vfx
+		return
+
+	var vfx: GPUParticles3D = GPUParticles3D.new()
+	vfx.name = "SpeedBoostVFX"
+	vfx.amount = 32
+	vfx.lifetime = 0.38
+	vfx.one_shot = false
+	vfx.explosiveness = 0.0
+	vfx.local_coords = true
+	vfx.draw_pass_1 = _create_speed_boost_vfx_mesh()
+	vfx.process_material = _create_speed_boost_vfx_process_material()
+	vfx.position = Vector3(0.0, 1.0, 0.0)
+	vfx.emitting = false
+	add_child(vfx)
+	speed_boost_vfx = vfx
+
+func _create_speed_boost_vfx_mesh() -> QuadMesh:
+	var mesh: QuadMesh = QuadMesh.new()
+	mesh.size = Vector2(0.09, 0.26)
+
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.albedo_color = Color(speed_boost_vfx_color.r, speed_boost_vfx_color.g, speed_boost_vfx_color.b, 0.88)
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.emission_enabled = true
+	material.emission = speed_boost_vfx_color
+	material.emission_energy_multiplier = 0.75
+	mesh.material = material
+	return mesh
+
+func _create_speed_boost_vfx_process_material() -> ParticleProcessMaterial:
+	var material: ParticleProcessMaterial = ParticleProcessMaterial.new()
+	material.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	material.emission_box_extents = Vector3(0.35, 0.6, 0.35)
+	material.direction = Vector3(0.0, 0.0, 1.0)
+	material.spread = 180.0
+	material.initial_velocity_min = 1.8
+	material.initial_velocity_max = 3.4
+	material.gravity = Vector3(0.0, 0.0, 0.0)
+	material.scale_min = 0.5
+	material.scale_max = 1.0
+	return material
+
 func _update_player_ring() -> void:
 	if player_ring == null:
 		return
@@ -554,20 +622,20 @@ func _update_player_ring() -> void:
 		return
 
 	if is_infected:
-		player_ring.scale = Vector3.ONE * (1.0 + pulse * 0.1)
+		player_ring.scale = Vector3(1.0 + pulse * 0.1, RING_THICKNESS_SCALE, 1.0 + pulse * 0.1)
 		material.albedo_color = Color(0.976, 0.451, 0.086, 0.86)
 		material.emission = hunter_emission_color
 		material.emission_energy_multiplier = 0.75 + pulse * 0.55
 	elif is_in_danger_visual:
-		player_ring.scale = Vector3.ONE * (1.0 + pulse * 0.14)
+		player_ring.scale = Vector3(1.0 + pulse * 0.14, RING_THICKNESS_SCALE, 1.0 + pulse * 0.14)
 		material.albedo_color = Color(0.961, 0.62, 0.043, 0.86)
 		material.emission = Color(0.961, 0.62, 0.043, 1.0)
 		material.emission_energy_multiplier = 0.7 + pulse * 0.42
 	else:
-		player_ring.scale = Vector3.ONE
+		player_ring.scale = Vector3(1.0 + pulse * 0.06, RING_THICKNESS_SCALE, 1.0 + pulse * 0.06)
 		material.albedo_color = Color(0.898, 0.933, 0.973, 0.78)
 		material.emission = Color(0.898, 0.933, 0.973, 1.0)
-		material.emission_energy_multiplier = 0.45
+		material.emission_energy_multiplier = 0.45 + pulse * 0.18
 
 func _update_token_presence(delta: float) -> void:
 	var planar_speed: float = Vector2(velocity.x, velocity.z).length()
@@ -614,4 +682,4 @@ func _flash_role_change() -> void:
 		return
 
 	pop_timer = 0.32
-	player_ring.scale = Vector3.ONE * 1.28
+	player_ring.scale = Vector3(1.28, RING_THICKNESS_SCALE, 1.28)

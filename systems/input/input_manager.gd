@@ -3,6 +3,13 @@ extends Node
 const DEADZONE: float = 0.2
 const MAX_JOINED_PLAYERS: int = 4
 const CHARACTER_IDS: Array[String] = ["sagui", "coelha", "tigre", "raposa"]
+const LIGHTING_STYLE_COUNT: int = 5
+const DEFAULT_LIGHTING_STYLE_INDEX: int = 0
+const DEFAULT_RAIN_ENABLED: bool = true
+const SETTINGS_FILE_PATH: String = "user://settings.cfg"
+const SETTINGS_SECTION_VIDEO: String = "video"
+const SETTINGS_KEY_LIGHTING_STYLE: String = "lighting_style"
+const SETTINGS_KEY_RAIN_ENABLED: String = "rain_enabled"
 
 var joined_devices: Array[int] = []
 var selected_characters: Dictionary = {}
@@ -12,8 +19,11 @@ var confirm_pressed_devices: Array[int] = []
 var cancel_pressed_devices: Array[int] = []
 var start_pressed_devices: Array[int] = []
 var connected_devices_cache: PackedInt32Array = PackedInt32Array()
+var lighting_style_index: int = DEFAULT_LIGHTING_STYLE_INDEX
+var rain_enabled: bool = DEFAULT_RAIN_ENABLED
 
 func _ready() -> void:
+	_load_persistent_settings()
 	_refresh_connected_devices()
 	if not Input.joy_connection_changed.is_connected(_on_joy_connection_changed):
 		Input.joy_connection_changed.connect(_on_joy_connection_changed)
@@ -176,6 +186,20 @@ func get_fugitive_devices() -> Array[int]:
 			fugitive_devices.append(joined_device)
 	return fugitive_devices
 
+func get_lighting_style_index() -> int:
+	return lighting_style_index
+
+func set_lighting_style_index(style_index: int) -> void:
+	lighting_style_index = clampi(style_index, 0, LIGHTING_STYLE_COUNT - 1)
+	_save_persistent_settings()
+
+func is_rain_enabled() -> bool:
+	return rain_enabled
+
+func set_rain_enabled(enabled: bool) -> void:
+	rain_enabled = enabled
+	_save_persistent_settings()
+
 func consume_ability_pressed(device_id: int) -> bool:
 	return _consume_pressed_device(ability_pressed_devices, device_id)
 
@@ -244,3 +268,32 @@ func _refresh_connected_devices() -> void:
 
 func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
 	_refresh_connected_devices()
+
+func _load_persistent_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	var load_result: Error = config.load(SETTINGS_FILE_PATH)
+	if load_result != OK:
+		lighting_style_index = DEFAULT_LIGHTING_STYLE_INDEX
+		return
+
+	var loaded_style: int = int(config.get_value(
+		SETTINGS_SECTION_VIDEO,
+		SETTINGS_KEY_LIGHTING_STYLE,
+		DEFAULT_LIGHTING_STYLE_INDEX
+	))
+	lighting_style_index = clampi(loaded_style, 0, LIGHTING_STYLE_COUNT - 1)
+	rain_enabled = bool(config.get_value(
+		SETTINGS_SECTION_VIDEO,
+		SETTINGS_KEY_RAIN_ENABLED,
+		DEFAULT_RAIN_ENABLED
+	))
+
+func _save_persistent_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	var load_result: Error = config.load(SETTINGS_FILE_PATH)
+	if load_result != OK and load_result != ERR_FILE_NOT_FOUND:
+		return
+
+	config.set_value(SETTINGS_SECTION_VIDEO, SETTINGS_KEY_LIGHTING_STYLE, lighting_style_index)
+	config.set_value(SETTINGS_SECTION_VIDEO, SETTINGS_KEY_RAIN_ENABLED, rain_enabled)
+	config.save(SETTINGS_FILE_PATH)

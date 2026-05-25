@@ -12,6 +12,74 @@ const GAME_SCENE_PATH: String = "res://scenes/player/move.tscn"
 const MAX_PLAYERS: int = 4
 const MIN_PLAYERS_TO_START: int = 1
 const CHARACTER_IDS: Array[String] = ["sagui", "coelha", "tigre", "raposa"]
+const LIGHTING_STYLE_LABELS: Array[String] = [
+	"DIA SUAVE",
+	"GOLDEN HOUR",
+	"NUBLADO",
+	"NOIR CYBER",
+	"LUAR",
+]
+const RAIN_OPTION_LABELS: Array[String] = [
+	"ATIVADA",
+	"DESATIVADA",
+]
+const LIGHTING_STYLE_PREVIEW_PRESETS: Array[Dictionary] = [
+	{
+		"description": "Dia limpo e neutro para leitura de jogo.",
+		"sun_color": Color(1.0, 0.97, 0.9, 1.0),
+		"sun_energy": 1.45,
+		"sun_rotation_degrees": Vector3(-52.0, 35.0, 0.0),
+		"ambient_color": Color(0.74, 0.8, 0.9, 1.0),
+		"ambient_energy": 0.52,
+		"background_color": Color(0.53, 0.62, 0.74, 1.0),
+		"floor_color": Color(0.18, 0.2, 0.23, 1.0),
+		"subject_color": Color(0.87, 0.9, 0.95, 1.0),
+	},
+	{
+		"description": "Fim de tarde quente, cinematico e dourado.",
+		"sun_color": Color(1.0, 0.84, 0.62, 1.0),
+		"sun_energy": 1.28,
+		"sun_rotation_degrees": Vector3(-34.0, 20.0, 0.0),
+		"ambient_color": Color(0.66, 0.56, 0.42, 1.0),
+		"ambient_energy": 0.42,
+		"background_color": Color(0.66, 0.48, 0.34, 1.0),
+		"floor_color": Color(0.24, 0.18, 0.14, 1.0),
+		"subject_color": Color(1.0, 0.86, 0.74, 1.0),
+	},
+	{
+		"description": "Nublado suave com contraste mais baixo.",
+		"sun_color": Color(0.88, 0.92, 0.98, 1.0),
+		"sun_energy": 0.95,
+		"sun_rotation_degrees": Vector3(-60.0, 10.0, 0.0),
+		"ambient_color": Color(0.7, 0.75, 0.82, 1.0),
+		"ambient_energy": 0.68,
+		"background_color": Color(0.47, 0.54, 0.62, 1.0),
+		"floor_color": Color(0.21, 0.23, 0.27, 1.0),
+		"subject_color": Color(0.84, 0.88, 0.94, 1.0),
+	},
+	{
+		"description": "Noir cyber com ambiente escuro e recorte forte.",
+		"sun_color": Color(0.7, 0.8, 1.0, 1.0),
+		"sun_energy": 1.02,
+		"sun_rotation_degrees": Vector3(-57.0, 46.0, 0.0),
+		"ambient_color": Color(0.12, 0.17, 0.26, 1.0),
+		"ambient_energy": 0.36,
+		"background_color": Color(0.08, 0.12, 0.2, 1.0),
+		"floor_color": Color(0.07, 0.1, 0.16, 1.0),
+		"subject_color": Color(0.67, 0.8, 1.0, 1.0),
+	},
+	{
+		"description": "Luar frio, noturno e tenso.",
+		"sun_color": Color(0.55, 0.68, 0.96, 1.0),
+		"sun_energy": 0.72,
+		"sun_rotation_degrees": Vector3(-66.0, 28.0, 0.0),
+		"ambient_color": Color(0.14, 0.19, 0.29, 1.0),
+		"ambient_energy": 0.31,
+		"background_color": Color(0.07, 0.1, 0.16, 1.0),
+		"floor_color": Color(0.06, 0.08, 0.12, 1.0),
+		"subject_color": Color(0.66, 0.74, 0.92, 1.0),
+	},
+]
 const CHARACTER_PORTRAITS: Dictionary = {
 	"sagui": preload("res://assets/ui/characters/sagui.png"),
 	"coelha": preload("res://assets/ui/characters/coelha.png"),
@@ -110,6 +178,11 @@ enum MenuState {
 @onready var reveal_title_label: Label = $RevealOverlay/RevealColumn/RevealTitle
 @onready var reveal_label: Label = $RevealOverlay/RevealColumn/RevealLabel
 @onready var volume_slider: HSlider = $SettingsOverlay/SettingsColumn/VolumeSlider
+@onready var lighting_style_option: OptionButton = $SettingsOverlay/SettingsColumn/LightingStyleOption
+@onready var rain_option: OptionButton = $SettingsOverlay/SettingsColumn/RainOption
+@onready var lighting_preview_container: SubViewportContainer = $SettingsOverlay/SettingsColumn/LightingPreviewViewport
+@onready var lighting_preview_desc_label: Label = $SettingsOverlay/SettingsColumn/LightingPreviewDesc
+@onready var close_settings_button: Button = $SettingsOverlay/SettingsColumn/CloseSettingsButton
 @onready var lobby_title_label: Label = $Root/Columns/LobbyPanel/LobbyColumn/LobbyTitle
 
 var menu_time: float = 0.0
@@ -150,13 +223,24 @@ var lobby_footer_mouse_label: Label = null
 var character_template_layer: Control = null
 var character_footer_text_labels: Array[Label] = []
 var reveal_template_layer: Control = null
+var lighting_preview_viewport: SubViewport = null
+var lighting_preview_world_environment: WorldEnvironment = null
+var lighting_preview_sunlight: DirectionalLight3D = null
+var lighting_preview_floor_material: StandardMaterial3D = null
+var lighting_preview_subject_material: StandardMaterial3D = null
 var ui_update_accumulator: float = 0.0
 const MENU_UI_UPDATE_INTERVAL: float = 0.12
 
 func _ready() -> void:
 	_apply_visual_style()
 	_apply_responsive_layout()
+	_connect_menu_signals()
+	_setup_lighting_style_options()
+	_setup_rain_options()
+	_setup_lighting_preview()
 	volume_slider.value_changed.connect(_on_volume_changed)
+	lighting_style_option.item_selected.connect(_on_lighting_style_selected)
+	rain_option.item_selected.connect(_on_rain_option_selected)
 	_disable_pointer_input()
 
 	if InputManager.has_method("clear_joined_devices"):
@@ -166,6 +250,8 @@ func _ready() -> void:
 	reveal_panel.visible = false
 	_set_menu_state(MenuState.LOBBY_CONTROLS)
 	_sync_volume_slider()
+	_sync_lighting_style_option()
+	_sync_rain_option()
 	_update_lobby_ui()
 
 func _process(delta: float) -> void:
@@ -188,7 +274,13 @@ func _input(event: InputEvent) -> void:
 		var joypad_event: InputEventJoypadButton = event
 		if not joypad_event.pressed:
 			return
+		if settings_panel.visible:
+			_handle_settings_joypad_input(joypad_event)
+			return
 		if current_state == MenuState.LOBBY_CONTROLS:
+			if joypad_event.button_index == JOY_BUTTON_Y:
+				_on_settings_pressed()
+				return
 			if _is_join_button(joypad_event.button_index) and InputManager.try_join_device(joypad_event.device):
 				_update_lobby_ui()
 				return
@@ -217,6 +309,14 @@ func _start_character_selection_if_ready() -> void:
 
 func _on_settings_pressed() -> void:
 	settings_panel.visible = not settings_panel.visible
+	if settings_panel.visible:
+		_sync_volume_slider()
+		_sync_lighting_style_option()
+		_sync_rain_option()
+		_apply_lighting_style_preview(lighting_style_option.get_selected())
+		status_label.text = "CONFIGURACOES ABERTAS: ajuste luz, volume e chuva."
+	else:
+		status_label.text = "Configuracoes salvas."
 
 func _on_quit_pressed() -> void:
 	get_tree().quit()
@@ -224,6 +324,176 @@ func _on_quit_pressed() -> void:
 func _on_volume_changed(value: float) -> void:
 	var volume_db: float = linear_to_db(max(value, 0.001))
 	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), volume_db)
+
+func _connect_menu_signals() -> void:
+	if not play_button.pressed.is_connected(_on_play_pressed):
+		play_button.pressed.connect(_on_play_pressed)
+	if not settings_button.pressed.is_connected(_on_settings_pressed):
+		settings_button.pressed.connect(_on_settings_pressed)
+	if not quit_button.pressed.is_connected(_on_quit_pressed):
+		quit_button.pressed.connect(_on_quit_pressed)
+	if not close_settings_button.pressed.is_connected(_on_settings_pressed):
+		close_settings_button.pressed.connect(_on_settings_pressed)
+
+	for character_index: int in range(character_buttons.size()):
+		var target_button: Button = character_buttons[character_index]
+		var callback: Callable = _on_character_button_pressed.bind(character_index)
+		if not target_button.pressed.is_connected(callback):
+			target_button.pressed.connect(callback)
+
+func _setup_lighting_style_options() -> void:
+	lighting_style_option.clear()
+	for label: String in LIGHTING_STYLE_LABELS:
+		lighting_style_option.add_item(label)
+
+func _setup_rain_options() -> void:
+	rain_option.clear()
+	for label: String in RAIN_OPTION_LABELS:
+		rain_option.add_item(label)
+
+func _sync_lighting_style_option() -> void:
+	var selected_index: int = 0
+	if InputManager != null and InputManager.has_method("get_lighting_style_index"):
+		selected_index = int(InputManager.call("get_lighting_style_index"))
+
+	selected_index = clampi(selected_index, 0, max(LIGHTING_STYLE_LABELS.size() - 1, 0))
+	lighting_style_option.select(selected_index)
+	_apply_lighting_style_preview(selected_index)
+
+func _on_lighting_style_selected(index: int) -> void:
+	if index < 0 or index >= LIGHTING_STYLE_LABELS.size():
+		return
+	if InputManager != null and InputManager.has_method("set_lighting_style_index"):
+		InputManager.call("set_lighting_style_index", index)
+	_apply_lighting_style_preview(index)
+	status_label.text = "Estilo de iluminacao: %s" % LIGHTING_STYLE_LABELS[index]
+
+func _sync_rain_option() -> void:
+	var rain_enabled: bool = true
+	if InputManager != null and InputManager.has_method("is_rain_enabled"):
+		rain_enabled = bool(InputManager.call("is_rain_enabled"))
+	rain_option.select(0 if rain_enabled else 1)
+
+func _on_rain_option_selected(index: int) -> void:
+	var rain_enabled: bool = index == 0
+	if InputManager != null and InputManager.has_method("set_rain_enabled"):
+		InputManager.call("set_rain_enabled", rain_enabled)
+	status_label.text = "Chuva: %s" % ("ativada" if rain_enabled else "desativada")
+
+func _setup_lighting_preview() -> void:
+	if lighting_preview_container == null or lighting_preview_viewport != null:
+		return
+
+	lighting_preview_viewport = SubViewport.new()
+	lighting_preview_viewport.disable_3d = false
+	lighting_preview_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	lighting_preview_viewport.msaa_3d = Viewport.MSAA_2X
+	lighting_preview_viewport.size = Vector2i(420, 180)
+	lighting_preview_container.add_child(lighting_preview_viewport)
+
+	var preview_root: Node3D = Node3D.new()
+	lighting_preview_viewport.add_child(preview_root)
+
+	var camera: Camera3D = Camera3D.new()
+	camera.current = true
+	camera.look_at_from_position(Vector3(0.0, 1.25, 3.2), Vector3(0.0, 0.7, 0.0), Vector3.UP)
+	preview_root.add_child(camera)
+
+	lighting_preview_world_environment = WorldEnvironment.new()
+	lighting_preview_world_environment.environment = Environment.new()
+	var environment: Environment = lighting_preview_world_environment.environment
+	environment.background_mode = Environment.BG_COLOR
+	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	preview_root.add_child(lighting_preview_world_environment)
+
+	lighting_preview_sunlight = DirectionalLight3D.new()
+	lighting_preview_sunlight.shadow_enabled = false
+	preview_root.add_child(lighting_preview_sunlight)
+
+	var floor_mesh: MeshInstance3D = MeshInstance3D.new()
+	var plane: PlaneMesh = PlaneMesh.new()
+	plane.size = Vector2(5.2, 5.2)
+	floor_mesh.mesh = plane
+	lighting_preview_floor_material = StandardMaterial3D.new()
+	lighting_preview_floor_material.roughness = 0.95
+	floor_mesh.material_override = lighting_preview_floor_material
+	preview_root.add_child(floor_mesh)
+
+	var subject_mesh: MeshInstance3D = MeshInstance3D.new()
+	var capsule: CapsuleMesh = CapsuleMesh.new()
+	capsule.radius = 0.3
+	capsule.height = 1.45
+	subject_mesh.mesh = capsule
+	subject_mesh.position = Vector3(0.0, 0.78, 0.0)
+	lighting_preview_subject_material = StandardMaterial3D.new()
+	lighting_preview_subject_material.roughness = 0.28
+	subject_mesh.material_override = lighting_preview_subject_material
+	preview_root.add_child(subject_mesh)
+
+	var backdrop: MeshInstance3D = MeshInstance3D.new()
+	var backdrop_box: BoxMesh = BoxMesh.new()
+	backdrop_box.size = Vector3(4.8, 2.2, 0.2)
+	backdrop.mesh = backdrop_box
+	backdrop.position = Vector3(0.0, 1.0, -1.9)
+	var backdrop_material: StandardMaterial3D = StandardMaterial3D.new()
+	backdrop_material.roughness = 0.9
+	backdrop_material.albedo_color = Color(0.12, 0.14, 0.18, 1.0)
+	backdrop.material_override = backdrop_material
+	preview_root.add_child(backdrop)
+
+func _apply_lighting_style_preview(index: int) -> void:
+	if lighting_preview_world_environment == null or lighting_preview_sunlight == null:
+		return
+	if LIGHTING_STYLE_PREVIEW_PRESETS.is_empty():
+		return
+
+	var preset_index: int = clampi(index, 0, LIGHTING_STYLE_PREVIEW_PRESETS.size() - 1)
+	var preset: Dictionary = LIGHTING_STYLE_PREVIEW_PRESETS[preset_index]
+	var environment: Environment = lighting_preview_world_environment.environment
+	if environment != null:
+		environment.background_color = preset.get("background_color", Color(0.08, 0.1, 0.16, 1.0))
+		environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+		environment.ambient_light_color = preset.get("ambient_color", Color(0.7, 0.75, 0.82, 1.0))
+		environment.ambient_light_energy = float(preset.get("ambient_energy", 0.5))
+
+	lighting_preview_sunlight.light_color = preset.get("sun_color", Color(1.0, 0.97, 0.9, 1.0))
+	lighting_preview_sunlight.light_energy = float(preset.get("sun_energy", 1.0))
+	lighting_preview_sunlight.rotation_degrees = preset.get("sun_rotation_degrees", Vector3(-52.0, 35.0, 0.0))
+
+	if lighting_preview_floor_material != null:
+		lighting_preview_floor_material.albedo_color = preset.get("floor_color", Color(0.2, 0.22, 0.25, 1.0))
+	if lighting_preview_subject_material != null:
+		lighting_preview_subject_material.albedo_color = preset.get("subject_color", Color(0.87, 0.9, 0.95, 1.0))
+	if lighting_preview_desc_label != null:
+		lighting_preview_desc_label.text = str(preset.get("description", "Previa em tempo real."))
+
+func _cycle_lighting_style(step: int) -> void:
+	var item_count: int = lighting_style_option.get_item_count()
+	if item_count <= 0:
+		return
+	var selected_index: int = lighting_style_option.get_selected()
+	selected_index = wrapi(selected_index + step, 0, item_count)
+	lighting_style_option.select(selected_index)
+	_on_lighting_style_selected(selected_index)
+
+func _adjust_volume_slider(step: float) -> void:
+	volume_slider.value = clampf(volume_slider.value + step, volume_slider.min_value, volume_slider.max_value)
+
+func _handle_settings_joypad_input(joypad_event: InputEventJoypadButton) -> void:
+	if _is_cancel_button(joypad_event.button_index) or _is_start_button(joypad_event.button_index) or _is_join_button(joypad_event.button_index):
+		_on_settings_pressed()
+		return
+	if joypad_event.button_index == JOY_BUTTON_DPAD_LEFT:
+		_cycle_lighting_style(-1)
+		return
+	if joypad_event.button_index == JOY_BUTTON_DPAD_RIGHT:
+		_cycle_lighting_style(1)
+		return
+	if joypad_event.button_index == JOY_BUTTON_DPAD_UP:
+		_adjust_volume_slider(0.05)
+		return
+	if joypad_event.button_index == JOY_BUTTON_DPAD_DOWN:
+		_adjust_volume_slider(-0.05)
 
 func _on_character_button_pressed(character_index: int) -> void:
 	if current_state != MenuState.CHARACTER_SELECT:
@@ -251,9 +521,9 @@ func _update_lobby_ui() -> void:
 		_apply_lobby_slot_state(slot_index, false)
 
 	if connected_devices.is_empty():
-		status_label.text = "Conecte os controles para montar a equipe do cofre"
+		status_label.text = "Conecte um controle para montar a equipe do cofre"
 	elif ready_players < MIN_PLAYERS_TO_START:
-		status_label.text = "Entre com pelo menos 1 controle. O policial sera revelado depois."
+		status_label.text = "Entre com pelo menos 1 jogador. O policial sera revelado depois."
 	else:
 		status_label.text = "Equipe pronta. Abra os dossies do assalto."
 
@@ -414,9 +684,11 @@ func _apply_visual_style() -> void:
 	_style_button(play_button, COLOR_GOLD, Color(1.0, 0.78, 0.26, 1.0), true)
 	_style_button(settings_button, COLOR_GREEN, COLOR_GREEN_HIGHLIGHT, false)
 	_style_button(quit_button, COLOR_RED, COLOR_ORANGE, false)
+	_style_button(close_settings_button, COLOR_RED, COLOR_ORANGE, false)
 	play_button.text = "INICIAR ASSALTO"
 	settings_button.text = "CONFIGURACOES"
 	quit_button.text = "SAIR"
+	close_settings_button.text = "FECHAR CONFIGURACOES"
 	play_button.icon = ICON_PLAY
 	settings_button.icon = ICON_REPEAT
 	if character_template_layer == null:
@@ -1244,10 +1516,10 @@ func _apply_responsive_layout() -> void:
 		reveal_style.content_margin_right = 52 if is_compact else (126 if is_large else 92)
 		reveal_style.content_margin_top = 38 if is_compact else (84 if is_large else 64)
 		reveal_style.content_margin_bottom = 34 if is_compact else (72 if is_large else 52)
-	settings_panel.offset_left = -200.0 if is_compact else -240.0
-	settings_panel.offset_top = -104.0 if is_compact else -122.0
-	settings_panel.offset_right = 200.0 if is_compact else 240.0
-	settings_panel.offset_bottom = 104.0 if is_compact else 122.0
+	settings_panel.offset_left = -220.0 if is_compact else -260.0
+	settings_panel.offset_top = -240.0 if is_compact else -280.0
+	settings_panel.offset_right = 220.0 if is_compact else 260.0
+	settings_panel.offset_bottom = 240.0 if is_compact else 280.0
 	call_deferred("_prime_menu_layout")
 
 func _add_background() -> void:
@@ -1907,11 +2179,15 @@ func _connect_button_feedback() -> void:
 			button.focus_entered.connect(_on_menu_button_attention.bind(button))
 
 func _disable_pointer_input() -> void:
-	for button: Button in button_targets:
-		button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	play_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	settings_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	quit_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	close_settings_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	for character_button: Button in character_buttons:
 		character_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	volume_slider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	volume_slider.mouse_filter = Control.MOUSE_FILTER_STOP
+	lighting_style_option.mouse_filter = Control.MOUSE_FILTER_STOP
+	rain_option.mouse_filter = Control.MOUSE_FILTER_STOP
 
 func _on_menu_button_attention(button: Button) -> void:
 	button.pivot_offset = button.size * 0.5
@@ -1980,3 +2256,17 @@ func _style_settings_labels() -> void:
 			label.add_theme_color_override("font_color", COLOR_TEXT)
 			label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
 			label.add_theme_constant_override("outline_size", 3)
+		elif child is OptionButton:
+			var option_button: OptionButton = child
+			option_button.add_theme_font_override("font", FONT_UI)
+			option_button.add_theme_font_size_override("font_size", 20)
+			option_button.add_theme_color_override("font_color", COLOR_GOLD)
+			option_button.add_theme_color_override("font_hover_color", COLOR_TEXT)
+			option_button.add_theme_color_override("font_focus_color", COLOR_TEXT)
+			option_button.add_theme_color_override("font_pressed_color", COLOR_TEXT)
+			option_button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.74))
+			option_button.add_theme_constant_override("outline_size", 3)
+			option_button.add_theme_stylebox_override("normal", _make_button_style(COLOR_GOLD, false, false))
+			option_button.add_theme_stylebox_override("hover", _make_button_style(COLOR_GOLD, true, false))
+			option_button.add_theme_stylebox_override("focus", _make_button_style(COLOR_GOLD, true, false))
+			option_button.add_theme_stylebox_override("pressed", _make_button_style(COLOR_GOLD.darkened(0.2), true, false))
