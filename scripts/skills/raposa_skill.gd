@@ -17,6 +17,8 @@ func _process(delta: float) -> void:
 	boost_remaining = maxf(boost_remaining - delta, 0.0)
 	if boost_remaining <= 0.0 and owner_player:
 		owner_player.set_skill_speed_multiplier(1.0)
+		if owner_player.has_method("set_speed_boost_vfx_enabled"):
+			owner_player.call("set_speed_boost_vfx_enabled", false)
 
 func try_activate() -> void:
 	if not can_activate() or boost_remaining > 0.0:
@@ -24,6 +26,8 @@ func try_activate() -> void:
 
 	boost_remaining = BOOST_DURATION
 	owner_player.set_skill_speed_multiplier(BOOST_MULTIPLIER)
+	if owner_player.has_method("set_speed_boost_vfx_enabled"):
+		owner_player.call("set_speed_boost_vfx_enabled", true)
 	_start_cooldown()
 	_show_message("Raposa acelerou")
 
@@ -32,6 +36,8 @@ func cancel() -> void:
 	boost_remaining = 0.0
 	if owner_player:
 		owner_player.set_skill_speed_multiplier(1.0)
+		if owner_player.has_method("set_speed_boost_vfx_enabled"):
+			owner_player.call("set_speed_boost_vfx_enabled", false)
 
 func get_status_text() -> String:
 	if boost_remaining > 0.0:

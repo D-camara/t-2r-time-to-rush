@@ -16,6 +16,10 @@ const LIGHTING_STYLE_LABELS: Array[String] = [
 	"NOIR CYBER",
 	"LUAR",
 ]
+const RAIN_OPTION_LABELS: Array[String] = [
+	"ATIVADA",
+	"DESATIVADA",
+]
 const LIGHTING_STYLE_PREVIEW_PRESETS: Array[Dictionary] = [
 	{
 		"description": "Dia limpo e neutro para leitura de jogo.",
@@ -172,6 +176,7 @@ enum MenuState {
 @onready var reveal_label: Label = $RevealOverlay/RevealColumn/RevealLabel
 @onready var volume_slider: HSlider = $SettingsOverlay/SettingsColumn/VolumeSlider
 @onready var lighting_style_option: OptionButton = $SettingsOverlay/SettingsColumn/LightingStyleOption
+@onready var rain_option: OptionButton = $SettingsOverlay/SettingsColumn/RainOption
 @onready var lighting_preview_container: SubViewportContainer = $SettingsOverlay/SettingsColumn/LightingPreviewViewport
 @onready var lighting_preview_desc_label: Label = $SettingsOverlay/SettingsColumn/LightingPreviewDesc
 @onready var close_settings_button: Button = $SettingsOverlay/SettingsColumn/CloseSettingsButton
@@ -222,9 +227,11 @@ func _ready() -> void:
 	_apply_responsive_layout()
 	_connect_menu_signals()
 	_setup_lighting_style_options()
+	_setup_rain_options()
 	_setup_lighting_preview()
 	volume_slider.value_changed.connect(_on_volume_changed)
 	lighting_style_option.item_selected.connect(_on_lighting_style_selected)
+	rain_option.item_selected.connect(_on_rain_option_selected)
 	_disable_pointer_input()
 
 	if InputManager.has_method("clear_joined_devices"):
@@ -235,6 +242,7 @@ func _ready() -> void:
 	_set_menu_state(MenuState.LOBBY_CONTROLS)
 	_sync_volume_slider()
 	_sync_lighting_style_option()
+	_sync_rain_option()
 	_update_lobby_ui()
 
 func _process(delta: float) -> void:
@@ -302,8 +310,9 @@ func _on_settings_pressed() -> void:
 	if settings_panel.visible:
 		_sync_volume_slider()
 		_sync_lighting_style_option()
+		_sync_rain_option()
 		_apply_lighting_style_preview(lighting_style_option.get_selected())
-		status_label.text = "CONFIGURACOES ABERTAS: ajuste o estilo de luz e o volume."
+		status_label.text = "CONFIGURACOES ABERTAS: ajuste luz, volume e chuva."
 	else:
 		status_label.text = "Configuracoes salvas."
 
@@ -335,6 +344,11 @@ func _setup_lighting_style_options() -> void:
 	for label: String in LIGHTING_STYLE_LABELS:
 		lighting_style_option.add_item(label)
 
+func _setup_rain_options() -> void:
+	rain_option.clear()
+	for label: String in RAIN_OPTION_LABELS:
+		rain_option.add_item(label)
+
 func _sync_lighting_style_option() -> void:
 	var selected_index: int = 0
 	if InputManager != null and InputManager.has_method("get_lighting_style_index"):
@@ -352,6 +366,18 @@ func _on_lighting_style_selected(index: int) -> void:
 	_apply_lighting_style_preview(index)
 	status_label.text = "Estilo de iluminacao: %s" % LIGHTING_STYLE_LABELS[index]
 
+func _sync_rain_option() -> void:
+	var rain_enabled: bool = true
+	if InputManager != null and InputManager.has_method("is_rain_enabled"):
+		rain_enabled = bool(InputManager.call("is_rain_enabled"))
+	rain_option.select(0 if rain_enabled else 1)
+
+func _on_rain_option_selected(index: int) -> void:
+	var rain_enabled: bool = index == 0
+	if InputManager != null and InputManager.has_method("set_rain_enabled"):
+		InputManager.call("set_rain_enabled", rain_enabled)
+	status_label.text = "Chuva: %s" % ("ativada" if rain_enabled else "desativada")
+
 func _setup_lighting_preview() -> void:
 	if lighting_preview_container == null or lighting_preview_viewport != null:
 		return
@@ -368,8 +394,7 @@ func _setup_lighting_preview() -> void:
 
 	var camera: Camera3D = Camera3D.new()
 	camera.current = true
-	camera.position = Vector3(0.0, 1.25, 3.2)
-	camera.look_at(Vector3(0.0, 0.7, 0.0), Vector3.UP)
+	camera.look_at_from_position(Vector3(0.0, 1.25, 3.2), Vector3(0.0, 0.7, 0.0), Vector3.UP)
 	preview_root.add_child(camera)
 
 	lighting_preview_world_environment = WorldEnvironment.new()
@@ -1822,6 +1847,7 @@ func _disable_pointer_input() -> void:
 		character_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	volume_slider.mouse_filter = Control.MOUSE_FILTER_STOP
 	lighting_style_option.mouse_filter = Control.MOUSE_FILTER_STOP
+	rain_option.mouse_filter = Control.MOUSE_FILTER_STOP
 
 func _handle_keyboard_menu_input(key_event: InputEventKey) -> void:
 	if settings_panel.visible:

@@ -206,6 +206,14 @@ text = "Estilo de iluminacao"
 [node name="LightingStyleOption" type="OptionButton" parent="SettingsOverlay/SettingsColumn"]
 layout_mode = 2
 
+[node name="RainLabel" type="Label" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Chuva no mapa"
+
+[node name="RainOption" type="OptionButton" parent="SettingsOverlay/SettingsColumn"]
+layout_mode = 2
+
 [node name="LightingPreviewLabel" type="Label" parent="SettingsOverlay/SettingsColumn"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16

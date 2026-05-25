@@ -37,6 +37,8 @@ var idle_animation_name: String = ""
 var run_animation_name: String = ""
 var input_manager_ref: Node = null
 var uses_imported_character_visual: bool = false
+const RING_FLOOR_Y: float = 0.09
+const RING_THICKNESS_SCALE: float = 0.11
 
 func _ready() -> void:
 	base_move_speed = move_speed
@@ -210,22 +212,29 @@ func _ensure_player_ring() -> void:
 	var existing_ring: MeshInstance3D = get_node_or_null("PlayerReadabilityRing") as MeshInstance3D
 	if existing_ring:
 		player_ring = existing_ring
+		player_ring.mesh = _create_ring_mesh()
 		if player_ring.material_override == null:
 			player_ring.material_override = _create_ring_material()
+		player_ring.position = Vector3(0.0, RING_FLOOR_Y, 0.0)
+		player_ring.scale = Vector3(1.0, RING_THICKNESS_SCALE, 1.0)
 		return
 
 	var ring: MeshInstance3D = MeshInstance3D.new()
 	ring.name = "PlayerReadabilityRing"
-	var mesh: CylinderMesh = CylinderMesh.new()
-	mesh.top_radius = 0.5
-	mesh.bottom_radius = 0.5
-	mesh.height = 0.045
-	mesh.radial_segments = 24
-	ring.mesh = mesh
-	ring.position = Vector3(0.0, 0.075, 0.0)
+	ring.mesh = _create_ring_mesh()
+	ring.position = Vector3(0.0, RING_FLOOR_Y, 0.0)
+	ring.scale = Vector3(1.0, RING_THICKNESS_SCALE, 1.0)
 	ring.material_override = _create_ring_material()
 	add_child(ring)
 	player_ring = ring
+
+func _create_ring_mesh() -> TorusMesh:
+	var mesh: TorusMesh = TorusMesh.new()
+	mesh.inner_radius = 0.64
+	mesh.outer_radius = 0.82
+	mesh.rings = 32
+	mesh.ring_segments = 18
+	return mesh
 
 func _ensure_player_shadow() -> void:
 	var existing_shadow: MeshInstance3D = get_node_or_null("TokenGroundShadow") as MeshInstance3D
@@ -242,7 +251,7 @@ func _ensure_player_shadow() -> void:
 	mesh.radial_segments = 24
 	shadow.mesh = mesh
 	shadow.scale = Vector3(1.22, 1.0, 0.7)
-	shadow.position = Vector3(0.1, 0.035, 0.14)
+	shadow.position = Vector3(0.1, 0.015, 0.14)
 	shadow.material_override = _create_shadow_material()
 	add_child(shadow)
 	player_shadow = shadow
@@ -344,13 +353,12 @@ func _create_avatar_material(albedo: Color, avatar_emission: Color, avatar_energ
 
 func _create_ring_material() -> StandardMaterial3D:
 	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = Color(0.898, 0.933, 0.973, 0.82)
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.albedo_color = Color(0.898, 0.933, 0.973, 1.0)
 	material.emission_enabled = true
 	material.emission = Color(0.898, 0.933, 0.973, 1.0)
-	material.emission_energy_multiplier = 0.5
+	material.emission_energy_multiplier = 0.22
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.no_depth_test = true
+	material.no_depth_test = false
 	return material
 
 func _create_shadow_material() -> StandardMaterial3D:
@@ -379,7 +387,7 @@ func _update_player_ring() -> void:
 		return
 
 	var pulse: float = (sin(visual_pulse_time * 7.5) + 1.0) * 0.5
-	player_ring.scale = Vector3.ONE * (1.0 + pulse * 0.12)
+	player_ring.scale = Vector3(1.0 + pulse * 0.12, RING_THICKNESS_SCALE, 1.0 + pulse * 0.12)
 	material.albedo_color = Color(0.976, 0.451, 0.086, 0.86)
 	material.emission = emission_color
 	material.emission_energy_multiplier = 0.82 + pulse * 0.56

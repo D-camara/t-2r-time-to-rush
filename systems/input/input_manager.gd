@@ -7,9 +7,11 @@ const KEYBOARD_P1_DEVICE: int = -100
 const KEYBOARD_P2_DEVICE: int = -101
 const LIGHTING_STYLE_COUNT: int = 5
 const DEFAULT_LIGHTING_STYLE_INDEX: int = 0
+const DEFAULT_RAIN_ENABLED: bool = true
 const SETTINGS_FILE_PATH: String = "user://settings.cfg"
 const SETTINGS_SECTION_VIDEO: String = "video"
 const SETTINGS_KEY_LIGHTING_STYLE: String = "lighting_style"
+const SETTINGS_KEY_RAIN_ENABLED: String = "rain_enabled"
 
 var joined_devices: Array[int] = []
 var selected_characters: Dictionary = {}
@@ -20,6 +22,7 @@ var cancel_pressed_devices: Array[int] = []
 var start_pressed_devices: Array[int] = []
 var connected_devices_cache: PackedInt32Array = PackedInt32Array()
 var lighting_style_index: int = DEFAULT_LIGHTING_STYLE_INDEX
+var rain_enabled: bool = DEFAULT_RAIN_ENABLED
 
 func _ready() -> void:
 	_load_persistent_settings()
@@ -215,6 +218,13 @@ func set_lighting_style_index(style_index: int) -> void:
 	lighting_style_index = clampi(style_index, 0, LIGHTING_STYLE_COUNT - 1)
 	_save_persistent_settings()
 
+func is_rain_enabled() -> bool:
+	return rain_enabled
+
+func set_rain_enabled(enabled: bool) -> void:
+	rain_enabled = enabled
+	_save_persistent_settings()
+
 func consume_ability_pressed(device_id: int) -> bool:
 	return _consume_pressed_device(ability_pressed_devices, device_id)
 
@@ -364,6 +374,11 @@ func _load_persistent_settings() -> void:
 		DEFAULT_LIGHTING_STYLE_INDEX
 	))
 	lighting_style_index = clampi(loaded_style, 0, LIGHTING_STYLE_COUNT - 1)
+	rain_enabled = bool(config.get_value(
+		SETTINGS_SECTION_VIDEO,
+		SETTINGS_KEY_RAIN_ENABLED,
+		DEFAULT_RAIN_ENABLED
+	))
 
 func _save_persistent_settings() -> void:
 	var config: ConfigFile = ConfigFile.new()
@@ -372,4 +387,5 @@ func _save_persistent_settings() -> void:
 		return
 
 	config.set_value(SETTINGS_SECTION_VIDEO, SETTINGS_KEY_LIGHTING_STYLE, lighting_style_index)
+	config.set_value(SETTINGS_SECTION_VIDEO, SETTINGS_KEY_RAIN_ENABLED, rain_enabled)
 	config.save(SETTINGS_FILE_PATH)
