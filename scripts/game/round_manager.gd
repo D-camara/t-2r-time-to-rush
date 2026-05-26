@@ -551,7 +551,7 @@ func _on_hunter_capture_body_entered(body: Node3D, hunter: CharacterBody3D) -> v
 	var target: FugitivePlayer = body as FugitivePlayer
 	if not target.is_participating or target.is_infected or target.is_captured or target.is_extracted:
 		return
-	_infect_fugitive(target)
+	_infect_fugitive(target, hunter)
 
 func _advance_to_next_round() -> void:
 	current_round_index += 1
@@ -602,18 +602,20 @@ func _is_last_round() -> bool:
 	return current_round_index >= match_rounds - 1
 
 func _award_round_points(ended_by_timeout: bool) -> void:
-	if current_police_device != -1:
-		_add_round_score(current_police_device, current_round_captures)
-
 	if not ended_by_timeout:
 		return
 
 	_refresh_runtime_lists()
+	var timeout_survivor_count: int = 0
 	for player: FugitivePlayer in active_fugitives_cache:
 		if player.device_id == -1 or player.device_id in current_round_extractions:
 			continue
 		current_round_survivors.append(player.device_id)
 		_add_round_score(player.device_id, 1)
+		timeout_survivor_count += 1
+
+	if timeout_survivor_count > 0 and current_police_device != -1:
+		_add_round_score(current_police_device, 1)
 
 func _add_round_score(device_id: int, points: int) -> void:
 	if points <= 0:
@@ -868,13 +870,15 @@ func _refresh_runtime_lists() -> void:
 		elif player.is_participating and not player.is_captured and not player.is_extracted:
 			active_fugitives_cache.append(player)
 
-func _infect_fugitive(target: FugitivePlayer) -> void:
+func _infect_fugitive(target: FugitivePlayer, hunter: CharacterBody3D) -> void:
 	if target == null or target.is_infected:
 		return
 
+	var capturer_device_id: int = _get_hunter_device_id(hunter)
 	target.infect()
 	current_round_captures += 1
-	_add_stat(player_capture_totals, current_police_device)
+	_add_round_score(capturer_device_id, 1)
+	_add_stat(player_capture_totals, capturer_device_id)
 	_apply_infected_hunter_balance()
 	_refresh_runtime_lists()
 	_sync_capture_areas_for_hunters()
@@ -886,6 +890,15 @@ func _infect_fugitive(target: FugitivePlayer) -> void:
 		return
 
 	_update_hud("Alarme reforcado! Mais um pegador na perseguicao")
+
+func _get_hunter_device_id(hunter: CharacterBody3D) -> int:
+	if hunter == null:
+		return -1
+	if hunter is PolicePlayer:
+		return (hunter as PolicePlayer).device_id
+	if hunter is FugitivePlayer:
+		return (hunter as FugitivePlayer).device_id
+	return -1
 
 func _add_stat(stats: Dictionary, device_id: int) -> void:
 	if device_id == -1:
