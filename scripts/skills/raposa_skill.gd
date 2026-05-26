@@ -37,3 +37,8 @@ func get_status_text() -> String:
 	if boost_remaining > 0.0:
 		return "%s %.1fs" % [display_name, boost_remaining]
 	return super.get_status_text()
+
+func get_cooldown_fill_ratio() -> float:
+	if boost_remaining > 0.0:
+		return clampf(boost_remaining / BOOST_DURATION, 0.0, 1.0)
+	return super.get_cooldown_fill_ratio()

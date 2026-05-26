@@ -2,6 +2,7 @@ extends Node
 
 const DEADZONE: float = 0.2
 const MAX_JOINED_PLAYERS: int = 4
+const KEYBOARD_DEVICE_ID: int = -100
 const CHARACTER_IDS: Array[String] = ["sagui", "coelha", "tigre", "raposa"]
 const LIGHTING_STYLE_COUNT: int = 5
 const DEFAULT_LIGHTING_STYLE_INDEX: int = 0
@@ -29,6 +30,29 @@ func _ready() -> void:
 		Input.joy_connection_changed.connect(_on_joy_connection_changed)
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		var key_event: InputEventKey = event
+		if not key_event.pressed or key_event.echo:
+			return
+		var keyboard_target_device: int = _get_keyboard_target_device()
+		if keyboard_target_device == -1:
+			return
+		var pressed_physical: Key = key_event.physical_keycode
+		var pressed_logical: Key = key_event.keycode
+		if pressed_physical == KEY_SPACE or pressed_logical == KEY_SPACE:
+			_add_pressed_device(ability_pressed_devices, keyboard_target_device)
+		elif (
+			pressed_physical == KEY_ENTER
+			or pressed_physical == KEY_KP_ENTER
+			or pressed_logical == KEY_ENTER
+			or pressed_logical == KEY_KP_ENTER
+		):
+			_add_pressed_device(confirm_pressed_devices, keyboard_target_device)
+			_add_pressed_device(start_pressed_devices, keyboard_target_device)
+		elif pressed_physical == KEY_ESCAPE or pressed_logical == KEY_ESCAPE:
+			_add_pressed_device(cancel_pressed_devices, keyboard_target_device)
+		return
+
 	if event is InputEventJoypadButton:
 		var joypad_event: InputEventJoypadButton = event
 		if not joypad_event.pressed:
@@ -55,15 +79,34 @@ func get_movement(device_id: int) -> Vector3:
 	if resolved_device == -1:
 		return Vector3.ZERO
 
+	if resolved_device == KEYBOARD_DEVICE_ID:
+		return _get_keyboard_movement()
+
 	var x: float = Input.get_joy_axis(resolved_device, JOY_AXIS_LEFT_X)
 	var y: float = Input.get_joy_axis(resolved_device, JOY_AXIS_LEFT_Y)
-
 	var dir: Vector3 = Vector3(x, 0, y)
 
 	# deadzone
 	if dir.length_squared() < DEADZONE * DEADZONE:
 		return Vector3.ZERO
 
+	return dir.normalized()
+
+func _get_keyboard_movement() -> Vector3:
+	var x: float = 0.0
+	var z: float = 0.0
+	if Input.is_physical_key_pressed(KEY_A):
+		x -= 1.0
+	if Input.is_physical_key_pressed(KEY_D):
+		x += 1.0
+	if Input.is_physical_key_pressed(KEY_W):
+		z -= 1.0
+	if Input.is_physical_key_pressed(KEY_S):
+		z += 1.0
+
+	var dir: Vector3 = Vector3(x, 0.0, z)
+	if dir.length_squared() < 0.0001:
+		return Vector3.ZERO
 	return dir.normalized()
 
 func get_connected_devices() -> PackedInt32Array:
@@ -92,6 +135,15 @@ func try_join_device(device_id: int) -> bool:
 
 	joined_devices.append(resolved_device)
 	return true
+
+func get_keyboard_device_id() -> int:
+	return KEYBOARD_DEVICE_ID
+
+func is_keyboard_joined() -> bool:
+	return KEYBOARD_DEVICE_ID in joined_devices
+
+func try_join_keyboard() -> bool:
+	return try_join_device(KEYBOARD_DEVICE_ID)
 
 func reset_match_setup() -> void:
 	selected_characters.clear()
@@ -255,6 +307,9 @@ func _is_start_button(button_index: int) -> bool:
 	return button_index == JOY_BUTTON_START
 
 func _resolve_device(device_id: int) -> int:
+	if device_id == KEYBOARD_DEVICE_ID:
+		return KEYBOARD_DEVICE_ID
+
 	if device_id in connected_devices_cache:
 		return device_id
 
@@ -268,6 +323,11 @@ func _refresh_connected_devices() -> void:
 
 func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
 	_refresh_connected_devices()
+
+func _get_keyboard_target_device() -> int:
+	if KEYBOARD_DEVICE_ID in joined_devices:
+		return KEYBOARD_DEVICE_ID
+	return -1
 
 func _load_persistent_settings() -> void:
 	var config: ConfigFile = ConfigFile.new()

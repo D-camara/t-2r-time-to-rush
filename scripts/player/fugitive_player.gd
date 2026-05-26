@@ -75,6 +75,7 @@ var speed_lines_alpha: float = 0.0
 var speed_lines_skill_active: bool = false
 var speed_lines_last_move_dir: Vector3 = Vector3.FORWARD
 var configured_character_id: String = ""
+var player_identity_color: Color = Color(0.898, 0.933, 0.973, 1.0)
 const RING_FLOOR_Y: float = 0.09
 const RING_THICKNESS_SCALE: float = 0.11
 
@@ -184,6 +185,10 @@ func configure_movement(speed: float, new_acceleration: float) -> void:
 	base_move_speed = speed
 	move_speed = _get_effective_move_speed()
 	acceleration = new_acceleration
+
+func set_player_identity_color(color: Color) -> void:
+	player_identity_color = color
+	_update_player_ring()
 
 func set_skill_speed_multiplier(multiplier: float) -> void:
 	skill_speed_multiplier = maxf(multiplier, 0.0)
@@ -583,9 +588,9 @@ func _create_avatar_material(albedo: Color, emission_color: Color, emission_ener
 
 func _create_ring_material() -> StandardMaterial3D:
 	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = Color(0.71, 0.86, 1.0, 1.0)
+	material.albedo_color = Color(player_identity_color.r, player_identity_color.g, player_identity_color.b, 0.86)
 	material.emission_enabled = true
-	material.emission = Color(0.44, 0.72, 1.0, 1.0)
+	material.emission = player_identity_color
 	material.emission_energy_multiplier = 0.42
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.no_depth_test = false
@@ -737,20 +742,21 @@ func _update_player_ring() -> void:
 	if material == null:
 		return
 
+	var ring_color: Color = player_identity_color
 	if is_infected:
 		player_ring.scale = Vector3(1.0 + pulse * 0.1, RING_THICKNESS_SCALE, 1.0 + pulse * 0.1)
-		material.albedo_color = Color(0.976, 0.451, 0.086, 0.86)
-		material.emission = hunter_emission_color
+		material.albedo_color = Color(ring_color.r, ring_color.g, ring_color.b, 0.9)
+		material.emission = ring_color
 		material.emission_energy_multiplier = 0.75 + pulse * 0.55
 	elif is_in_danger_visual:
 		player_ring.scale = Vector3(1.0 + pulse * 0.14, RING_THICKNESS_SCALE, 1.0 + pulse * 0.14)
-		material.albedo_color = Color(0.961, 0.62, 0.043, 0.86)
-		material.emission = Color(0.961, 0.62, 0.043, 1.0)
+		material.albedo_color = Color(ring_color.r, ring_color.g, ring_color.b, 0.9)
+		material.emission = ring_color
 		material.emission_energy_multiplier = 0.7 + pulse * 0.42
 	else:
 		player_ring.scale = Vector3(1.0 + pulse * 0.06, RING_THICKNESS_SCALE, 1.0 + pulse * 0.06)
-		material.albedo_color = Color(0.898, 0.933, 0.973, 0.78)
-		material.emission = Color(0.898, 0.933, 0.973, 1.0)
+		material.albedo_color = Color(ring_color.r, ring_color.g, ring_color.b, 0.82)
+		material.emission = ring_color
 		material.emission_energy_multiplier = 0.45 + pulse * 0.18
 
 func _update_token_presence(delta: float) -> void:

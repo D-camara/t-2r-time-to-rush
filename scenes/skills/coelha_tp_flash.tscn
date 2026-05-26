@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/coelha_tp_flash.gd" id="1_flash"]
+[ext_resource type="Texture2D" path="res://assets/vfx/coelha/tp.png" id="2_tp"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_flash"]
+size = Vector2(2.0, 2.0)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_flash"]
+albedo_color = Color(1, 1, 1, 0.72)
+albedo_texture = ExtResource("2_tp")
+transparency = 1
+shading_mode = 0
+emission_enabled = true
+emission = Color(1, 0.4, 0.72, 1)
+emission_energy_multiplier = 3.1
+texture_filter = 5
+cull_mode = 2
+
+[node name="CoelhaTeleportFlash" type="Node3D"]
+script = ExtResource("1_flash")
+
+[node name="Decal" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.03, 0)
+rotation = Vector3(-1.5708, 0, 0)
+mesh = SubResource("QuadMesh_flash")
+material_override = SubResource("StandardMaterial3D_flash")
