@@ -518,7 +518,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 65.25, 195.5)
 label_text = "ESCADA"
 
 [node name="LEFT_DOOR_EXTRACTION" parent="." instance=ExtResource("11_extract")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -54.5, 65.35, 202.0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -62.5, 65.35, 190.0)
 label_text = "SAIDA"
 detection_radius = 3.0
 visual_radius = 2.7

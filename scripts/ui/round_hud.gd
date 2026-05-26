@@ -3,6 +3,12 @@ extends CanvasLayer
 
 const FONT_ARCADE: FontFile = preload("res://assets/ui/fonts/PressStart2P-Regular.ttf")
 const FONT_UI: FontFile = preload("res://assets/ui/fonts/KenneyFuture.ttf")
+const CHARACTER_PORTRAITS: Dictionary = {
+	"sagui": preload("res://assets/ui/characters/sagui.png"),
+	"coelha": preload("res://assets/ui/characters/coelha.png"),
+	"tigre": preload("res://assets/ui/characters/tigre.png"),
+	"raposa": preload("res://assets/ui/characters/raposa.png"),
+}
 
 @onready var time_label: Label = $Control/TopLeft/InfoColumn/TimeLabel
 @onready var fugitives_label: Label = $Control/TopLeft/InfoColumn/FugitivesLabel
@@ -41,6 +47,16 @@ var result_overlay: PanelContainer = null
 var result_backdrop: ColorRect = null
 var result_title_label: Label = null
 var result_subtitle_label: Label = null
+var match_result_overlay: PanelContainer = null
+var match_result_column: VBoxContainer = null
+var match_result_title_label: Label = null
+var match_result_summary_label: Label = null
+var match_result_winner_label: Label = null
+var match_result_cards_grid: GridContainer = null
+var match_result_prompt_label: Label = null
+var match_result_card_panels: Array[PanelContainer] = []
+var match_result_card_names: Array[Label] = []
+var match_result_card_scores: Array[Label] = []
 var danger_flash: ColorRect = null
 var banner_label: Label = null
 var vault_icon: HeistIcon = null
@@ -297,6 +313,8 @@ func show_round_result(title: String, subtitle: String, is_success: bool) -> voi
 	_set_gameplay_hud_visible(false)
 	if result_backdrop:
 		result_backdrop.visible = true
+	if match_result_overlay:
+		match_result_overlay.visible = false
 	result_overlay.visible = true
 	result_title_label.text = title.to_upper()
 	result_subtitle_label.text = subtitle
@@ -309,15 +327,43 @@ func show_round_result(title: String, subtitle: String, is_success: bool) -> voi
 		banner_label.visible = false
 	_apply_responsive_layout()
 
-func show_match_result(title: String, subtitle: String, is_success: bool) -> void:
-	show_round_result(title, subtitle, is_success)
+func show_match_result(title: String, summary: String, ranking_entries: Array[Dictionary], winner_text: String, prompt_text: String, _is_success: bool) -> void:
+	if result_overlay == null:
+		_create_result_overlay()
+	if match_result_overlay == null:
+		_create_match_result_overlay()
+
 	is_match_result_visible = true
+	_set_gameplay_hud_visible(false)
+	hide_round_points_breakdown()
+	if result_backdrop:
+		result_backdrop.color = Color(0.0, 0.0, 0.0, 0.68)
+		result_backdrop.visible = true
+	result_overlay.visible = false
+	match_result_overlay.visible = true
+	match_result_title_label.text = title.to_upper()
+	match_result_summary_label.text = summary
+	match_result_winner_label.text = winner_text.to_upper() if winner_text.to_lower().begins_with("empate") else "VENCEDOR: %s" % winner_text.to_upper()
+	match_result_prompt_label.text = prompt_text
+	_populate_match_result_cards(ranking_entries)
+	match_result_overlay.add_theme_stylebox_override("panel", _make_result_style(COLOR_WARNING))
+	hide_round_start_countdown()
+	banner_time = 0.0
+	if banner_label:
+		banner_label.visible = false
 	_apply_responsive_layout()
+
+func update_match_result_prompt(prompt_text: String) -> void:
+	if not is_match_result_visible or match_result_prompt_label == null:
+		return
+	match_result_prompt_label.text = prompt_text
 
 func hide_round_result() -> void:
 	is_match_result_visible = false
 	if result_overlay:
 		result_overlay.visible = false
+	if match_result_overlay:
+		match_result_overlay.visible = false
 	if result_backdrop:
 		result_backdrop.visible = false
 	_set_gameplay_hud_visible(true)
@@ -751,19 +797,31 @@ func _apply_responsive_layout() -> void:
 	if result_overlay:
 		result_overlay.offset_left = -360.0 if is_compact else -460.0
 		result_overlay.offset_right = 360.0 if is_compact else 460.0
-		if is_match_result_visible:
-			result_overlay.offset_top = -192.0 if is_compact else -242.0
-			result_overlay.offset_bottom = 192.0 if is_compact else 242.0
-		else:
-			result_overlay.offset_top = -128.0 if is_compact else -164.0
-			result_overlay.offset_bottom = 128.0 if is_compact else 164.0
+		result_overlay.offset_top = -128.0 if is_compact else -164.0
+		result_overlay.offset_bottom = 128.0 if is_compact else 164.0
+	if match_result_overlay:
+		match_result_overlay.offset_left = -600.0 if is_compact else (-710.0 if is_large else -650.0)
+		match_result_overlay.offset_right = 600.0 if is_compact else (710.0 if is_large else 650.0)
+		match_result_overlay.offset_top = -345.0 if is_compact else (-412.0 if is_large else -378.0)
+		match_result_overlay.offset_bottom = 345.0 if is_compact else (412.0 if is_large else 378.0)
 	if result_title_label:
 		result_title_label.add_theme_font_size_override("font_size", 38 if is_compact else (56 if is_large else 50))
 	if result_subtitle_label:
-		if is_match_result_visible:
-			result_subtitle_label.add_theme_font_size_override("font_size", 13 if is_compact else (18 if is_large else 16))
-		else:
-			result_subtitle_label.add_theme_font_size_override("font_size", 20 if is_compact else (27 if is_large else 24))
+		result_subtitle_label.add_theme_font_size_override("font_size", 20 if is_compact else (27 if is_large else 24))
+	if match_result_title_label:
+		match_result_title_label.add_theme_font_size_override("font_size", 28 if is_compact else (42 if is_large else 36))
+	if match_result_summary_label:
+		match_result_summary_label.add_theme_font_size_override("font_size", 13 if is_compact else (18 if is_large else 15))
+	if match_result_winner_label:
+		match_result_winner_label.add_theme_font_size_override("font_size", 16 if is_compact else (22 if is_large else 19))
+	if match_result_prompt_label:
+		match_result_prompt_label.add_theme_font_size_override("font_size", 13 if is_compact else (18 if is_large else 15))
+	for card: PanelContainer in match_result_card_panels:
+		card.custom_minimum_size = Vector2(480.0 if is_compact else (570.0 if is_large else 520.0), 120.0 if is_compact else (150.0 if is_large else 136.0))
+	for name_label: Label in match_result_card_names:
+		name_label.add_theme_font_size_override("font_size", 12 if is_compact else (17 if is_large else 14))
+	for score_text: Label in match_result_card_scores:
+		score_text.add_theme_font_size_override("font_size", 12 if is_compact else (17 if is_large else 14))
 	if round_start_label:
 		round_start_label.add_theme_font_size_override("font_size", 42 if is_compact else (66 if is_large else 54))
 	if round_points_overlay:
@@ -1183,6 +1241,209 @@ func _create_result_overlay() -> void:
 	result_subtitle_label.add_theme_color_override("font_outline_color", Color(0.008, 0.012, 0.027, 0.78))
 	result_subtitle_label.add_theme_constant_override("outline_size", 3)
 	column.add_child(result_subtitle_label)
+
+func _create_match_result_overlay() -> void:
+	if match_result_overlay != null:
+		return
+
+	match_result_overlay = PanelContainer.new()
+	match_result_overlay.name = "MatchResultOverlay"
+	match_result_overlay.visible = false
+	match_result_overlay.set_anchors_preset(Control.PRESET_CENTER)
+	match_result_overlay.add_theme_stylebox_override("panel", _make_result_style(COLOR_WARNING))
+	$Control.add_child(match_result_overlay)
+
+	match_result_column = VBoxContainer.new()
+	match_result_column.name = "MatchResultColumn"
+	match_result_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	match_result_column.add_theme_constant_override("separation", 14)
+	match_result_overlay.add_child(match_result_column)
+
+	match_result_title_label = Label.new()
+	match_result_title_label.name = "MatchResultTitle"
+	match_result_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	match_result_title_label.text = "PARTIDA FINALIZADA"
+	match_result_title_label.add_theme_font_override("font", FONT_ARCADE)
+	match_result_title_label.add_theme_color_override("font_color", COLOR_WARNING)
+	match_result_title_label.add_theme_color_override("font_outline_color", Color(0.008, 0.012, 0.027, 0.9))
+	match_result_title_label.add_theme_constant_override("outline_size", 8)
+	match_result_column.add_child(match_result_title_label)
+
+	var subtitle_label: Label = Label.new()
+	subtitle_label.name = "MatchResultSubtitle"
+	subtitle_label.text = "RESULTADO FINAL DO ASSALTO"
+	subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle_label.add_theme_font_override("font", FONT_UI)
+	subtitle_label.add_theme_font_size_override("font_size", 17)
+	subtitle_label.add_theme_color_override("font_color", COLOR_MUTED)
+	match_result_column.add_child(subtitle_label)
+
+	match_result_summary_label = Label.new()
+	match_result_summary_label.name = "MatchResultSummary"
+	match_result_summary_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	match_result_summary_label.add_theme_font_override("font", FONT_UI)
+	match_result_summary_label.add_theme_font_size_override("font_size", 16)
+	match_result_summary_label.add_theme_color_override("font_color", COLOR_DEFAULT)
+	match_result_column.add_child(match_result_summary_label)
+
+	match_result_winner_label = Label.new()
+	match_result_winner_label.name = "MatchResultWinner"
+	match_result_winner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	match_result_winner_label.add_theme_font_override("font", FONT_ARCADE)
+	match_result_winner_label.add_theme_font_size_override("font_size", 19)
+	match_result_winner_label.add_theme_color_override("font_color", COLOR_WARNING)
+	match_result_column.add_child(match_result_winner_label)
+
+	var cards_center: CenterContainer = CenterContainer.new()
+	cards_center.name = "MatchCardsCenter"
+	cards_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	match_result_column.add_child(cards_center)
+
+	match_result_cards_grid = GridContainer.new()
+	match_result_cards_grid.name = "MatchCardsGrid"
+	match_result_cards_grid.columns = 2
+	match_result_cards_grid.add_theme_constant_override("h_separation", 12)
+	match_result_cards_grid.add_theme_constant_override("v_separation", 12)
+	cards_center.add_child(match_result_cards_grid)
+
+	match_result_prompt_label = Label.new()
+	match_result_prompt_label.name = "MatchResultPrompt"
+	match_result_prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	match_result_prompt_label.add_theme_font_override("font", FONT_UI)
+	match_result_prompt_label.add_theme_font_size_override("font_size", 16)
+	match_result_prompt_label.add_theme_color_override("font_color", COLOR_CYAN)
+	match_result_column.add_child(match_result_prompt_label)
+
+func _populate_match_result_cards(ranking_entries: Array[Dictionary]) -> void:
+	for child: Node in match_result_cards_grid.get_children():
+		child.queue_free()
+	match_result_card_panels.clear()
+	match_result_card_names.clear()
+	match_result_card_scores.clear()
+
+	for entry: Dictionary in ranking_entries:
+		var card: PanelContainer = _create_match_result_card(entry)
+		match_result_cards_grid.add_child(card)
+		match_result_card_panels.append(card)
+
+func _create_match_result_card(entry: Dictionary) -> PanelContainer:
+	var is_winner: bool = bool(entry.get("is_winner", false))
+	var character_id: String = str(entry.get("character_id", ""))
+	var character_color: Color = _get_character_accent(character_id)
+	var accent: Color = COLOR_WARNING if is_winner else character_color
+
+	var card: PanelContainer = PanelContainer.new()
+	card.custom_minimum_size = Vector2(488.0, 140.0)
+	card.add_theme_stylebox_override("panel", _make_ranking_card_style(accent, is_winner))
+
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	card.add_child(row)
+
+	var rank_label: Label = Label.new()
+	rank_label.custom_minimum_size = Vector2(43.0, 0.0)
+	rank_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	rank_label.text = "%do" % int(entry.get("rank", 0))
+	rank_label.add_theme_font_override("font", FONT_ARCADE)
+	rank_label.add_theme_font_size_override("font_size", 20)
+	rank_label.add_theme_color_override("font_color", accent)
+	row.add_child(rank_label)
+
+	var portrait_frame: PanelContainer = PanelContainer.new()
+	portrait_frame.custom_minimum_size = Vector2(82.0, 112.0)
+	portrait_frame.add_theme_stylebox_override("panel", _make_portrait_style(character_color))
+	row.add_child(portrait_frame)
+
+	var portrait: TextureRect = TextureRect.new()
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.texture = CHARACTER_PORTRAITS.get(character_id) as Texture2D
+	portrait_frame.add_child(portrait)
+
+	var detail_column: VBoxContainer = VBoxContainer.new()
+	detail_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	detail_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	detail_column.add_theme_constant_override("separation", 4)
+	row.add_child(detail_column)
+
+	var name_label: Label = Label.new()
+	name_label.text = str(entry.get("name", "JOGADOR"))
+	name_label.add_theme_font_override("font", FONT_ARCADE)
+	name_label.add_theme_font_size_override("font_size", 15)
+	name_label.add_theme_color_override("font_color", character_color.lightened(0.13))
+	detail_column.add_child(name_label)
+	match_result_card_names.append(name_label)
+
+	var points_label: Label = Label.new()
+	points_label.text = "PTS: %d   |   ULTIMA RODADA: +%d" % [int(entry.get("points", 0)), int(entry.get("last_round_points", 0))]
+	points_label.add_theme_font_override("font", FONT_UI)
+	points_label.add_theme_font_size_override("font_size", 15)
+	points_label.add_theme_color_override("font_color", COLOR_DEFAULT)
+	detail_column.add_child(points_label)
+	match_result_card_scores.append(points_label)
+
+	var stats_label: Label = Label.new()
+	stats_label.text = "CAPTURAS: %d   |   EXTRACOES: %d" % [int(entry.get("captures", 0)), int(entry.get("extractions", 0))]
+	stats_label.add_theme_font_override("font", FONT_UI)
+	stats_label.add_theme_font_size_override("font_size", 13)
+	stats_label.add_theme_color_override("font_color", COLOR_MUTED)
+	detail_column.add_child(stats_label)
+
+	if is_winner:
+		var winner_badge: Label = Label.new()
+		winner_badge.text = "VENCEDOR"
+		winner_badge.add_theme_font_override("font", FONT_UI)
+		winner_badge.add_theme_font_size_override("font_size", 12)
+		winner_badge.add_theme_color_override("font_color", COLOR_WARNING)
+		detail_column.add_child(winner_badge)
+
+	return card
+
+func _get_character_accent(character_id: String) -> Color:
+	match character_id:
+		"sagui":
+			return Color(0.976, 0.729, 0.176, 1.0)
+		"coelha":
+			return COLOR_CYAN
+		"tigre":
+			return Color(0.973, 0.459, 0.102, 1.0)
+		"raposa":
+			return Color(0.941, 0.286, 0.306, 1.0)
+		_:
+			return COLOR_MUTED
+
+func _make_ranking_card_style(accent: Color, is_winner: bool) -> StyleBoxFlat:
+	var style_box: StyleBoxFlat = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.027, 0.043, 0.096, 0.96)
+	style_box.border_color = accent
+	style_box.set_border_width_all(3 if is_winner else 2)
+	style_box.corner_radius_top_left = 6
+	style_box.corner_radius_top_right = 6
+	style_box.corner_radius_bottom_right = 6
+	style_box.corner_radius_bottom_left = 6
+	style_box.content_margin_left = 12
+	style_box.content_margin_right = 12
+	style_box.content_margin_top = 10
+	style_box.content_margin_bottom = 10
+	if is_winner:
+		style_box.shadow_color = accent.darkened(0.5)
+		style_box.shadow_size = 12
+	return style_box
+
+func _make_portrait_style(accent: Color) -> StyleBoxFlat:
+	var style_box: StyleBoxFlat = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.016, 0.027, 0.059, 1.0)
+	style_box.border_color = accent.darkened(0.15)
+	style_box.set_border_width_all(2)
+	style_box.corner_radius_top_left = 4
+	style_box.corner_radius_top_right = 4
+	style_box.corner_radius_bottom_right = 4
+	style_box.corner_radius_bottom_left = 4
+	style_box.content_margin_left = 4
+	style_box.content_margin_right = 4
+	style_box.content_margin_top = 4
+	style_box.content_margin_bottom = 4
+	return style_box
 
 func _make_result_style(accent: Color) -> StyleBoxFlat:
 	var style_box: StyleBoxFlat = StyleBoxFlat.new()
