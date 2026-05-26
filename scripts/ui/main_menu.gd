@@ -9,6 +9,7 @@ const MENU_BACKGROUND_TEMPLATE: Texture2D = preload("res://assets/ui/backgrounds
 const CHARACTER_BACKGROUND_TEMPLATE: Texture2D = preload("res://assets/ui/backgrounds/fundo-personagens.png")
 const POLICE_REVEAL_TEMPLATE: Texture2D = preload("res://assets/ui/backgrounds/policial-reveal.png")
 const GAME_SCENE_PATH: String = "res://scenes/player/move.tscn"
+const MENU_MUSIC_PATH: String = "res://assets/music/intro.mpeg"
 const MAX_PLAYERS: int = 4
 const MIN_PLAYERS_TO_START: int = 1
 const KEYBOARD_DEVICE_ID: int = -100
@@ -237,8 +238,10 @@ var settings_controls: Array[Control] = []
 var navigation_axis_armed: Dictionary = {}
 var lobby_menu_index: int = 0
 const MENU_UI_UPDATE_INTERVAL: float = 0.12
+var menu_music_player: AudioStreamPlayer = null
 
 func _ready() -> void:
+	_setup_menu_music()
 	_apply_visual_style()
 	_apply_responsive_layout()
 	_connect_menu_signals()
@@ -261,6 +264,46 @@ func _ready() -> void:
 	_sync_lighting_style_option()
 	_sync_rain_option()
 	_update_lobby_ui()
+
+func _setup_menu_music() -> void:
+	if menu_music_player == null:
+		menu_music_player = get_node_or_null("MenuMusicPlayer") as AudioStreamPlayer
+	if menu_music_player == null:
+		menu_music_player = AudioStreamPlayer.new()
+		menu_music_player.name = "MenuMusicPlayer"
+		add_child(menu_music_player)
+		move_child(menu_music_player, 0)
+
+	var music_stream: AudioStream = _load_music_stream(MENU_MUSIC_PATH)
+	if music_stream == null:
+		push_warning("Nao foi possivel carregar a musica do menu em %s" % MENU_MUSIC_PATH)
+		return
+
+	if music_stream is AudioStreamMP3:
+		(music_stream as AudioStreamMP3).loop = true
+	elif music_stream is AudioStreamOggVorbis:
+		(music_stream as AudioStreamOggVorbis).loop = true
+	elif music_stream is AudioStreamWAV:
+		(music_stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_FORWARD
+
+	menu_music_player.bus = "Master"
+	menu_music_player.volume_db = -10.0
+	menu_music_player.stream = music_stream
+	if not menu_music_player.playing:
+		menu_music_player.play()
+
+func _load_music_stream(path: String) -> AudioStream:
+	var stream: AudioStream = load(path) as AudioStream
+	if stream != null:
+		return stream
+	if not FileAccess.file_exists(path):
+		return null
+	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return null
+	var mp3_stream: AudioStreamMP3 = AudioStreamMP3.new()
+	mp3_stream.data = file.get_buffer(file.get_length())
+	return mp3_stream
 
 func _process(delta: float) -> void:
 	menu_time += delta

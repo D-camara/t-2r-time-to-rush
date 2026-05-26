@@ -16,6 +16,7 @@ enum PostRoundAdvanceStep {
 
 const MapDaylightLightingScript: Script = preload("res://scripts/game/map_daylight_lighting.gd")
 const MENU_SCENE_PATH: String = "res://scenes/ui/main_menu.tscn"
+const ROUND_MUSIC_PATH: String = "res://assets/music/round.mpeg"
 
 @export var match_rounds: int = 4
 @export var round_duration: float = 120.0
@@ -80,8 +81,10 @@ var hunter_capture_areas: Dictionary = {}
 var post_round_advance_step: int = PostRoundAdvanceStep.NONE
 var post_round_result_sequence: int = 0
 const HUD_UPDATE_INTERVAL: float = 0.1
+var round_music_player: AudioStreamPlayer = null
 
 func _ready() -> void:
+	_setup_round_music()
 	input_manager_ref = get_node_or_null("/root/InputManager")
 	fugitive_slots.clear()
 	fugitive_slots.append(fugitive)
@@ -93,6 +96,46 @@ func _ready() -> void:
 	danger_distance_squared = danger_distance * danger_distance
 	_initialize_match_state()
 	start_round()
+
+func _setup_round_music() -> void:
+	if round_music_player == null:
+		round_music_player = get_node_or_null("RoundMusicPlayer") as AudioStreamPlayer
+	if round_music_player == null:
+		round_music_player = AudioStreamPlayer.new()
+		round_music_player.name = "RoundMusicPlayer"
+		add_child(round_music_player)
+		move_child(round_music_player, 0)
+
+	var music_stream: AudioStream = _load_music_stream(ROUND_MUSIC_PATH)
+	if music_stream == null:
+		push_warning("Nao foi possivel carregar a musica da partida em %s" % ROUND_MUSIC_PATH)
+		return
+
+	if music_stream is AudioStreamMP3:
+		(music_stream as AudioStreamMP3).loop = true
+	elif music_stream is AudioStreamOggVorbis:
+		(music_stream as AudioStreamOggVorbis).loop = true
+	elif music_stream is AudioStreamWAV:
+		(music_stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_FORWARD
+
+	round_music_player.bus = "Master"
+	round_music_player.volume_db = -9.0
+	round_music_player.stream = music_stream
+	if not round_music_player.playing:
+		round_music_player.play()
+
+func _load_music_stream(path: String) -> AudioStream:
+	var stream: AudioStream = load(path) as AudioStream
+	if stream != null:
+		return stream
+	if not FileAccess.file_exists(path):
+		return null
+	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return null
+	var mp3_stream: AudioStreamMP3 = AudioStreamMP3.new()
+	mp3_stream.data = file.get_buffer(file.get_length())
+	return mp3_stream
 
 func _attach_map_daylight_lighting() -> void:
 	var map_root: Node = get_node_or_null("MAPADEFINITIVO")
