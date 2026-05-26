@@ -436,8 +436,6 @@ _data = {
 height = 3.8203125
 radius = 0.3930664
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_hqmky"]
-
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_86tx1"]
 sky_top_color = Color(0.8219605, 0.9431423, 0.9282102, 1)
 sky_horizon_color = Color(0.058343045, 0.3046049, 0.24021697, 1)
@@ -481,14 +479,14 @@ script = ExtResource("4_camera")
 environment = SubResource("Environment_c43ro")
 
 [node name="POLICIAL" parent="." unique_id=1667643868 instance=ExtResource("5_police")]
-transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, -22.877434, 65.071884, 206.1393)
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, -22.977726, 63.836197, 207.79266)
 
 [node name="FUGITIVO_2" parent="." unique_id=1693917688 instance=ExtResource("7_fugitive")]
 transform = Transform3D(1.1661876, -0.026122186, 0.28164542, 0.051920462, 1.1943386, -0.10420998, -0.27804813, 0.11345962, 1.1618159, -1.1907578, 66.35538, 201.66258)
 device_id = 1
 
-[node name="FUGITIVO_3" parent="." instance=ExtResource("7_fugitive")]
-transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, -33.936043, 64.62743, 201.66258)
+[node name="FUGITIVO_3" parent="." unique_id=487410232 instance=ExtResource("7_fugitive")]
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, -33.296288, 63.86091, 201.78001)
 device_id = 2
 
 [node name="HUD" parent="." unique_id=1214818089 instance=ExtResource("6_hud")]
@@ -496,7 +494,7 @@ device_id = 2
 [node name="FUGITIVE_2_SPAWN" type="Node3D" parent="." unique_id=344666412]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1907578, 66.35538, 201.66258)
 
-[node name="FUGITIVE_3_SPAWN" type="Node3D" parent="."]
+[node name="FUGITIVE_3_SPAWN" type="Node3D" parent="." unique_id=38371071]
 transform = Transform3D(-0.9016515, -0.4324634, 0, 0.4324634, -0.9016515, 0, 0, 0, 1, -33.936043, 64.62743, 201.66258)
 
 [node name="POLICE_SPAWN" type="Node3D" parent="." unique_id=1241531624]
@@ -507,18 +505,19 @@ metadata/_edit_group_ = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.084122, 66.74017, 190.49883)
 visible = false
 
-[node name="HELIPAD_EXTRACTION" parent="." instance=ExtResource("11_extract")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.4, 65.25, 197.4)
+[node name="HELIPAD_EXTRACTION" parent="." unique_id=538086989 instance=ExtResource("11_extract")]
+transform = Transform3D(2.8, 0, 0, 0, 1, 0, 0, 0, 2.8, -23.545788, 65.25, 197.56946)
 label_text = "HELIPONTO"
-detection_radius = 6.6
-visual_radius = 6.1
+detection_radius = 11.0
+detection_height = 14.0
+visual_radius = 9.5
 
-[node name="RIGHT_STAIRS_EXTRACTION" parent="." instance=ExtResource("11_extract")]
+[node name="RIGHT_STAIRS_EXTRACTION" parent="." unique_id=1316852315 instance=ExtResource("11_extract")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 65.25, 195.5)
 label_text = "ESCADA"
 
-[node name="LEFT_DOOR_EXTRACTION" parent="." instance=ExtResource("11_extract")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -62.5, 65.35, 190.0)
+[node name="LEFT_DOOR_EXTRACTION" parent="." unique_id=483885607 instance=ExtResource("11_extract")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -62.5, 65.35, 190)
 label_text = "SAIDA"
 detection_radius = 3.0
 visual_radius = 2.7
@@ -542,7 +541,7 @@ transform = Transform3D(-0.19525063, -0.004969263, 0.98074067, 0.019270116, 0.99
 transform = Transform3D(0.99964786, -0.0049692625, -0.026063114, 0.0044286493, 0.99977446, -0.020759866, 0.0261603, 0.020637117, 0.9994446, 7.895319, 0.071989596, -1.5864296)
 
 [node name="MAPADEFINITIVO" parent="." unique_id=2082928804 instance=ExtResource("9_hqmky")]
-transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, 0, 0, 0)
+transform = Transform3D(-3.5, 0, -3.059797e-07, 0, 3.5, 0, 3.059797e-07, 0, -3.5, -0.042043686, 0, 0)
 
 [node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=345733139]
 transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 22.488272, 65.25548, 195.51212)

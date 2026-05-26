@@ -29,7 +29,7 @@ const RAPOSA_BOOST_VFX_SCENE: PackedScene = preload("res://assets/vfx/raposa/rap
 @export var speed_lines_secondary_color: Color = Color(0.66, 0.68, 0.72, 1.0)
 @export var speed_lines_min_speed_ratio: float = 0.3
 
-@onready var animator: AnimationPlayer = find_child("AnimationPlayer", true, false) as AnimationPlayer
+@onready var animator: AnimationPlayer = null
 @onready var character_visual: Node3D = find_child("boneco", true, false) as Node3D
 @onready var view: Node3D = get_node_or_null(camera_path)
 
@@ -82,6 +82,7 @@ const RING_THICKNESS_SCALE: float = 0.11
 func _ready() -> void:
 	base_move_speed = move_speed
 	input_manager_ref = get_node_or_null("/root/InputManager")
+	animator = _resolve_animator()
 	_cache_animation_names()
 	if character_visual:
 		visual_base_position = character_visual.position
@@ -167,6 +168,8 @@ func _play_animation_by_suffix(suffix: String) -> void:
 		animator.play(animation_name, 0.3)
 
 func _cache_animation_names() -> void:
+	idle_animation_name = ""
+	run_animation_name = ""
 	if not animator:
 		return
 	for animation_name: String in animator.get_animation_list():
@@ -174,6 +177,21 @@ func _cache_animation_names() -> void:
 			idle_animation_name = animation_name
 		elif animation_name.ends_with("/FastRun") or animation_name == "FastRun":
 			run_animation_name = animation_name
+
+	if idle_animation_name.is_empty() or run_animation_name.is_empty():
+		for animation_name: String in animator.get_animation_list():
+			var lower_name: String = animation_name.to_lower()
+			if idle_animation_name.is_empty() and lower_name.contains("idle"):
+				idle_animation_name = animation_name
+			elif run_animation_name.is_empty() and (lower_name.contains("fastrun") or lower_name.contains("run")):
+				run_animation_name = animation_name
+
+func _resolve_animator() -> AnimationPlayer:
+	if character_visual != null:
+		var visual_animator: AnimationPlayer = character_visual.find_child("AnimationPlayer", true, false) as AnimationPlayer
+		if visual_animator != null:
+			return visual_animator
+	return find_child("AnimationPlayer", true, false) as AnimationPlayer
 
 func set_input_enabled(enabled: bool) -> void:
 	input_enabled = enabled
@@ -248,7 +266,7 @@ func _swap_character_visual(visual_scene: PackedScene) -> void:
 	uses_imported_character_visual = true
 	visual_base_position = Vector3.ZERO
 	character_visual.scale = Vector3.ONE * visual_scale
-	animator = find_child("AnimationPlayer", true, false) as AnimationPlayer
+	animator = _resolve_animator()
 	_cache_animation_names()
 	_remove_presentation_avatar()
 

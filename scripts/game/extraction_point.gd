@@ -5,6 +5,7 @@ signal fugitive_entered(player: FugitivePlayer, point: ExtractionPoint)
 
 @export var label_text: String = "EXTRACAO"
 @export var detection_radius: float = 2.4
+@export var detection_height: float = 2.0
 @export var visual_radius: float = 2.2
 @export var active_color: Color = Color(0.15, 0.9, 1.0, 0.78)
 @export var inactive_color: Color = Color(0.15, 0.2, 0.26, 0.18)
@@ -75,6 +76,7 @@ func _apply_radius_settings() -> void:
 	if collision_shape and collision_shape.shape is CylinderShape3D:
 		var shape: CylinderShape3D = collision_shape.shape as CylinderShape3D
 		shape.radius = detection_radius
+		shape.height = detection_height
 	if ring and ring.mesh is CylinderMesh:
 		var mesh: CylinderMesh = ring.mesh as CylinderMesh
 		mesh.top_radius = visual_radius
