@@ -15,6 +15,8 @@ func setup(new_owner: FugitivePlayer, character_id: String, new_round_manager: N
 	owner_player = new_owner
 	round_manager = new_round_manager
 	input_manager = get_node_or_null("/root/InputManager")
+	if input_manager != null and owner_player != null and input_manager.has_method("consume_ability_pressed"):
+		input_manager.call("consume_ability_pressed", owner_player.device_id)
 	var skill_script: Script = _get_skill_script(character_id)
 	if skill_script == null:
 		return

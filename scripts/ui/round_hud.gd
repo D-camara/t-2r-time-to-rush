@@ -36,6 +36,8 @@ const COLOR_CARD_BORDER_READY: Color = Color(0.173, 0.878, 0.529, 0.98)
 const COLOR_CARD_BORDER_COOLDOWN: Color = Color(0.286, 0.824, 0.996, 0.95)
 const COLOR_CARD_BORDER_POLICE: Color = Color(0.965, 0.757, 0.216, 0.98)
 const COLOR_CARD_BORDER_INACTIVE: Color = Color(0.353, 0.4, 0.471, 0.85)
+const SHOW_TOP_CENTER_STATUS_PANEL: bool = false
+const SHOW_TOP_LEFT_INFO_PANEL: bool = false
 
 var result_overlay: PanelContainer = null
 var result_backdrop: ColorRect = null
@@ -90,6 +92,12 @@ func _ready() -> void:
 		get_viewport().size_changed.connect(_apply_responsive_layout)
 	_apply_hud_style()
 	_apply_responsive_layout()
+	if top_left:
+		top_left.visible = SHOW_TOP_LEFT_INFO_PANEL
+		_sync_panel_for(top_left)
+	if top_center:
+		top_center.visible = false
+		_sync_panel_for(top_center)
 	_update_timer_pivot()
 	set_controls_hint("")
 	skill_label.text = ""
@@ -102,8 +110,13 @@ func _process(delta: float) -> void:
 		vault_icon.rotation = sin(hud_time * 0.9) * 0.025
 	if cash_icon:
 		cash_icon.modulate.a = 0.7 + (sin(hud_time * 2.6) + 1.0) * 0.12
+		if not SHOW_TOP_LEFT_INFO_PANEL:
+			cash_icon.visible = false
 	if alarm_icon:
-		alarm_icon.visible = capture_flash_time > 0.0 or time_label.modulate == COLOR_WARNING
+		if SHOW_TOP_LEFT_INFO_PANEL:
+			alarm_icon.visible = capture_flash_time > 0.0 or time_label.modulate == COLOR_WARNING
+		else:
+			alarm_icon.visible = false
 	if capture_flash_time > 0.0:
 		capture_flash_time = max(capture_flash_time - delta, 0.0)
 		if danger_flash:
@@ -272,7 +285,7 @@ func set_status(message: String, color: Color = COLOR_DEFAULT) -> void:
 		last_status_color = color
 		status_label.modulate = color
 	var has_result_overlay: bool = result_overlay != null and result_overlay.visible
-	var should_show: bool = not has_result_overlay and not message.is_empty() and color != COLOR_DEFAULT
+	var should_show: bool = SHOW_TOP_CENTER_STATUS_PANEL and not has_result_overlay and not message.is_empty() and color != COLOR_DEFAULT
 	if top_center.visible != should_show:
 		top_center.visible = should_show
 		_sync_panel_for(top_center)
@@ -404,7 +417,7 @@ func hide_round_points_breakdown() -> void:
 		round_points_overlay.visible = false
 
 func _set_gameplay_hud_visible(is_visible: bool) -> void:
-	top_left.visible = is_visible
+	top_left.visible = is_visible and SHOW_TOP_LEFT_INFO_PANEL
 	top_timer.visible = is_visible
 	top_center.visible = false
 	bottom_left.visible = false
@@ -963,6 +976,12 @@ func _position_hud_heist_icons(is_compact: bool) -> void:
 	var middle_y: float = top_left.offset_top + 10.0
 	var alarm_y: float = top_left.offset_top + 42.0
 	_place_hud_icon(vault_icon, timer_icon_x, timer_icon_y, icon_size)
+	if cash_icon:
+		cash_icon.visible = SHOW_TOP_LEFT_INFO_PANEL
+	if alarm_icon:
+		alarm_icon.visible = SHOW_TOP_LEFT_INFO_PANEL and capture_flash_time > 0.0
+	if not SHOW_TOP_LEFT_INFO_PANEL:
+		return
 	_place_hud_icon(cash_icon, icon_x, middle_y, icon_size)
 	_place_hud_icon(alarm_icon, icon_x, alarm_y, icon_size)
 

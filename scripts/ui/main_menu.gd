@@ -11,6 +11,7 @@ const POLICE_REVEAL_TEMPLATE: Texture2D = preload("res://assets/ui/backgrounds/p
 const GAME_SCENE_PATH: String = "res://scenes/player/move.tscn"
 const MAX_PLAYERS: int = 4
 const MIN_PLAYERS_TO_START: int = 1
+const KEYBOARD_DEVICE_ID: int = -100
 const CHARACTER_IDS: Array[String] = ["sagui", "coelha", "tigre", "raposa"]
 const NAV_AXIS_TRIGGER: float = 0.68
 const NAV_AXIS_RELEASE: float = 0.28
@@ -280,6 +281,12 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventJoypadMotion:
 		_handle_joypad_motion(event as InputEventJoypadMotion)
 		return
+	if event is InputEventKey:
+		var key_event: InputEventKey = event
+		if not key_event.pressed or key_event.echo:
+			return
+		_handle_keyboard_menu_input(key_event)
+		return
 	if event is InputEventJoypadButton:
 		var joypad_event: InputEventJoypadButton = event
 		if not joypad_event.pressed:
@@ -310,6 +317,56 @@ func _input(event: InputEvent) -> void:
 				return
 		if current_state == MenuState.CHARACTER_SELECT:
 			_handle_character_select_button(joypad_event)
+
+func _handle_keyboard_menu_input(key_event: InputEventKey) -> void:
+	if settings_panel.visible:
+		if _is_key_cancel(key_event):
+			_on_settings_pressed()
+		return
+
+	if current_state == MenuState.LOBBY_CONTROLS:
+		if _is_key_up(key_event):
+			_set_lobby_menu_focus(lobby_menu_index - 1)
+			return
+		if _is_key_down(key_event):
+			_set_lobby_menu_focus(lobby_menu_index + 1)
+			return
+		if _is_key_confirm(key_event):
+			if not InputManager.is_keyboard_joined():
+				if InputManager.try_join_keyboard():
+					if InputManager.has_method("clear_pressed_buttons"):
+						InputManager.clear_pressed_buttons()
+					_update_lobby_ui()
+				return
+			_activate_lobby_menu_selection()
+			return
+		return
+
+	if current_state != MenuState.CHARACTER_SELECT:
+		return
+
+	var joined_players: Array[int] = InputManager.get_joined_devices()
+	if selecting_player_index >= joined_players.size():
+		return
+	if int(joined_players[selecting_player_index]) != KEYBOARD_DEVICE_ID:
+		return
+
+	if _is_key_cancel(key_event):
+		InputManager.reset_match_setup()
+		selecting_player_index = 0
+		character_cursor_index = 0
+		_set_menu_state(MenuState.LOBBY_CONTROLS)
+		_update_lobby_ui()
+	elif _is_key_left(key_event):
+		_move_character_cursor(-1)
+	elif _is_key_right(key_event):
+		_move_character_cursor(1)
+	elif _is_key_up(key_event):
+		_move_character_cursor(-2)
+	elif _is_key_down(key_event):
+		_move_character_cursor(2)
+	elif _is_key_confirm(key_event):
+		_try_select_current_character()
 
 func _on_play_pressed() -> void:
 	_start_character_selection_if_ready()
@@ -621,17 +678,17 @@ func _update_lobby_ui() -> void:
 
 	for slot_index: int in range(slot_labels.size()):
 		if slot_index < ready_players:
-			slot_labels[slot_index].text = "%02d  OPERADOR %d\n      CONTROLE %d\n      PRONTO" % [slot_index + 1, slot_index + 1, joined_players[slot_index]]
+			slot_labels[slot_index].text = "%02d  OPERADOR %d\n      %s\n      PRONTO" % [slot_index + 1, slot_index + 1, _get_device_label(int(joined_players[slot_index]))]
 			_apply_lobby_slot_state(slot_index, true)
 			continue
 
 		slot_labels[slot_index].text = "%02d  OPERADOR %d\n      AGUARDANDO CONTROLE\n      STANDBY" % [slot_index + 1, slot_index + 1]
 		_apply_lobby_slot_state(slot_index, false)
 
-	if connected_devices.is_empty():
-		status_label.text = "Conecte um controle para montar a equipe do cofre"
-	elif ready_players < MIN_PLAYERS_TO_START:
+	if ready_players < MIN_PLAYERS_TO_START:
 		status_label.text = "Entre com pelo menos 1 jogador. O policial sera revelado depois."
+	elif connected_devices.is_empty():
+		status_label.text = "Equipe pronta com teclado. Abra os dossies do assalto."
 	else:
 		status_label.text = "Equipe pronta. Abra os dossies do assalto."
 
@@ -648,6 +705,47 @@ func _is_cancel_button(button_index: int) -> bool:
 
 func _is_start_button(button_index: int) -> bool:
 	return button_index == JOY_BUTTON_START
+
+func _is_key_confirm(key_event: InputEventKey) -> bool:
+	return (
+		key_event.physical_keycode == KEY_ENTER
+		or key_event.physical_keycode == KEY_KP_ENTER
+		or key_event.keycode == KEY_ENTER
+		or key_event.keycode == KEY_KP_ENTER
+		or key_event.physical_keycode == KEY_SPACE
+		or key_event.keycode == KEY_SPACE
+	)
+
+func _is_key_cancel(key_event: InputEventKey) -> bool:
+	return key_event.physical_keycode == KEY_ESCAPE or key_event.keycode == KEY_ESCAPE
+
+func _is_key_left(key_event: InputEventKey) -> bool:
+	return (
+		key_event.physical_keycode == KEY_A
+		or key_event.physical_keycode == KEY_LEFT
+		or key_event.keycode == KEY_LEFT
+	)
+
+func _is_key_right(key_event: InputEventKey) -> bool:
+	return (
+		key_event.physical_keycode == KEY_D
+		or key_event.physical_keycode == KEY_RIGHT
+		or key_event.keycode == KEY_RIGHT
+	)
+
+func _is_key_up(key_event: InputEventKey) -> bool:
+	return (
+		key_event.physical_keycode == KEY_W
+		or key_event.physical_keycode == KEY_UP
+		or key_event.keycode == KEY_UP
+	)
+
+func _is_key_down(key_event: InputEventKey) -> bool:
+	return (
+		key_event.physical_keycode == KEY_S
+		or key_event.physical_keycode == KEY_DOWN
+		or key_event.keycode == KEY_DOWN
+	)
 
 func _set_menu_state(new_state: int) -> void:
 	current_state = new_state
@@ -744,7 +842,7 @@ func _update_character_select_ui() -> void:
 
 	var current_player_label: String = "Todos escolheram"
 	if selecting_player_index < joined_players.size():
-		current_player_label = "Jogador %d | Controle %d" % [selecting_player_index + 1, joined_players[selecting_player_index]]
+		current_player_label = "Jogador %d | %s" % [selecting_player_index + 1, _get_device_label(int(joined_players[selecting_player_index]))]
 
 	character_title_label.text = "DOSSIER DO ASSALTO"
 	character_turn_label.text = "%s" % current_player_label.to_upper()
@@ -759,6 +857,11 @@ func _update_character_select_ui() -> void:
 		var is_cursor: bool = character_index == character_cursor_index
 		button.disabled = is_selected
 		_apply_character_card_state(character_index, is_cursor, is_selected)
+
+func _get_device_label(device_id: int) -> String:
+	if device_id == KEYBOARD_DEVICE_ID:
+		return "TECLADO (WASD)"
+	return "CONTROLE %d" % device_id
 
 func _start_police_reveal() -> void:
 	var police_device: int = InputManager.pick_random_police()
@@ -835,7 +938,7 @@ func _apply_visual_style() -> void:
 	connected_label.add_theme_font_override("font", FONT_UI)
 	join_hint_label.add_theme_color_override("font_color", COLOR_GOLD)
 	join_hint_label.add_theme_font_override("font", FONT_UI)
-	join_hint_label.text = "X / A ENTRAR  //  MOUSE SELECIONAR"
+	join_hint_label.text = "X / A / ENTER ENTRAR  //  MOUSE SELECIONAR"
 	lobby_title_label.text = "LOBBY DO ASSALTO"
 	lobby_title_label.add_theme_font_override("font", FONT_ARCADE)
 	lobby_title_label.add_theme_color_override("font_color", COLOR_GREEN_HIGHLIGHT)
