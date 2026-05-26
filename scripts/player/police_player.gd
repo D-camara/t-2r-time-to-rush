@@ -37,6 +37,7 @@ var idle_animation_name: String = ""
 var run_animation_name: String = ""
 var input_manager_ref: Node = null
 var uses_imported_character_visual: bool = false
+var player_identity_color: Color = Color(0.976, 0.451, 0.086, 1.0)
 const RING_FLOOR_Y: float = 0.09
 const RING_THICKNESS_SCALE: float = 0.11
 
@@ -109,6 +110,10 @@ func configure_movement(speed: float, new_acceleration: float) -> void:
 	base_move_speed = speed
 	move_speed = _get_effective_move_speed()
 	acceleration = new_acceleration
+
+func set_player_identity_color(color: Color) -> void:
+	player_identity_color = color
+	_update_player_ring()
 
 func apply_hunter_disruption(stun_seconds: float, slow_multiplier: float, slow_seconds: float) -> void:
 	if stun_seconds > 0.0:
@@ -353,9 +358,9 @@ func _create_avatar_material(albedo: Color, avatar_emission: Color, avatar_energ
 
 func _create_ring_material() -> StandardMaterial3D:
 	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = Color(0.898, 0.933, 0.973, 1.0)
+	material.albedo_color = Color(player_identity_color.r, player_identity_color.g, player_identity_color.b, 0.86)
 	material.emission_enabled = true
-	material.emission = Color(0.898, 0.933, 0.973, 1.0)
+	material.emission = player_identity_color
 	material.emission_energy_multiplier = 0.22
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.no_depth_test = false
@@ -388,8 +393,8 @@ func _update_player_ring() -> void:
 
 	var pulse: float = (sin(visual_pulse_time * 7.5) + 1.0) * 0.5
 	player_ring.scale = Vector3(1.0 + pulse * 0.12, RING_THICKNESS_SCALE, 1.0 + pulse * 0.12)
-	material.albedo_color = Color(0.976, 0.451, 0.086, 0.86)
-	material.emission = emission_color
+	material.albedo_color = Color(player_identity_color.r, player_identity_color.g, player_identity_color.b, 0.9)
+	material.emission = player_identity_color
 	material.emission_energy_multiplier = 0.82 + pulse * 0.56
 
 func _update_token_presence(delta: float) -> void:

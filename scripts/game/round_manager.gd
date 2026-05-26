@@ -17,6 +17,12 @@ enum PostRoundAdvanceStep {
 const MapDaylightLightingScript: Script = preload("res://scripts/game/map_daylight_lighting.gd")
 const MENU_SCENE_PATH: String = "res://scenes/ui/main_menu.tscn"
 const ROUND_MUSIC_PATH: String = "res://assets/music/round.mpeg"
+const PLAYER_CONTROL_COLORS: Array[Color] = [
+	Color(0.95, 0.24, 0.2, 1.0),
+	Color(0.22, 0.86, 0.42, 1.0),
+	Color(0.25, 0.67, 1.0, 1.0),
+	Color(1.0, 0.82, 0.21, 1.0),
+]
 
 @export var match_rounds: int = 4
 @export var round_duration: float = 120.0
@@ -405,6 +411,7 @@ func _configure_players_for_current_round() -> void:
 	if police_rotation_order.is_empty():
 		_configure_players_from_lobby()
 		current_police_device = police.device_id
+		_apply_player_identification_colors()
 		return
 
 	current_police_device = police_rotation_order[current_round_index % police_rotation_order.size()]
@@ -421,6 +428,7 @@ func _configure_players_for_current_round() -> void:
 	_assign_fugitive_from_device_list(fugitive, fugitive_devices, 0, input_manager_ref)
 	_assign_fugitive_from_device_list(second_fugitive, fugitive_devices, 1, input_manager_ref)
 	_assign_fugitive_from_device_list(third_fugitive, fugitive_devices, 2, input_manager_ref)
+	_apply_player_identification_colors()
 
 func _setup_extraction_points() -> void:
 	extraction_points.clear()
@@ -873,6 +881,7 @@ func _build_skill_hud_blocks() -> Array[Dictionary]:
 	return blocks
 
 func _build_skill_hud_block_for_device(device_id: int, slot_index: int) -> Dictionary:
+	var player_color: Color = _get_player_control_color(device_id)
 	if device_id == current_police_device:
 		return {
 			"slot_label": "P%d" % [slot_index + 1],
@@ -882,6 +891,7 @@ func _build_skill_hud_block_for_device(device_id: int, slot_index: int) -> Dicti
 			"is_ready": false,
 			"is_police": true,
 			"is_active": true,
+			"player_color": player_color,
 		}
 
 	var player: FugitivePlayer = _find_fugitive_by_device(device_id)
@@ -894,6 +904,7 @@ func _build_skill_hud_block_for_device(device_id: int, slot_index: int) -> Dicti
 			"is_ready": false,
 			"is_police": false,
 			"is_active": false,
+			"player_color": player_color,
 		}
 
 	var skill_data: Dictionary = player.get_skill_hud_data()
@@ -905,6 +916,7 @@ func _build_skill_hud_block_for_device(device_id: int, slot_index: int) -> Dicti
 		"is_ready": bool(skill_data.get("is_ready", false)),
 		"is_police": false,
 		"is_active": player.is_participating and not player.is_infected and not player.is_extracted,
+		"player_color": player_color,
 	}
 
 func _find_fugitive_by_device(device_id: int) -> FugitivePlayer:
@@ -975,3 +987,18 @@ func _assign_fugitive_slot(player: FugitivePlayer, joined_devices: Array, joined
 	player.device_id = -1
 	player.clear_skill()
 	player.deactivate_slot()
+
+func _apply_player_identification_colors() -> void:
+	if police != null and police.has_method("set_player_identity_color"):
+		police.call("set_player_identity_color", _get_player_control_color(police.device_id))
+	for player: FugitivePlayer in fugitive_slots:
+		if player == null:
+			continue
+		if player.has_method("set_player_identity_color"):
+			player.call("set_player_identity_color", _get_player_control_color(player.device_id))
+
+func _get_player_control_color(device_id: int) -> Color:
+	var slot_index: int = match_player_devices.find(device_id)
+	if slot_index >= 0 and slot_index < PLAYER_CONTROL_COLORS.size():
+		return PLAYER_CONTROL_COLORS[slot_index]
+	return Color(0.86, 0.9, 0.96, 1.0)

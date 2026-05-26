@@ -232,6 +232,10 @@ func update_player_skill_blocks(blocks: Array[Dictionary]) -> void:
 		var is_ready: bool = bool(block_data.get("is_ready", false))
 		var is_police: bool = bool(block_data.get("is_police", false))
 		var is_active: bool = bool(block_data.get("is_active", false))
+		var player_color_variant: Variant = block_data.get("player_color", COLOR_CARD_BORDER_COOLDOWN)
+		var player_color: Color = COLOR_CARD_BORDER_COOLDOWN
+		if player_color_variant is Color:
+			player_color = player_color_variant as Color
 
 		slot_label.text = slot_text
 		name_label.text = player_name
@@ -240,34 +244,28 @@ func update_player_skill_blocks(blocks: Array[Dictionary]) -> void:
 
 		var fill_color: Color = COLOR_BAR_FILL_COOLDOWN
 		var bar_background_color: Color = COLOR_BAR_BG
-		var card_border: Color = COLOR_CARD_BORDER_COOLDOWN
+		var card_border: Color = Color(player_color.r, player_color.g, player_color.b, 0.95)
 		var card_bg: Color = COLOR_CARD_BG
-		var player_name_color: Color = COLOR_DEFAULT
-		var ability_text_color: Color = COLOR_CYAN
-		var slot_text_color: Color = COLOR_CARD_BORDER_COOLDOWN
+		var player_name_color: Color = player_color.lightened(0.1)
+		var ability_text_color: Color = player_color.lightened(0.05)
+		var slot_text_color: Color = player_color.lightened(0.12)
 		var card_border_width: int = 2
 		if not is_active or is_police:
 			fill_color = COLOR_BAR_FILL_INACTIVE
 			bar_background_color = COLOR_CARD_BG_INACTIVE
 		if not is_active:
-			card_border = COLOR_CARD_BORDER_INACTIVE
+			card_border = Color(player_color.r, player_color.g, player_color.b, 0.36)
 			card_bg = COLOR_CARD_BG_INACTIVE
-			player_name_color = COLOR_MUTED
-			ability_text_color = COLOR_MUTED
-			slot_text_color = COLOR_MUTED
+			player_name_color = Color(player_color.r, player_color.g, player_color.b, 0.56)
+			ability_text_color = Color(player_color.r, player_color.g, player_color.b, 0.52)
+			slot_text_color = Color(player_color.r, player_color.g, player_color.b, 0.58)
 		elif is_police:
-			card_border = COLOR_CARD_BORDER_POLICE
+			card_border = Color(player_color.r, player_color.g, player_color.b, 0.98)
 			card_bg = Color(COLOR_CARD_BG.r + 0.015, COLOR_CARD_BG.g + 0.01, COLOR_CARD_BG.b, COLOR_CARD_BG.a)
-			player_name_color = COLOR_WARNING.lightened(0.08)
-			ability_text_color = COLOR_WARNING
-			slot_text_color = COLOR_WARNING
 			card_border_width = 3
 		elif is_ready:
 			fill_color = COLOR_BAR_FILL_READY
-			card_border = COLOR_CARD_BORDER_READY
-			player_name_color = COLOR_SUCCESS.lightened(0.1)
-			ability_text_color = COLOR_SUCCESS.lightened(0.05)
-			slot_text_color = COLOR_SUCCESS
+			card_border = Color(player_color.r, player_color.g, player_color.b, 0.98)
 			card_border_width = 3
 
 		skill_block_cards[block_index].add_theme_stylebox_override("panel", _make_skill_block_card_style(card_bg, card_border, card_border_width))
