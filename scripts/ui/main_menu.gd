@@ -756,8 +756,6 @@ func _is_key_confirm(key_event: InputEventKey) -> bool:
 		or key_event.physical_keycode == KEY_KP_ENTER
 		or key_event.keycode == KEY_ENTER
 		or key_event.keycode == KEY_KP_ENTER
-		or key_event.physical_keycode == KEY_SPACE
-		or key_event.keycode == KEY_SPACE
 	)
 
 func _is_key_cancel(key_event: InputEventKey) -> bool:
@@ -904,7 +902,7 @@ func _update_character_select_ui() -> void:
 
 func _get_device_label(device_id: int) -> String:
 	if device_id == KEYBOARD_DEVICE_ID:
-		return "TECLADO (WASD)"
+		return "TECLADO (WASD + SETAS)"
 	return "CONTROLE %d" % device_id
 
 func _start_police_reveal() -> void:

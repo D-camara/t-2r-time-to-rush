@@ -375,9 +375,6 @@ func is_controller_connected() -> bool:
 	return bool(input_manager.call("has_device", device_id))
 
 func _get_input_direction() -> Vector3:
-	if device_id < 0:
-		return Vector3.ZERO
-
 	var input_manager: Node = _get_input_manager()
 	if input_manager != null and input_manager.has_method("get_movement"):
 		var movement_result: Variant = input_manager.call("get_movement", device_id)

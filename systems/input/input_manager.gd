@@ -39,7 +39,12 @@ func _input(event: InputEvent) -> void:
 			return
 		var pressed_physical: Key = key_event.physical_keycode
 		var pressed_logical: Key = key_event.keycode
-		if pressed_physical == KEY_SPACE or pressed_logical == KEY_SPACE:
+		var is_wasd_ability: bool = pressed_physical == KEY_E or pressed_logical == KEY_E
+		var is_arrows_ability: bool = (
+			(pressed_physical == KEY_CTRL or pressed_logical == KEY_CTRL)
+			and key_event.location == KEY_LOCATION_RIGHT
+		)
+		if is_wasd_ability or is_arrows_ability:
 			_add_pressed_device(ability_pressed_devices, keyboard_target_device)
 		elif (
 			pressed_physical == KEY_ENTER
@@ -95,13 +100,13 @@ func get_movement(device_id: int) -> Vector3:
 func _get_keyboard_movement() -> Vector3:
 	var x: float = 0.0
 	var z: float = 0.0
-	if Input.is_physical_key_pressed(KEY_A):
+	if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT):
 		x -= 1.0
-	if Input.is_physical_key_pressed(KEY_D):
+	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT):
 		x += 1.0
-	if Input.is_physical_key_pressed(KEY_W):
+	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):
 		z -= 1.0
-	if Input.is_physical_key_pressed(KEY_S):
+	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):
 		z += 1.0
 
 	var dir: Vector3 = Vector3(x, 0.0, z)
