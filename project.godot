@@ -13,6 +13,7 @@ config_version=5
 config/name="T2R_TimeToRush"
 run/main_scene="res://scenes/ui/main_menu.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
+config/icon="uid://dcdwjvxek4jqd"
 
 [autoload]
 

@@ -1,17 +1,17 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://c3df76ecd7ct"]
 
-[ext_resource type="Script" path="res://scripts/player/police_player.gd" id="1_police"]
+[ext_resource type="Script" uid="uid://ct7gf8ai26p2v" path="res://scripts/player/police_player.gd" id="1_police"]
 [ext_resource type="PackedScene" path="res://scenes/player/animated_boneco.tscn" id="2_boneco"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_police"]
-height = 2.25
-radius = 0.28
+height = 3.7597656
+radius = 0.5307617
 
-[node name="PolicePlayer" type="CharacterBody3D"]
+[node name="PolicePlayer" type="CharacterBody3D" unique_id=1224015428]
 script = ExtResource("1_police")
 
-[node name="boneco" parent="." instance=ExtResource("2_boneco")]
+[node name="boneco" parent="." unique_id=60383499 instance=ExtResource("2_boneco")]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2097016822]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9048828, 0.16497159)
 shape = SubResource("CylinderShape3D_police")

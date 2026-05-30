@@ -1,8 +1,8 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://d0i2snslbe88p"]
 
-[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
+[ext_resource type="Script" uid="uid://q1wsxem2poh" path="res://scripts/ui/main_menu.gd" id="1_menu"]
 
-[node name="MainMenu" type="Control"]
+[node name="MainMenu" type="Control" unique_id=2008614003]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,7 +11,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_menu")
 
-[node name="Root" type="MarginContainer" parent="."]
+[node name="Root" type="MarginContainer" parent="." unique_id=942249194]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -23,146 +23,144 @@ offset_bottom = -28.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Columns" type="HBoxContainer" parent="Root"]
+[node name="Columns" type="HBoxContainer" parent="Root" unique_id=1552494073]
 layout_mode = 2
 theme_override_constants/separation = 32
 
-[node name="MenuPanel" type="PanelContainer" parent="Root/Columns"]
+[node name="MenuPanel" type="PanelContainer" parent="Root/Columns" unique_id=788874778]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MenuColumn" type="VBoxContainer" parent="Root/Columns/MenuPanel"]
+[node name="MenuColumn" type="VBoxContainer" parent="Root/Columns/MenuPanel" unique_id=924358292]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="Title" type="Label" parent="Root/Columns/MenuPanel/MenuColumn"]
+[node name="Title" type="Label" parent="Root/Columns/MenuPanel/MenuColumn" unique_id=265535140]
 layout_mode = 2
 theme_override_font_sizes/font_size = 42
 text = "TIME TO RUSH"
 
-[node name="Subtitle" type="Label" parent="Root/Columns/MenuPanel/MenuColumn"]
+[node name="Subtitle" type="Label" parent="Root/Columns/MenuPanel/MenuColumn" unique_id=571218399]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "ASSALTO AO BANCO // COFRE"
 
-[node name="PlayButton" type="Button" parent="Root/Columns/MenuPanel/MenuColumn"]
+[node name="PlayButton" type="Button" parent="Root/Columns/MenuPanel/MenuColumn" unique_id=874377354]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Selecionar personagens"
 
-[node name="SettingsButton" type="Button" parent="Root/Columns/MenuPanel/MenuColumn"]
+[node name="SettingsButton" type="Button" parent="Root/Columns/MenuPanel/MenuColumn" unique_id=653851175]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Configuracoes"
 
-[node name="QuitButton" type="Button" parent="Root/Columns/MenuPanel/MenuColumn"]
+[node name="QuitButton" type="Button" parent="Root/Columns/MenuPanel/MenuColumn" unique_id=235835266]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Sair"
 
-[node name="StatusLabel" type="Label" parent="Root/Columns/MenuPanel/MenuColumn"]
+[node name="StatusLabel" type="Label" parent="Root/Columns/MenuPanel/MenuColumn" unique_id=1267891164]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = ""
 autowrap_mode = 3
 
-[node name="LobbyPanel" type="PanelContainer" parent="Root/Columns"]
+[node name="LobbyPanel" type="PanelContainer" parent="Root/Columns" unique_id=1813057031]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="LobbyColumn" type="VBoxContainer" parent="Root/Columns/LobbyPanel"]
+[node name="LobbyColumn" type="VBoxContainer" parent="Root/Columns/LobbyPanel" unique_id=244218855]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="LobbyTitle" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+[node name="LobbyTitle" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn" unique_id=716432776]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "HEIST LOBBY"
 
-[node name="ConnectedLabel" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+[node name="ConnectedLabel" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn" unique_id=971980461]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Controles conectados: 0"
 
-[node name="JoinHint" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+[node name="JoinHint" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn" unique_id=520423343]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Aperte X no controle para entrar"
 autowrap_mode = 3
 
-[node name="Slot1" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+[node name="Slot1" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn" unique_id=1112272478]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Operador 1: Aperte X para entrar"
 
-[node name="Slot2" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+[node name="Slot2" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn" unique_id=1467930672]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Operador 2: Aperte X para entrar"
 
-[node name="Slot3" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+[node name="Slot3" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn" unique_id=442528825]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Operador 3: Aperte X para entrar"
 
-[node name="Slot4" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn"]
+[node name="Slot4" type="Label" parent="Root/Columns/LobbyPanel/LobbyColumn" unique_id=1810448406]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Operador 4: Aperte X para entrar"
 
-[node name="CharacterPanel" type="PanelContainer" parent="Root/Columns"]
+[node name="CharacterPanel" type="PanelContainer" parent="Root/Columns" unique_id=517472693]
 visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CharacterColumn" type="VBoxContainer" parent="Root/Columns/CharacterPanel"]
+[node name="CharacterColumn" type="VBoxContainer" parent="Root/Columns/CharacterPanel" unique_id=135977139]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="CharacterTitle" type="Label" parent="Root/Columns/CharacterPanel/CharacterColumn"]
+[node name="CharacterTitle" type="Label" parent="Root/Columns/CharacterPanel/CharacterColumn" unique_id=1569870900]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "HEIST CREW"
 
-[node name="CharacterTurnLabel" type="Label" parent="Root/Columns/CharacterPanel/CharacterColumn"]
+[node name="CharacterTurnLabel" type="Label" parent="Root/Columns/CharacterPanel/CharacterColumn" unique_id=513050359]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Escolha sua funcao no assalto"
 autowrap_mode = 3
 
-[node name="CharacterGrid" type="GridContainer" parent="Root/Columns/CharacterPanel/CharacterColumn"]
+[node name="CharacterGrid" type="GridContainer" parent="Root/Columns/CharacterPanel/CharacterColumn" unique_id=544098188]
 layout_mode = 2
-columns = 2
 theme_override_constants/h_separation = 12
 theme_override_constants/v_separation = 12
+columns = 2
 
-[node name="SaguiButton" type="Button" parent="Root/Columns/CharacterPanel/CharacterColumn/CharacterGrid"]
+[node name="SaguiButton" type="Button" parent="Root/Columns/CharacterPanel/CharacterColumn/CharacterGrid" unique_id=1777130189]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "Sagui"
 
-[node name="CoelhaButton" type="Button" parent="Root/Columns/CharacterPanel/CharacterColumn/CharacterGrid"]
+[node name="CoelhaButton" type="Button" parent="Root/Columns/CharacterPanel/CharacterColumn/CharacterGrid" unique_id=1728967449]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "Coelha"
 
-[node name="TigreButton" type="Button" parent="Root/Columns/CharacterPanel/CharacterColumn/CharacterGrid"]
+[node name="TigreButton" type="Button" parent="Root/Columns/CharacterPanel/CharacterColumn/CharacterGrid" unique_id=1035721334]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "Tigre"
 
-[node name="RaposaButton" type="Button" parent="Root/Columns/CharacterPanel/CharacterColumn/CharacterGrid"]
+[node name="RaposaButton" type="Button" parent="Root/Columns/CharacterPanel/CharacterColumn/CharacterGrid" unique_id=153808958]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "Raposa"
 
-[node name="CharacterStatusLabel" type="Label" parent="Root/Columns/CharacterPanel/CharacterColumn"]
+[node name="CharacterStatusLabel" type="Label" parent="Root/Columns/CharacterPanel/CharacterColumn" unique_id=1262159608]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = ""
 autowrap_mode = 3
 
-[node name="SettingsOverlay" type="PanelContainer" parent="."]
+[node name="SettingsOverlay" type="PanelContainer" parent="." unique_id=12194540]
 visible = false
 layout_mode = 1
 anchors_preset = 8
@@ -177,77 +175,76 @@ offset_bottom = 240.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="SettingsColumn" type="VBoxContainer" parent="SettingsOverlay"]
+[node name="SettingsColumn" type="VBoxContainer" parent="SettingsOverlay" unique_id=11754205]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="SettingsTitle" type="Label" parent="SettingsOverlay/SettingsColumn"]
+[node name="SettingsTitle" type="Label" parent="SettingsOverlay/SettingsColumn" unique_id=221541468]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "Configuracoes"
 
-[node name="VolumeLabel" type="Label" parent="SettingsOverlay/SettingsColumn"]
+[node name="VolumeLabel" type="Label" parent="SettingsOverlay/SettingsColumn" unique_id=2088470019]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Volume geral"
 
-[node name="VolumeSlider" type="HSlider" parent="SettingsOverlay/SettingsColumn"]
+[node name="VolumeSlider" type="HSlider" parent="SettingsOverlay/SettingsColumn" unique_id=790744202]
 layout_mode = 2
-min_value = 0.0
 max_value = 1.0
 step = 0.01
 value = 1.0
 
-[node name="LightingLabel" type="Label" parent="SettingsOverlay/SettingsColumn"]
+[node name="LightingLabel" type="Label" parent="SettingsOverlay/SettingsColumn" unique_id=341436298]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Estilo de iluminacao"
 
-[node name="LightingStyleOption" type="OptionButton" parent="SettingsOverlay/SettingsColumn"]
+[node name="LightingStyleOption" type="OptionButton" parent="SettingsOverlay/SettingsColumn" unique_id=1747526461]
 layout_mode = 2
 
-[node name="RainLabel" type="Label" parent="SettingsOverlay/SettingsColumn"]
+[node name="RainLabel" type="Label" parent="SettingsOverlay/SettingsColumn" unique_id=239181971]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Chuva no mapa"
 
-[node name="RainOption" type="OptionButton" parent="SettingsOverlay/SettingsColumn"]
+[node name="RainOption" type="OptionButton" parent="SettingsOverlay/SettingsColumn" unique_id=358756138]
 layout_mode = 2
 
-[node name="LightingPreviewLabel" type="Label" parent="SettingsOverlay/SettingsColumn"]
+[node name="LightingPreviewLabel" type="Label" parent="SettingsOverlay/SettingsColumn" unique_id=1031400686]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "Previa de iluminacao"
 
-[node name="LightingPreviewViewport" type="SubViewportContainer" parent="SettingsOverlay/SettingsColumn"]
+[node name="LightingPreviewViewport" type="SubViewportContainer" parent="SettingsOverlay/SettingsColumn" unique_id=842014356]
 custom_minimum_size = Vector2(0, 128)
 layout_mode = 2
 mouse_filter = 2
 stretch = true
 
-[node name="LightingPreviewDesc" type="Label" parent="SettingsOverlay/SettingsColumn"]
+[node name="LightingPreviewDesc" type="Label" parent="SettingsOverlay/SettingsColumn" unique_id=316848897]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "Previa em tempo real."
 autowrap_mode = 3
 
-[node name="LightingHint" type="Label" parent="SettingsOverlay/SettingsColumn"]
+[node name="LightingHint" type="Label" parent="SettingsOverlay/SettingsColumn" unique_id=1371106721]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "CIMA/BAIXO navega  //  ESQ/DIR ajusta valor"
 autowrap_mode = 3
 
-[node name="CloseSettingsButton" type="Button" parent="SettingsOverlay/SettingsColumn"]
+[node name="CloseSettingsButton" type="Button" parent="SettingsOverlay/SettingsColumn" unique_id=1594817835]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Fechar configuracoes"
 
-[node name="CloseHint" type="Label" parent="SettingsOverlay/SettingsColumn"]
+[node name="CloseHint" type="Label" parent="SettingsOverlay/SettingsColumn" unique_id=2041172676]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "A confirma  //  B fecha"
 
-[node name="RevealOverlay" type="PanelContainer" parent="."]
+[node name="RevealOverlay" type="PanelContainer" parent="." unique_id=1224533183]
 visible = false
 layout_mode = 1
 anchors_preset = 8
@@ -262,19 +259,18 @@ offset_bottom = 130.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="RevealColumn" type="VBoxContainer" parent="RevealOverlay"]
+[node name="RevealColumn" type="VBoxContainer" parent="RevealOverlay" unique_id=1120467881]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="RevealTitle" type="Label" parent="RevealOverlay/RevealColumn"]
+[node name="RevealTitle" type="Label" parent="RevealOverlay/RevealColumn" unique_id=1920162798]
 layout_mode = 2
 theme_override_font_sizes/font_size = 34
 text = "ALARME DO BANCO"
 horizontal_alignment = 1
 
-[node name="RevealLabel" type="Label" parent="RevealOverlay/RevealColumn"]
+[node name="RevealLabel" type="Label" parent="RevealOverlay/RevealColumn" unique_id=1966526963]
 layout_mode = 2
 theme_override_font_sizes/font_size = 42
-text = ""
 horizontal_alignment = 1
 autowrap_mode = 3

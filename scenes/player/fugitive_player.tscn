@@ -1,17 +1,17 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://c11ng8pa25w3t"]
 
-[ext_resource type="Script" path="res://scripts/player/fugitive_player.gd" id="1_fugitive"]
+[ext_resource type="Script" uid="uid://bq1rke32ox34t" path="res://scripts/player/fugitive_player.gd" id="1_fugitive"]
 [ext_resource type="PackedScene" path="res://scenes/player/animated_boneco.tscn" id="2_boneco"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_fugitive"]
-height = 2.25
-radius = 0.28
+height = 3.5551758
+radius = 0.44873047
 
-[node name="FugitivePlayer" type="CharacterBody3D"]
+[node name="FugitivePlayer" type="CharacterBody3D" unique_id=1314253692]
 script = ExtResource("1_fugitive")
 
-[node name="boneco" parent="." instance=ExtResource("2_boneco")]
+[node name="boneco" parent="." unique_id=1069158623 instance=ExtResource("2_boneco")]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2050182847]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8025879, 0.18679857)
 shape = SubResource("CylinderShape3D_fugitive")
