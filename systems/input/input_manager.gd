@@ -3,6 +3,8 @@ extends Node
 const DEADZONE: float = 0.2
 const MAX_JOINED_PLAYERS: int = 4
 const KEYBOARD_DEVICE_ID: int = -100
+const KEYBOARD_WASD_DEVICE_ID: int = -100
+const KEYBOARD_ARROWS_DEVICE_ID: int = -101
 const CHARACTER_IDS: Array[String] = ["sagui", "coelha", "tigre", "raposa"]
 const LIGHTING_STYLE_COUNT: int = 5
 const DEFAULT_LIGHTING_STYLE_INDEX: int = 0
@@ -34,28 +36,15 @@ func _input(event: InputEvent) -> void:
 		var key_event: InputEventKey = event
 		if not key_event.pressed or key_event.echo:
 			return
-		var keyboard_target_device: int = _get_keyboard_target_device()
-		if keyboard_target_device == -1:
-			return
-		var pressed_physical: Key = key_event.physical_keycode
-		var pressed_logical: Key = key_event.keycode
-		var is_wasd_ability: bool = pressed_physical == KEY_E or pressed_logical == KEY_E
-		var is_arrows_ability: bool = (
-			(pressed_physical == KEY_CTRL or pressed_logical == KEY_CTRL)
-			and key_event.location == KEY_LOCATION_RIGHT
-		)
-		if is_wasd_ability or is_arrows_ability:
-			_add_pressed_device(ability_pressed_devices, keyboard_target_device)
-		elif (
-			pressed_physical == KEY_ENTER
-			or pressed_physical == KEY_KP_ENTER
-			or pressed_logical == KEY_ENTER
-			or pressed_logical == KEY_KP_ENTER
-		):
-			_add_pressed_device(confirm_pressed_devices, keyboard_target_device)
-			_add_pressed_device(start_pressed_devices, keyboard_target_device)
-		elif pressed_physical == KEY_ESCAPE or pressed_logical == KEY_ESCAPE:
-			_add_pressed_device(cancel_pressed_devices, keyboard_target_device)
+		if _is_wasd_ability_key(key_event):
+			_add_pressed_if_joined(ability_pressed_devices, KEYBOARD_WASD_DEVICE_ID)
+		if _is_arrows_ability_key(key_event):
+			_add_pressed_if_joined(ability_pressed_devices, KEYBOARD_ARROWS_DEVICE_ID)
+		if _is_keyboard_confirm_key(key_event):
+			_add_pressed_to_joined_keyboards(confirm_pressed_devices)
+			_add_pressed_to_joined_keyboards(start_pressed_devices)
+		if _is_keyboard_cancel_key(key_event):
+			_add_pressed_to_joined_keyboards(cancel_pressed_devices)
 		return
 
 	if event is InputEventJoypadButton:
@@ -67,9 +56,8 @@ func _input(event: InputEvent) -> void:
 		if resolved_device == -1:
 			return
 
-		if _is_ability_button(joypad_event.button_index):
+		if _is_confirm_button(joypad_event.button_index):
 			_add_pressed_device(ability_pressed_devices, resolved_device)
-		elif _is_confirm_button(joypad_event.button_index):
 			_add_pressed_device(confirm_pressed_devices, resolved_device)
 		elif _is_cancel_button(joypad_event.button_index):
 			_add_pressed_device(cancel_pressed_devices, resolved_device)
@@ -84,8 +72,10 @@ func get_movement(device_id: int) -> Vector3:
 	if resolved_device == -1:
 		return Vector3.ZERO
 
-	if resolved_device == KEYBOARD_DEVICE_ID:
-		return _get_keyboard_movement()
+	if resolved_device == KEYBOARD_WASD_DEVICE_ID:
+		return _get_keyboard_wasd_movement()
+	if resolved_device == KEYBOARD_ARROWS_DEVICE_ID:
+		return _get_keyboard_arrows_movement()
 
 	var x: float = Input.get_joy_axis(resolved_device, JOY_AXIS_LEFT_X)
 	var y: float = Input.get_joy_axis(resolved_device, JOY_AXIS_LEFT_Y)
@@ -97,16 +87,33 @@ func get_movement(device_id: int) -> Vector3:
 
 	return dir.normalized()
 
-func _get_keyboard_movement() -> Vector3:
+func _get_keyboard_wasd_movement() -> Vector3:
 	var x: float = 0.0
 	var z: float = 0.0
-	if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT):
+	if Input.is_physical_key_pressed(KEY_A):
 		x -= 1.0
-	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT):
+	if Input.is_physical_key_pressed(KEY_D):
 		x += 1.0
-	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):
+	if Input.is_physical_key_pressed(KEY_W):
 		z -= 1.0
-	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):
+	if Input.is_physical_key_pressed(KEY_S):
+		z += 1.0
+
+	var dir: Vector3 = Vector3(x, 0.0, z)
+	if dir.length_squared() < 0.0001:
+		return Vector3.ZERO
+	return dir.normalized()
+
+func _get_keyboard_arrows_movement() -> Vector3:
+	var x: float = 0.0
+	var z: float = 0.0
+	if Input.is_physical_key_pressed(KEY_LEFT):
+		x -= 1.0
+	if Input.is_physical_key_pressed(KEY_RIGHT):
+		x += 1.0
+	if Input.is_physical_key_pressed(KEY_UP):
+		z -= 1.0
+	if Input.is_physical_key_pressed(KEY_DOWN):
 		z += 1.0
 
 	var dir: Vector3 = Vector3(x, 0.0, z)
@@ -144,11 +151,25 @@ func try_join_device(device_id: int) -> bool:
 func get_keyboard_device_id() -> int:
 	return KEYBOARD_DEVICE_ID
 
+func get_keyboard_device_ids() -> Array[int]:
+	return [KEYBOARD_WASD_DEVICE_ID, KEYBOARD_ARROWS_DEVICE_ID]
+
+func is_keyboard_device(device_id: int) -> bool:
+	return device_id == KEYBOARD_WASD_DEVICE_ID or device_id == KEYBOARD_ARROWS_DEVICE_ID
+
 func is_keyboard_joined() -> bool:
-	return KEYBOARD_DEVICE_ID in joined_devices
+	return KEYBOARD_WASD_DEVICE_ID in joined_devices or KEYBOARD_ARROWS_DEVICE_ID in joined_devices
 
 func try_join_keyboard() -> bool:
-	return try_join_device(KEYBOARD_DEVICE_ID)
+	if KEYBOARD_WASD_DEVICE_ID not in joined_devices:
+		return try_join_device(KEYBOARD_WASD_DEVICE_ID)
+	return try_join_device(KEYBOARD_ARROWS_DEVICE_ID)
+
+func try_join_keyboard_wasd() -> bool:
+	return try_join_device(KEYBOARD_WASD_DEVICE_ID)
+
+func try_join_keyboard_arrows() -> bool:
+	return try_join_device(KEYBOARD_ARROWS_DEVICE_ID)
 
 func reset_match_setup() -> void:
 	selected_characters.clear()
@@ -300,7 +321,7 @@ func _add_pressed_device(pressed_devices: Array[int], device_id: int) -> void:
 		pressed_devices.append(device_id)
 
 func _is_ability_button(button_index: int) -> bool:
-	return button_index == JOY_BUTTON_RIGHT_SHOULDER
+	return _is_confirm_button(button_index)
 
 func _is_confirm_button(button_index: int) -> bool:
 	return button_index == JOY_BUTTON_A or button_index == JOY_BUTTON_X
@@ -312,8 +333,8 @@ func _is_start_button(button_index: int) -> bool:
 	return button_index == JOY_BUTTON_START
 
 func _resolve_device(device_id: int) -> int:
-	if device_id == KEYBOARD_DEVICE_ID:
-		return KEYBOARD_DEVICE_ID
+	if device_id == KEYBOARD_WASD_DEVICE_ID or device_id == KEYBOARD_ARROWS_DEVICE_ID:
+		return device_id
 
 	if device_id in connected_devices_cache:
 		return device_id
@@ -330,9 +351,39 @@ func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
 	_refresh_connected_devices()
 
 func _get_keyboard_target_device() -> int:
-	if KEYBOARD_DEVICE_ID in joined_devices:
-		return KEYBOARD_DEVICE_ID
+	if KEYBOARD_WASD_DEVICE_ID in joined_devices:
+		return KEYBOARD_WASD_DEVICE_ID
+	if KEYBOARD_ARROWS_DEVICE_ID in joined_devices:
+		return KEYBOARD_ARROWS_DEVICE_ID
 	return -1
+
+func _add_pressed_if_joined(pressed_devices: Array[int], device_id: int) -> void:
+	if device_id in joined_devices:
+		_add_pressed_device(pressed_devices, device_id)
+
+func _add_pressed_to_joined_keyboards(pressed_devices: Array[int]) -> void:
+	_add_pressed_if_joined(pressed_devices, KEYBOARD_WASD_DEVICE_ID)
+	_add_pressed_if_joined(pressed_devices, KEYBOARD_ARROWS_DEVICE_ID)
+
+func _is_wasd_ability_key(key_event: InputEventKey) -> bool:
+	return key_event.physical_keycode == KEY_E or key_event.keycode == KEY_E
+
+func _is_arrows_ability_key(key_event: InputEventKey) -> bool:
+	return (
+		(key_event.physical_keycode == KEY_CTRL or key_event.keycode == KEY_CTRL)
+		and key_event.location == KEY_LOCATION_RIGHT
+	)
+
+func _is_keyboard_confirm_key(key_event: InputEventKey) -> bool:
+	return (
+		key_event.physical_keycode == KEY_ENTER
+		or key_event.physical_keycode == KEY_KP_ENTER
+		or key_event.keycode == KEY_ENTER
+		or key_event.keycode == KEY_KP_ENTER
+	)
+
+func _is_keyboard_cancel_key(key_event: InputEventKey) -> bool:
+	return key_event.physical_keycode == KEY_ESCAPE or key_event.keycode == KEY_ESCAPE
 
 func _load_persistent_settings() -> void:
 	var config: ConfigFile = ConfigFile.new()

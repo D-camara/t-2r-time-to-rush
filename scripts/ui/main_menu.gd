@@ -13,6 +13,7 @@ const MENU_MUSIC_PATH: String = "res://assets/music/intro.mpeg"
 const MAX_PLAYERS: int = 4
 const MIN_PLAYERS_TO_START: int = 1
 const KEYBOARD_DEVICE_ID: int = -100
+const KEYBOARD_ARROWS_DEVICE_ID: int = -101
 const CHARACTER_IDS: Array[String] = ["sagui", "coelha", "tigre", "raposa"]
 const NAV_AXIS_TRIGGER: float = 0.68
 const NAV_AXIS_RELEASE: float = 0.28
@@ -375,6 +376,29 @@ func _handle_keyboard_menu_input(key_event: InputEventKey) -> void:
 		if _is_key_down(key_event):
 			_set_lobby_menu_focus(lobby_menu_index + 1)
 			return
+		if _is_key_join_wasd(key_event):
+			var joined_wasd: bool = false
+			if InputManager.has_method("try_join_keyboard_wasd"):
+				joined_wasd = bool(InputManager.try_join_keyboard_wasd())
+				if joined_wasd:
+					if InputManager.has_method("clear_pressed_buttons"):
+						InputManager.clear_pressed_buttons()
+					_update_lobby_ui()
+					return
+			elif not InputManager.is_keyboard_joined():
+				joined_wasd = bool(InputManager.try_join_keyboard())
+				if joined_wasd:
+					if InputManager.has_method("clear_pressed_buttons"):
+						InputManager.clear_pressed_buttons()
+					_update_lobby_ui()
+					return
+		if _is_key_join_arrows(key_event):
+			if InputManager.has_method("try_join_keyboard_arrows"):
+				if InputManager.try_join_keyboard_arrows():
+					if InputManager.has_method("clear_pressed_buttons"):
+						InputManager.clear_pressed_buttons()
+					_update_lobby_ui()
+			return
 		if _is_key_confirm(key_event):
 			if not InputManager.is_keyboard_joined():
 				if InputManager.try_join_keyboard():
@@ -392,7 +416,11 @@ func _handle_keyboard_menu_input(key_event: InputEventKey) -> void:
 	var joined_players: Array[int] = InputManager.get_joined_devices()
 	if selecting_player_index >= joined_players.size():
 		return
-	if int(joined_players[selecting_player_index]) != KEYBOARD_DEVICE_ID:
+	var selecting_device_id: int = int(joined_players[selecting_player_index])
+	var is_keyboard_selector: bool = selecting_device_id == KEYBOARD_DEVICE_ID or selecting_device_id == KEYBOARD_ARROWS_DEVICE_ID
+	if InputManager.has_method("is_keyboard_device"):
+		is_keyboard_selector = bool(InputManager.call("is_keyboard_device", selecting_device_id))
+	if not is_keyboard_selector:
 		return
 
 	if _is_key_cancel(key_event):
@@ -758,6 +786,15 @@ func _is_key_confirm(key_event: InputEventKey) -> bool:
 		or key_event.keycode == KEY_KP_ENTER
 	)
 
+func _is_key_join_wasd(key_event: InputEventKey) -> bool:
+	return _is_key_confirm(key_event)
+
+func _is_key_join_arrows(key_event: InputEventKey) -> bool:
+	return (
+		(key_event.physical_keycode == KEY_CTRL or key_event.keycode == KEY_CTRL)
+		and key_event.location == KEY_LOCATION_RIGHT
+	)
+
 func _is_key_cancel(key_event: InputEventKey) -> bool:
 	return key_event.physical_keycode == KEY_ESCAPE or key_event.keycode == KEY_ESCAPE
 
@@ -902,7 +939,11 @@ func _update_character_select_ui() -> void:
 
 func _get_device_label(device_id: int) -> String:
 	if device_id == KEYBOARD_DEVICE_ID:
-		return "TECLADO (WASD + SETAS)"
+		return "TECLADO 1 (WASD)"
+	if device_id == KEYBOARD_ARROWS_DEVICE_ID:
+		return "TECLADO 2 (SETAS)"
+	if InputManager.has_method("is_keyboard_device") and bool(InputManager.call("is_keyboard_device", device_id)):
+		return "TECLADO"
 	return "CONTROLE %d" % device_id
 
 func _start_police_reveal() -> void:
@@ -980,7 +1021,7 @@ func _apply_visual_style() -> void:
 	connected_label.add_theme_font_override("font", FONT_UI)
 	join_hint_label.add_theme_color_override("font_color", COLOR_GOLD)
 	join_hint_label.add_theme_font_override("font", FONT_UI)
-	join_hint_label.text = "X / A / ENTER ENTRAR  //  MOUSE SELECIONAR"
+	join_hint_label.text = "X / A / ENTER (WASD) / CTRL DIREITO (SETAS) ENTRAR  //  MOUSE SELECIONAR"
 	lobby_title_label.text = "LOBBY DO ASSALTO"
 	lobby_title_label.add_theme_font_override("font", FONT_ARCADE)
 	lobby_title_label.add_theme_color_override("font_color", COLOR_GREEN_HIGHLIGHT)

@@ -732,6 +732,10 @@ func _get_player_display_name(device_id: int) -> String:
 		if not character_name.is_empty():
 			return character_name
 
+	if input_manager_ref != null and input_manager_ref.has_method("is_keyboard_device"):
+		if bool(input_manager_ref.call("is_keyboard_device", device_id)):
+			return "Teclado"
+
 	if input_manager_ref != null and input_manager_ref.has_method("get_keyboard_device_id"):
 		var keyboard_device_id: int = int(input_manager_ref.call("get_keyboard_device_id"))
 		if device_id == keyboard_device_id:
